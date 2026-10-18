@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-18T19:23:35.756Z",
+  "generatedAt": "2026-10-18T19:46:33.796Z",
   "tool": "tools/i18n-report.ts",
   "locale": "zh-CN",
   "notes": [
@@ -10,7 +10,7 @@
     "Excluded (with reasons): identifiers, CSS class names, resource ids, paths, URLs, file names, tests, fixtures, examples, dev-only screens and the language control."
   ],
   "source": {
-    "commit": "04fbd841540ec7a0c109623c04fba84e300cf217",
+    "commit": "94769135e66584cf17cf72758ec5feada79b718d",
     "dirty": true
   },
   "inventory": {
@@ -19,20 +19,20 @@
     "distinctStrings": 1870,
     "byKind": {
       "jsx-text": 467,
-      "message-call": 514,
-      "jsx-attr": 150,
+      "message-call": 515,
+      "jsx-attr": 149,
       "data-message": 1059
     },
     "byEvidence": {
-      "verified": 617,
-      "candidate": 1573
+      "verified": 616,
+      "candidate": 1574
     }
   },
   "coverage": {
     "verified": {
-      "total": 509,
-      "covered": 509,
-      "exact": 508,
+      "total": 508,
+      "covered": 508,
+      "exact": 507,
       "rule": 1,
       "fallback": 0,
       "percent": 100
@@ -63,14 +63,14 @@
     }
   },
   "excluded": {
-    "occurrences": 4736,
+    "occurrences": 4738,
     "byReason": {
       "non-user-attribute": 1570,
       "identifier-or-class": 3,
       "technical-literal": 47,
       "no-readable-text": 128,
       "css-class-name": 2762,
-      "non-literal-message-argument": 205,
+      "non-literal-message-argument": 207,
       "keyboard-token": 4,
       "path": 17
     },

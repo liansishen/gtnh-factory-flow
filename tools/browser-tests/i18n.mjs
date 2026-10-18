@@ -68,6 +68,40 @@ async function queryResources(query, extra = {}) {
   assert.equal(response.status(), 200);
   return response.json();
 }
+async function emptySearchStates(viewport) {
+  const input = page.getByRole("textbox", { name: /Search items and fluids|搜索物品和流体/ });
+  await input.fill("龘靐齉");
+  await page.getByText("没有匹配的资源。", { exact: true }).waitFor();
+  await observe(`search-empty-${viewport}-zh`);
+  for (const [filter, message] of [
+    ["在此画布上", "画布上还没有放置任何东西。"],
+    ["作物产出", "没有作物能长出这个。"],
+    ["蜜蜂产出", "没有蜜蜂能产出这个。"],
+  ]) {
+    await page.getByRole("button", { name: "显示与排序", exact: true }).click();
+    const menu = page.getByRole("menu", { name: "显示与排序", exact: true });
+    await menu.getByRole("menuitem", { name: filter, exact: true }).click();
+    await page.getByText(message, { exact: true }).waitFor();
+    await observe(`search-empty-${viewport}-${filter}-zh`);
+  }
+  await page.getByRole("button", { name: "显示与排序", exact: true }).click();
+  await page.getByRole("menu", { name: "显示与排序", exact: true }).getByRole("menuitem", { name: /^全部资源/ }).click();
+  await page.getByText("没有匹配的资源。", { exact: true }).waitFor();
+  const errorRoute = "**/api/datasets/*/resources?*query=i18n-query-error*";
+  await page.route(errorRoute, route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Resource query failed." }) }));
+  try {
+    await input.fill("i18n-query-error");
+    await page.getByText("资源查询失败。", { exact: true }).waitFor();
+    await observe(`search-error-${viewport}-zh`);
+    await locale("en");
+    await page.getByText("Resource query failed.", { exact: true }).waitFor();
+    await locale("zh-CN");
+    await page.getByText("资源查询失败。", { exact: true }).waitFor();
+  } finally {
+    await page.unroute(errorRoute);
+  }
+  await search("钢板");
+}
 
 try {
   const root = await page.goto(base, { waitUntil: "load", timeout: 120000 });
@@ -102,7 +136,7 @@ try {
   await page.getByRole("textbox", { name: /Search items and fluids|搜索物品和流体/ }).fill("龘靐齉");
   await emptySearchResponse;
   await page.waitForFunction(() => document.querySelectorAll('[role="option"]').length === 0);
-  await observe("search-empty-desktop-zh");
+  await emptySearchStates("desktop");
   await search("Steel Plate");
   await search("gt 钢板");
   await search("钢板");
@@ -232,6 +266,7 @@ try {
   await page.locator('[data-mb="plans"]').click();
   const items = page.locator('[data-mb="drawer-items"]');
   if (await items.isVisible()) await items.click();
+  await emptySearchStates("mobile");
   await search("钢板");
   await page.getByRole("option", { name: "钢板", exact: true }).first().click();
   await page.locator('[data-recipe=""]').first().waitFor({ timeout: 120000 });

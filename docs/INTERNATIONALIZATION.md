@@ -82,9 +82,9 @@ Read-only assets under `src/lib/i18n/`:
 | `messages-planner-zh.json` | planner-specific strings | 240 | authored here |
 | `messages-secondary-zh.json` | per-area additions | 169 | authored here |
 | `messages-inventory-zh.json` | inventory additions | 190 | authored here |
-| `messages-runtime-zh.json` | settings, controls, current release notes | 112 | authored here |
+| `messages-runtime-zh.json` | settings, controls, resource filters, current release notes | 120 | authored here |
 | `rules-zh.json` | community dynamic rules | 127 | community source |
-| `rules-planner-zh.json` | planner dynamic rules | 17 | authored here |
+| `rules-planner-zh.json` | planner dynamic rules | 18 | authored here |
 | `rules-runtime-zh.json` | release history count | 1 | authored here |
 | `game-names.zh-CN.json` | game names | 33265 | dictionary lookup |
 | `game-words.zh-CN.json` | words, materials, patterns | 8974 (1268 materials, 131 patterns) | generated |
@@ -174,7 +174,7 @@ kind.
 
 A snapshot from the last run (regenerate for current numbers):
 
-- verified inventory: 509 of 509 (100%), 0 fallback
+- verified inventory: 508 of 508 (100%), 0 fallback
 - translation-call candidates: 386 of 386 (100%), 0 fallback
 - data messages: 191 of 1055 (18.1%), 864 fallback
 - all distinct inventoried strings: 1006 of 1870 (53.8%)

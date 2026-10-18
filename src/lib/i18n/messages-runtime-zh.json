@@ -110,5 +110,13 @@
   "MACHINES": "机器",
   "Avg": "平均",
   "No machines yet.": "还没有机器。",
-  "Nothing to calculate yet: set a rate on a drawer, or pin a machine count": "还没有可计算的内容：在抽屉上设置速率，或钉选机器数量"
+  "Nothing to calculate yet: set a rate on a drawer, or pin a machine count": "还没有可计算的内容：在抽屉上设置速率，或钉选机器数量",
+  "Everything": "全部资源",
+  "Items only": "仅物品",
+  "Fluids only": "仅流体",
+  "Grown by crops": "作物产出",
+  "Made by bees": "蜜蜂产出",
+  "Grown": "作物产出",
+  "From bees": "蜜蜂产出",
+  "Show": "显示"
 }

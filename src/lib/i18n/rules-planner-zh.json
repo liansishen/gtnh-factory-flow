@@ -15,5 +15,6 @@
   { "re": "^(\\d+) tasks?$", "flags": "i", "zh": "$1 个任务" },
   { "re": "^(\\d+) comments?$", "flags": "i", "zh": "$1 条评论" },
   { "re": "^(\\d+) selected$", "flags": "i", "zh": "已选择 $1 项" },
-  { "re": "^([\\d.]+) machines? running$", "flags": "", "zh": "$1 台机器运行中" }
+  { "re": "^([\\d.]+) machines? running$", "flags": "", "zh": "$1 台机器运行中" },
+  { "re": "^Showing (.+), (.+)$", "flags": "", "zh": "显示：$1；排序：$2" }
 ]

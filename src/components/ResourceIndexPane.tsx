@@ -827,11 +827,11 @@ function VirtualResourceResultList({
       </div>
       <div ref={containerRef} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {error ? (
-          <div className="nei-empty">{error}</div>
+          <div className="nei-empty"><I18nText>{error}</I18nText></div>
         ) : isLoading && resources.length === 0 ? (
           <ResourceResultSkeleton pageSize={pageSize} gridColumns={gridColumns} />
         ) : resources.length === 0 ? (
-          <div className="nei-empty">{emptyLabel ?? "No matching resource."}</div>
+          <div className="nei-empty"><I18nText>{emptyLabel ?? "No matching resource."}</I18nText></div>
         ) : (
           <ResourceResultPage
             resources={resources}
@@ -967,7 +967,7 @@ function NeiListMenu({
         aria-label={_i18nT("Show and sort")}
         aria-haspopup="menu"
         aria-expanded={anchor !== undefined}
-        title={_i18nT(`Showing ${filterLabel.toLowerCase()}, ${sortLabel.toLowerCase()}`)}
+        title={_i18nT(`Showing ${_i18nT(filterLabel)}, ${_i18nT(sortLabel)}`)}
         data-on={changed ? "" : undefined}
         {...{ [MENU_ANCHOR_ATTR]: "" }}
         onClick={(event) => {
@@ -982,7 +982,7 @@ function NeiListMenu({
       {anchor ? (
         <ChromeMenu
           anchor={anchor}
-          label="Show and sort"
+          label={_i18nT("Show and sort")}
           align="right"
           zIndex={80}
           minWidth={170}
