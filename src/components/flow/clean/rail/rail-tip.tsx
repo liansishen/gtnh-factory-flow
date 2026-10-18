@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import { createPortal } from "react-dom";
 import { wheelChangesValues } from "@/lib/device-settings";
@@ -162,7 +164,7 @@ export function RailTipHost() {
       {content.sub ? <div className="rail-tip-sub">{content.sub}</div> : null}
       {content.rows?.map(([label, value]) => (
         <div key={label} className="rail-tip-row">
-          <span>{label}</span>
+          <span><I18nText>{label}</I18nText></span>
           <span>{value}</span>
         </div>
       ))}
@@ -176,7 +178,7 @@ export function RailTipHost() {
           {actions.map((action) => (
             <span key={`${action.input}:${action.label}`} className="rail-tip-action">
               <InputIcon input={action.input} />
-              {action.label}
+              <I18nText>{action.label}</I18nText>
             </span>
           ))}
         </div>

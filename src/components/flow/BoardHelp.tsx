@@ -1,3 +1,5 @@
+
+import { I18nText, useT } from "@/lib/i18n/react";
 import {
   Box,
   Eye,
@@ -724,19 +726,20 @@ const HELP_BUTTON_CLASS =
  * one way out, and no pointing.
  */
 function HelpSheet({ onClose }: { onClose: () => void }) {
+  const _i18nT = useT();
   return (
     <div className="ui-zoom fixed inset-0 z-[120] flex flex-col bg-[#101419] font-mono text-[#dbe3ec]">
       <div
         className="flex h-11 shrink-0 items-center justify-between px-3"
         style={{ borderBottom: `1px solid ${GLANCE_LINE}` }}
       >
-        <span className="text-[12px] font-black uppercase tracking-[0.14em] text-[#aebccd]">
+        <span className="text-[12px] font-black uppercase tracking-[0.14em] text-[#aebccd]"><I18nText>
           Board help
-        </span>
+        </I18nText></span>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close help"
+          aria-label={_i18nT("Close help")}
           className="flex h-9 w-9 items-center justify-center border text-[16px] text-[#aebccd]"
           style={{ borderColor: GLANCE_LINE }}
         >
@@ -866,6 +869,7 @@ function HelpGlanceSheet({
 }
 
 export const BoardHelp = memo(function BoardHelp({ compact }: { compact: boolean }) {
+  const _i18nT = useT();
   const [measured, setMeasured] = useState<Measured | undefined>(undefined);
   const [isSheetOpen, setSheetOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -908,8 +912,8 @@ export const BoardHelp = memo(function BoardHelp({ compact }: { compact: boolean
           data-help-anchor="help"
           className={HELP_BUTTON_CLASS}
           style={{ zoom: BOARD_TOOL_SCALE }}
-          title="Board help"
-          aria-label="Show board help"
+          title={_i18nT("Board help")}
+          aria-label={_i18nT("Show board help")}
         >
           ?
         </button>
@@ -953,8 +957,8 @@ export const BoardHelp = memo(function BoardHelp({ compact }: { compact: boolean
         data-help-anchor="help"
         className={HELP_BUTTON_CLASS}
         style={{ zoom: BOARD_TOOL_SCALE }}
-        title="Board help"
-        aria-label="Show board help"
+        title={_i18nT("Board help")}
+        aria-label={_i18nT("Show board help")}
       >
         ?
       </button>

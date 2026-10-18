@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { memo, useEffect, useRef } from "react";
 import { wheelChangesValues } from "@/lib/device-settings";
@@ -147,6 +149,7 @@ function WirePercentage({
   share: number;
   locked: boolean;
 }) {
+  const _i18nT = useT();
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const element = ref.current;
@@ -174,7 +177,7 @@ function WirePercentage({
         data-ratio-control={side}
         role="spinbutton"
         tabIndex={locked ? -1 : 0}
-        aria-label={`${side === "export" ? "Setup output" : side === "input" ? "Incoming" : "Outgoing"} percentage`}
+        aria-label={_i18nT(`${side === "export" ? "Setup output" : side === "input" ? "Incoming" : "Outgoing"} percentage`)}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={share * 100}

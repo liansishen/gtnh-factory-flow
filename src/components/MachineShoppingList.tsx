@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { checklistCursorStyle } from "./flow/ChecklistMode";
 
@@ -54,6 +56,7 @@ const NEUTRAL_CHIP = {
 
 /** One row per board card, using its solved count in Solve and Pool. */
 export function MachineShoppingList() {
+  const _i18nT = useT();
   const [powerColumn, setPowerColumn] = useState<"peak" | "average">("peak");
   const project = useFactoryStore((state) => state.project);
   const checklistMode = useFactoryStore((state) => state.checklistMode);
@@ -111,12 +114,12 @@ export function MachineShoppingList() {
         {/* The sheet's head: the title on the left, the two column labels
             over their columns on the right. */}
         <div className="inspector-section-heading -mx-3">
-          <h2>Machines</h2>
+          <h2><I18nText>Machines</I18nText></h2>
           <span className="inspector-count">{formatMachineListCount(totalMachines)}</span>
           <span
             className="inspector-rate-selector ml-auto flex justify-end gap-0.5"
             role="group"
-            aria-label="Machine power display"
+            aria-label={_i18nT("Machine power display")}
           >
             {(["peak", "average"] as const).map((value) => (
               <button
@@ -124,10 +127,10 @@ export function MachineShoppingList() {
                 type="button"
                 aria-pressed={powerColumn === value}
                 onClick={() => setPowerColumn(value)}
-                aria-label={value === "peak" ? "Show peak power" : "Show average power"}
+                aria-label={_i18nT(value === "peak" ? "Show peak power" : "Show average power")}
                 className="px-1 py-0.5"
               >
-                {value === "peak" ? "Peak" : "Average"}
+                <I18nText>{value === "peak" ? "Peak" : "Average"}</I18nText>
               </button>
             ))}
           </span>
@@ -297,7 +300,7 @@ function TotalLine({ label, peak, average }: { label: string; peak: Figure; aver
   return (
     <div className="flex w-full items-center gap-1.5 text-[13px] font-bold leading-5">
       <span className="min-w-0 flex-1 truncate text-[11px] uppercase tracking-wider text-[var(--mc-ink-muted)]">
-        {label}
+        <I18nText>{label}</I18nText>
       </span>
       <FigureCell figure={peak} />
       <FigureCell figure={average} />
@@ -407,32 +410,32 @@ function ListLine({
       <div className="w-max max-w-[280px]">
         {count !== undefined ? (
           <div className="text-[13px] font-semibold text-white">
-            {count}× {count === 1 ? "machine" : "machines"}
+            {count}× <I18nText>{count === 1 ? "machine" : "machines"}</I18nText>
           </div>
         ) : null}
         <div className="mt-0.5 flex items-center gap-1.5 text-[13px] font-semibold text-white">
           {chip.isMultiblock ? (
-            <span>Supplied {formatCompact(supplyEuT)} EU/t per machine</span>
+            <span><I18nText>Supplied </I18nText>{formatCompact(supplyEuT)}<I18nText> EU/t per machine</I18nText></span>
           ) : (
             <>
               {tierBadge}
-              <span>Per machine</span>
+              <span><I18nText>Per machine</I18nText></span>
             </>
           )}
         </div>
         {!chip.isMultiblock ? (
           <div className="mt-0.5 text-[11px] leading-4 text-slate-300">
-            {formatCompact(hatchAmps)} A:{" "}
-            <span className="font-bold text-white">{formatCompact(supplyEuT)} EU/t</span>
+            {formatCompact(hatchAmps)}<I18nText> A:</I18nText><I18nText>{" "}</I18nText>
+            <span className="font-bold text-white">{formatCompact(supplyEuT)}<I18nText> EU/t</I18nText></span>
           </div>
         ) : null}
         {peakEuT !== undefined ? (
           <>
-            <div className="text-[11px] leading-4 text-slate-300">
-              PEAK <span className="font-bold text-white">{formatPowerValue(powerDisplayFromEuT(peakEuT))} {powerDisplaySuffix()}</span>
+            <div className="text-[11px] leading-4 text-slate-300"><I18nText>
+              PEAK </I18nText><span className="font-bold text-white">{formatPowerValue(powerDisplayFromEuT(peakEuT))} {powerDisplaySuffix()}</span>
             </div>
-            <div className="text-[11px] leading-4 text-slate-300">
-              AVG{" "}
+            <div className="text-[11px] leading-4 text-slate-300"><I18nText>
+              AVG</I18nText><I18nText>{" "}</I18nText>
               <span className="font-bold text-white">{formatPowerValue(powerDisplayFromEuT(averageEuT ?? 0))} {powerDisplaySuffix()}</span>
             </div>
           </>
@@ -519,11 +522,11 @@ function ListLine({
             >
               {chip.isMultiblock && (
                 <span className="text-[10px] tabular-nums">
-                  {chip.typedEuT !== undefined
+                  <I18nText>{chip.typedEuT !== undefined
                     ? formatCompact(chip.typedEuT / getVoltageTierMaxEuT(chip.tier)) + "A"
                     : hatchAmps !== undefined
                       ? formatCompact(hatchAmps) + "A"
-                      : "—"}
+                      : "—"}</I18nText>
                 </span>
               )}
               <span className="text-[10px] font-bold leading-4">{chip.tier}</span>
@@ -535,7 +538,7 @@ function ListLine({
             <span className="flex items-baseline gap-1">
               {stalled ? (
                 <span className={[COLUMN_CLASS, "font-bold text-red-400"].join(" ")}>
-                  {state === "under-powered" ? "LOW!" : "TIER!"}
+                  <I18nText>{state === "under-powered" ? "LOW!" : "TIER!"}</I18nText>
                 </span>
               ) : (
                 <FigureCell figure={peak} className="text-[13px]" />

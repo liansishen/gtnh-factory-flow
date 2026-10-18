@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -65,6 +67,7 @@ export function IconPicker({
   onClear?: () => void;
   onClose: () => void;
 }) {
+  const _i18nT = useT();
   const datasetManifest = useFactoryStore((state) => state.datasetManifest);
   const datasetManifestUrl = useFactoryStore((state) => state.datasetManifestUrl);
   const selectedDatasetVersionId = useFactoryStore((state) => state.selectedDatasetVersionId);
@@ -125,7 +128,7 @@ export function IconPicker({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close icon picker"
+            aria-label={_i18nT("Close icon picker")}
             className="rounded p-1 text-neutral-400 hover:text-neutral-100"
           >
             <X className="h-4 w-4" />
@@ -137,16 +140,16 @@ export function IconPicker({
             autoFocus
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search item or fluid..."
+            placeholder={_i18nT("Search item or fluid...")}
             className="min-w-0 flex-1 bg-transparent outline-none"
           />
         </label>
         {error ? <p className="mt-2 text-[11px] text-red-400">{error}</p> : null}
         {suggestions && suggestions.length > 0 ? (
           <div className="mt-2 shrink-0">
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-neutral-500">
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-neutral-500"><I18nText>
               From this build
-            </p>
+            </I18nText></p>
             <div className="flex flex-wrap gap-1">
               {suggestions.map((suggestion) => (
                 <button
@@ -178,10 +181,10 @@ export function IconPicker({
         ) : null}
         <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
           {!version ? (
-            <p className="pt-1 text-[11px] text-neutral-500">The dataset is still loading…</p>
+            <p className="pt-1 text-[11px] text-neutral-500"><I18nText>The dataset is still loading…</I18nText></p>
           ) : resources.length === 0 ? (
             <p className="pt-1 text-[11px] text-neutral-500">
-              {result ? "Nothing matches." : "Searching…"}
+              <I18nText>{result ? "Nothing matches." : "Searching…"}</I18nText>
             </p>
           ) : (
             <div className="grid grid-cols-8 gap-1">
@@ -227,9 +230,9 @@ export function IconPicker({
             type="button"
             onClick={onClear}
             className="mt-2 h-7 shrink-0 rounded-[4px] border border-neutral-700 bg-[#17191d] text-[11px] text-neutral-400 hover:border-red-500 hover:text-red-400"
-          >
+          ><I18nText>
             Remove the current icon
-          </button>
+          </I18nText></button>
         ) : null}
       </div>
     </div>
@@ -251,6 +254,7 @@ export function EntryIconSlot({
   onEdit?: () => void;
   className?: string;
 }) {
+  const _i18nT = useT();
   // Fills the slot: the padded source art is drawn at 200% and cropped by
   // the wrapper, so the sprite lands at roughly the slot's own size.
   const face = icon ? (
@@ -292,7 +296,7 @@ export function EntryIconSlot({
     <button
       type="button"
       onClick={onEdit}
-      aria-label={icon ? "Change the icon" : "Pick an icon"}
+      aria-label={_i18nT(icon ? "Change the icon" : "Pick an icon")}
       className={[
         "flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[4px] border",
         icon

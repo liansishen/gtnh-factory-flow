@@ -1,4 +1,8 @@
 "use client";
+import { matchesGameNameFilter } from "@/lib/i18n/game-search";
+
+import { I18nText, useT } from "@/lib/i18n/react";
+
 import { isInputRate, storageTargetMode } from "@/lib/model/storage-target";
 import { usePortRowBrowse } from "./use-port-row-browse";
 import { formatAmountWithSuffix, parseAmountWithSuffix, RateBox, RuleButton, trimFlow, useRateRule } from "./rate-rule";
@@ -196,6 +200,7 @@ function storageIconPixelSize(
 }
 
 function StorageNodeComponent({ data, selected }: NodeProps<StorageFlowNode>) {
+  const _i18nT = useT();
   const { storage, result } = data;
   const category = useFactoryStore((state) =>
     getCategoryPresentation(state.project.recipes, storage.kind, storage.resourceId),
@@ -541,7 +546,7 @@ function StorageNodeComponent({ data, selected }: NodeProps<StorageFlowNode>) {
               data-resource-handle="true"
               data-resource-node-id={storage.id}
               data-resource-handle-id={outputHandleId}
-              aria-label={`${title}${readOnly ? "" : ". Left click or R for recipes, right click or U for uses, drag to connect"}`}
+              aria-label={_i18nT(`${title}${readOnly ? "" : ". Left click or R for recipes, right click or U for uses, drag to connect"}`)}
               className="nodrag"
               style={WELL_HANDLE}
             />
@@ -580,7 +585,7 @@ function StorageNodeComponent({ data, selected }: NodeProps<StorageFlowNode>) {
                     // leaving the setup, so it says so.
                     <div className="storage-chip-surplus">
                       <ChipRate net={net} kind={storage.kind} role={role} size="large" />
-                      <span className="storage-chip-surplus-word">(surplus)</span>
+                      <span className="storage-chip-surplus-word"><I18nText>(surplus)</I18nText></span>
                     </div>
                   ) : (
                     <ChipRate net={net} kind={storage.kind} role={role} size="large" />
@@ -787,6 +792,7 @@ export function TargetLine({
   inlinePencil?: boolean;
   input?: boolean;
 }) {
+  const _i18nT = useT();
   const setStorageTarget = useFactoryStore((state) => state.setStorageTarget);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -862,7 +868,7 @@ export function TargetLine({
         onPointerDown={(event) => event.stopPropagation()}
         onMouseDown={(event) => { event.stopPropagation(); if (event.button === 1) event.preventDefault(); }}
         onAuxClick={clearRate}
-        aria-label="Required amount"
+        aria-label={_i18nT("Required amount")}
         style={rateStyle}
         className="nodrag group/target relative z-40 flex cursor-pointer justify-center hover:brightness-125"
       >
@@ -881,9 +887,9 @@ export function TargetLine({
                 "storage-net-line relative h-4 whitespace-nowrap text-center text-[12px] font-bold leading-4 tabular-nums",
                 askBlink ? "animate-pulse" : "opacity-60",
               ].join(" ")}
-            >
+            ><I18nText>
               rate?
-            </div>
+            </I18nText></div>
           )}
           <Pencil
             aria-hidden
@@ -920,8 +926,8 @@ export function TargetLine({
         onTouchStart={(event) => event.stopPropagation()}
         onClick={(event) => event.stopPropagation()}
         inputMode={signed ? "text" : "decimal"}
-        placeholder="rate"
-        aria-label="Required amount"
+        placeholder={_i18nT("rate")}
+        aria-label={_i18nT("Required amount")}
         className={[
           "nodrag h-4 w-[60px] border px-[3px] text-center text-[9px] font-bold tabular-nums outline-none",
           "bg-[#14171d] shadow-[inset_1px_1px_0_rgba(255,255,255,0.08),inset_-1px_-1px_0_rgba(0,0,0,0.5)]",
@@ -936,8 +942,9 @@ export function TargetLine({
 
 /** The ratio editor's pencil, a key in the title bar beside the mode key. */
 function RatioSplitButton({ storageId }: { storageId: string }) {
+  const _i18nT = useT();
   return (
-    <button type="button" data-tooltip-stop aria-label="Edit drawer ratios" title="Edit split"
+    <button type="button" data-tooltip-stop aria-label={_i18nT("Edit drawer ratios")} title={_i18nT("Edit split")}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => { event.stopPropagation(); openRatioEditor(storageId); }}
       className="storage-title-key board-edit-chrome nodrag nopan"
@@ -965,6 +972,7 @@ function StorageTitleBar({
   title: string;
   solveMode: boolean;
 }) {
+  const _i18nT = useT();
   const deleteStorage = useFactoryStore((state) => state.deleteStorage);
   const noun = isTank ? "tank" : "drawer";
   const ratio = role === "buffer" && storage.bufferMode === "ratio";
@@ -981,8 +989,8 @@ function StorageTitleBar({
             deleteStorage(storage.id);
           }}
           className="storage-title-key storage-title-key--delete board-edit-chrome nodrag"
-          title={`Delete ${noun}`}
-          aria-label={`Delete ${noun}`}
+          title={_i18nT(`Delete ${noun}`)}
+          aria-label={_i18nT(`Delete ${noun}`)}
         />
       </span>
       <StorageTitleName title={title} />
@@ -1005,6 +1013,7 @@ function StorageTitleBar({
  * Clicking cycles all three; ratio's pencil beside it opens its editor.
  */
 function BufferModeSwap({ storageId, mode }: { storageId: string; mode: StorageBufferMode }) {
+  const _i18nT = useT();
   const updateStorage = useFactoryStore((state) => state.updateStorage);
   const Icon = mode === "ratio" ? Split : mode === "strict" ? ArrowLeftRight : ArrowDownToLine;
   const next = mode === "overflow" ? "strict" : mode === "strict" ? "ratio" : "overflow";
@@ -1017,7 +1026,7 @@ function BufferModeSwap({ storageId, mode }: { storageId: string; mode: StorageB
         event.stopPropagation();
         updateStorage(storageId, { bufferMode: next });
       }}
-      aria-label={`Switch to ${next}`}
+      aria-label={_i18nT(`Switch to ${next}`)}
       className="storage-title-key board-edit-chrome nodrag"
     >
       <Icon aria-hidden />
@@ -1041,6 +1050,7 @@ function DrainModeSwap({
   role: StorageRole;
   kind: FactoryStorage["kind"];
 }) {
+  const _i18nT = useT();
   const setStorageDrainMode = useFactoryStore((state) => state.setStorageDrainMode);
   // POOL MODE has one drawer kind, the product: byproduct and trash drawers
   // are inert there (the pool banks every surplus by itself), so there is
@@ -1068,7 +1078,7 @@ function DrainModeSwap({
         event.stopPropagation();
         setStorageDrainMode(storageId, next);
       }}
-      aria-label={`Switch to ${next}`}
+      aria-label={_i18nT(`Switch to ${next}`)}
       className="storage-title-key board-edit-chrome nodrag"
     >
       <Repeat aria-hidden />
@@ -1226,9 +1236,7 @@ function storageMatchesSearch(storage: FactoryStorage, query: string) {
     return false;
   }
 
-  return `${storage.displayName ?? ""} ${storage.resourceId}`
-    .toLowerCase()
-    .includes(normalizedQuery);
+  return matchesGameNameFilter(normalizedQuery, `${storage.displayName ?? ""} ${storage.resourceId}`);
 }
 
 function formatCompactRate(value: number, kind: string): string {

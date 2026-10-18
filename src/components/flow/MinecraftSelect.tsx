@@ -1,4 +1,7 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+import { matchesGameNameFilter } from "@/lib/i18n/game-search";
+
 
 import { useDropdownDismiss } from "@/lib/hooks/use-dropdown-dismiss";
 import { focusDropdownFilter } from "@/lib/dropdown-focus";
@@ -47,6 +50,7 @@ export function MinecraftSelect({
   wideMenu?: boolean;
   tooltipContent?: ReactNode | (() => ReactNode);
 }) {
+  const _i18nT = useT();
   const [isOpen, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -70,11 +74,11 @@ export function MinecraftSelect({
   }, [isOpen, searchable]);
 
   const current = options.find((option) => option.key === value);
-  const trimmed = filter.trim().toLowerCase();
+  const trimmed = filter.trim();
   const shownOptions =
     trimmed === ""
       ? options
-      : options.filter((option) => option.label.toLowerCase().includes(trimmed));
+      : options.filter((option) => matchesGameNameFilter(filter, option.label));
 
   return (
     <div ref={rootRef} className={["relative min-w-0", className].join(" ")}>
@@ -93,22 +97,22 @@ export function MinecraftSelect({
             setOpen(false);
           }
         }}
-        title={tooltipContent ? undefined : title}
-        aria-label={ariaLabel}
+        title={tooltipContent ? undefined : title ? _i18nT(title) : title}
+        aria-label={ariaLabel ? _i18nT(ariaLabel) : ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         className="flex h-6 w-full min-w-0 items-center gap-1 border border-[var(--mc-33)] bg-[var(--mc-85)] px-1.5 text-[12px] font-bold leading-4 text-[var(--mc-ink)] shadow-[inset_1px_1px_0_var(--mc-100),inset_-1px_-1px_0_var(--mc-54)] outline-none focus:border-cyan-700 disabled:cursor-not-allowed disabled:text-[var(--mc-33)]"
       >
         {/* No icon on the closed control: the chip beside it already shows the
             current block, and two copies of it read as two things. */}
-        <span className="min-w-0 flex-1 truncate text-left">{current?.label ?? value}</span>
+        <span className="min-w-0 flex-1 truncate text-left"><I18nText game>{current?.label ?? value}</I18nText></span>
         {disabled ? null : <ChevronDown className="h-3 w-3 shrink-0" />}
       </button>
       </MinecraftTooltip>
       {isOpen ? (
         <div
           role="listbox"
-          aria-label={ariaLabel}
+          aria-label={ariaLabel ? _i18nT(ariaLabel) : ariaLabel}
           // "nowheel" keeps React Flow from zooming the canvas while the
           // option list scrolls; its native wheel handler runs before React's.
           className={[
@@ -140,15 +144,15 @@ export function MinecraftSelect({
                     setOpen(false);
                   }
                 }}
-                placeholder="Filter..."
-                aria-label={ariaLabel ? `Filter ${ariaLabel}` : "Filter options"}
+                placeholder={_i18nT("Filter...")}
+                aria-label={_i18nT(ariaLabel ? `Filter ${_i18nT(ariaLabel)}` : "Filter options")}
                 className="h-6 w-full border border-[var(--mc-33)] bg-[var(--mc-93)] pl-6 pr-1.5 text-[12px] text-[var(--mc-ink)] placeholder:text-[var(--mc-ink)]/50 outline-none focus:border-cyan-700"
               />
             </label>
           ) : null}
           <div className="min-h-0 flex-1 overflow-y-auto">
             {shownOptions.length === 0 ? (
-              <p className="px-1.5 py-1 text-[12px] text-[var(--mc-ink)]/60">No matches.</p>
+              <p className="px-1.5 py-1 text-[12px] text-[var(--mc-ink)]/60"><I18nText>No matches.</I18nText></p>
             ) : (
               shownOptions.map((option) => {
                 const isSelected = option.key === value;
@@ -174,7 +178,7 @@ export function MinecraftSelect({
                     {option.icon ? (
                       <span className="flex shrink-0 items-center">{option.icon}</span>
                     ) : null}
-                    <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                    <span className="min-w-0 flex-1 truncate"><I18nText game>{option.label}</I18nText></span>
                   </button>
                 );
               })

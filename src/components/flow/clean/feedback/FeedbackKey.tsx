@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { Bug } from "lucide-react";
 import { openFeedback } from "./feedback-store";
@@ -8,11 +10,12 @@ import { openFeedback } from "./feedback-store";
  * (FeedbackHost shows it).
  */
 export function FeedbackKey({ className = "" }: { className?: string }) {
+  const _i18nT = useT();
   return (
     <button
       type="button"
-      aria-label="Send feedback"
-      title="Send feedback: a bug, an idea, or a question"
+      aria-label={_i18nT("Send feedback")}
+      title={_i18nT("Send feedback: a bug, an idea, or a question")}
       className={`fb-topkey ${className}`}
       onClick={openFeedback}
     >

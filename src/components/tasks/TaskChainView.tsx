@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { tipAttrs } from "@/components/flow/clean/interaction";
@@ -48,6 +49,7 @@ interface Layout {
 }
 
 export function TaskChainView() {
+  const _i18nT = useT();
   const project = useFactoryStore((state) => state.project);
   const tasks = project.tasks;
   const nameOf = useNameOf();
@@ -263,11 +265,11 @@ export function TaskChainView() {
         {listShown ? (
           <>
             <div className="tc-list-head">
-              {count === 1 ? "1 task" : `${count} tasks`}
+              {count === 1 ? _i18nT("1 task") : `${count} tasks`}
               <button
                 type="button"
                 className="tc-fold"
-                aria-label="Fold the list away"
+                aria-label={_i18nT("Fold the list away")}
                 {...tipAttrs({ id: "task-chain|fold", title: "Fold the list away" })}
                 onClick={() => setListOpen(false)}
               >
@@ -280,7 +282,8 @@ export function TaskChainView() {
                 return (
                   <div key={at} className="tc-chain" data-chain={at + 1}>
                     <div className="tc-heading">
-                      Chain {at + 1}
+                      <I18nText>Chain </I18nText>
+                      {at + 1}
                       <i>{ids.length}</i>
                     </div>
                     {ids.map((id) => (
@@ -301,7 +304,7 @@ export function TaskChainView() {
               {layout.loose.length > 0 ? (
                 <div className="tc-loose">
                   <div className="tc-heading">
-                    Not linked
+                    <I18nText>Not linked</I18nText>
                     <i>{layout.loose.length}</i>
                   </div>
                   {layout.loose.map((id) => (
@@ -321,7 +324,7 @@ export function TaskChainView() {
             </div>
           </>
         ) : (
-          <button type="button" className="tc-fold" aria-label="Show the list of tasks">
+          <button type="button" className="tc-fold" aria-label={_i18nT("Show the list of tasks")}>
             <Caret right />
           </button>
         )}
@@ -336,8 +339,12 @@ export function TaskChainView() {
       >
         {count === 0 ? (
           <div className="tc-empty">
-            <p>No tasks yet.</p>
-            <p>Press New task to add one.</p>
+            <p>
+              <I18nText>No tasks yet.</I18nText>
+            </p>
+            <p>
+              <I18nText>Press New task to add one.</I18nText>
+            </p>
           </div>
         ) : (
           <div
@@ -360,7 +367,9 @@ export function TaskChainView() {
             </svg>
             {placed.looseY >= 0 ? (
               <div className="tc-loose-head" style={{ left: MARGIN, top: placed.looseY + 3 }}>
-                {layout.chains.length === 0 ? "No task waits on another yet" : "Not linked"}
+                {layout.chains.length === 0
+                  ? _i18nT("No task waits on another yet")
+                  : _i18nT("Not linked")}
               </div>
             ) : null}
             {[...placed.nodes].map(([id, at]) => {
@@ -408,7 +417,9 @@ export function TaskChainView() {
           </div>
         )}
         {count > 0 && layout.chains.length === 0 ? (
-          <p className="tc-hint">Open a task and add what it waits on to link it.</p>
+          <p className="tc-hint">
+            <I18nText>Open a task and add what it waits on to link it.</I18nText>
+          </p>
         ) : null}
         {count > 0 ? (
           <button
@@ -418,7 +429,7 @@ export function TaskChainView() {
             onPointerDown={(event) => event.stopPropagation()}
             onClick={fit}
           >
-            Fit
+            <I18nText>Fit</I18nText>
           </button>
         ) : null}
       </div>

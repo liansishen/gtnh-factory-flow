@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import { Globe, LoaderCircle, Save, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -26,6 +27,7 @@ export function BlueprintSaveDialog() {
 }
 
 function SaveDialogBody({ request }: { request: BlueprintSaveRequest }) {
+  const _i18nT = useT();
   const setSaveRequest = useBlueprintStore((state) => state.setSaveRequest);
   const save = useBlueprintStore((state) => state.save);
   const update = useBlueprintStore((state) => state.update);
@@ -108,12 +110,12 @@ function SaveDialogBody({ request }: { request: BlueprintSaveRequest }) {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-base font-semibold">
             <Save className="h-4 w-4" />
-            {isOverwrite ? "Overwrite this pocket" : "Save this pocket"}
+            {isOverwrite ? _i18nT("Overwrite this pocket") : _i18nT("Save this pocket")}
           </h2>
           <button
             type="button"
             onClick={close}
-            aria-label="Close"
+            aria-label={_i18nT("Close")}
             className="rounded p-1 text-neutral-400 hover:text-neutral-100"
           >
             <X className="h-4 w-4" />
@@ -122,8 +124,10 @@ function SaveDialogBody({ request }: { request: BlueprintSaveRequest }) {
 
         {isOverwrite ? (
           <p className="mb-3 text-xs leading-relaxed text-amber-300">
-            The picked pocket replaces this one&apos;s contents. Its votes, downloads and
-            standing stay.
+            <I18nText>
+              The picked pocket replaces this one&apos;s contents. Its votes, downloads and standing
+              stay.
+            </I18nText>
           </p>
         ) : null}
 
@@ -144,7 +148,7 @@ function SaveDialogBody({ request }: { request: BlueprintSaveRequest }) {
                 void commit();
               }
             }}
-            placeholder="Pocket name"
+            placeholder={_i18nT("Pocket name")}
             className="h-10 min-w-0 flex-1 rounded-[4px] border border-neutral-700 bg-[#17191d] px-2.5 text-sm outline-none focus:border-cyan-600"
           />
         </div>
@@ -152,33 +156,40 @@ function SaveDialogBody({ request }: { request: BlueprintSaveRequest }) {
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-[4px] border border-neutral-700 bg-[#17191d] p-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs tabular-nums text-neutral-400">
             <span>
-              <span className="font-semibold text-neutral-100">{cardCount}</span> cards inside
+              <span className="font-semibold text-neutral-100">{cardCount}</span>
+              <I18nText> cards inside</I18nText>
             </span>
             <span>
-              <span className="font-semibold text-neutral-100">{machineCount}</span> machines
+              <span className="font-semibold text-neutral-100">{machineCount}</span>
+              <I18nText> machines</I18nText>
             </span>
             {io.highestTier ? (
               <span className="flex items-center gap-1.5">
-                up to <TierBadge tier={io.highestTier} />
+                <I18nText>up to </I18nText>
+                <TierBadge tier={io.highestTier} />
               </span>
             ) : null}
           </div>
           <div className="mt-2">
             {renderIoStats(io.needs, io.outputs, { layout: "side-by-side" }) ?? (
-              <p className="text-[11px] text-neutral-500">No outside needs or leftovers.</p>
+              <p className="text-[11px] text-neutral-500">
+                <I18nText>No outside needs or leftovers.</I18nText>
+              </p>
             )}
           </div>
         </div>
 
         <div className="mt-3 text-sm">
-          <span className="mb-1 block text-xs font-medium text-neutral-300">Tags (optional)</span>
+          <span className="mb-1 block text-xs font-medium text-neutral-300">
+            <I18nText>Tags (optional)</I18nText>
+          </span>
           <div className="flex flex-wrap items-center gap-1 rounded-[4px] border border-neutral-700 bg-[#17191d] px-2 py-1.5">
             {tags.map((tag) => (
               <button
                 key={tag}
                 type="button"
                 onClick={() => setTags(tags.filter((entry) => entry !== tag))}
-                title={`Remove #${tag}`}
+                title={`${_i18nT("Remove")} #${tag}`}
                 className="rounded-[3px] border border-neutral-600 bg-[#25272c] px-1.5 py-0.5 text-[11px] text-neutral-300 hover:border-red-500 hover:text-red-400"
               >
                 #{tag} ×
@@ -193,7 +204,7 @@ function SaveDialogBody({ request }: { request: BlueprintSaveRequest }) {
                   addTagFromInput();
                 }
               }}
-              placeholder={tags.length === 0 ? "steel, early game..." : ""}
+              placeholder={tags.length === 0 ? _i18nT("steel, early game...") : ""}
               className="h-6 min-w-24 flex-1 bg-transparent text-[13px] outline-none"
             />
           </div>
@@ -207,11 +218,13 @@ function SaveDialogBody({ request }: { request: BlueprintSaveRequest }) {
           />
           <Globe className="h-4 w-4 text-emerald-400" />
           <span className="min-w-0">
-            <span className="block leading-tight">Publish to everyone</span>
+            <span className="block leading-tight">
+              <I18nText>Publish to everyone</I18nText>
+            </span>
             <span className="block text-[11px] leading-tight text-neutral-500">
               {isOverwrite
-                ? "Off keeps it private. It stays on your shelf either way."
-                : "On the Public shelf the moment it saves. You can flip this any time."}
+                ? _i18nT("Off keeps it private. It stays on your shelf either way.")
+                : _i18nT("On the Public shelf the moment it saves. You can flip this any time.")}
             </span>
           </span>
         </label>
@@ -224,7 +237,7 @@ function SaveDialogBody({ request }: { request: BlueprintSaveRequest }) {
             onClick={close}
             className="h-9 rounded-[4px] border border-neutral-700 bg-[#17191d] px-4 text-sm text-neutral-300 hover:border-neutral-500"
           >
-            Cancel
+            <I18nText>Cancel</I18nText>
           </button>
           <button
             type="button"
@@ -233,13 +246,13 @@ function SaveDialogBody({ request }: { request: BlueprintSaveRequest }) {
             className="flex h-9 items-center gap-1.5 rounded-[4px] border border-cyan-700 bg-cyan-600 px-4 text-sm font-medium text-white enabled:hover:bg-cyan-500 disabled:opacity-50"
           >
             {isSaving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
-            {isOverwrite ? "Overwrite" : "Save to my shelf"}
+            {isOverwrite ? _i18nT("Overwrite") : _i18nT("Save to my shelf")}
           </button>
         </div>
       </div>
       {isPickingIcon ? (
         <IconPicker
-          title="Pick this pocket's icon"
+          title={_i18nT("Pick this pocket's icon")}
           suggestions={iconSuggestionsFromStats(io.needs, io.outputs)}
           onPick={(picked) => {
             setIcon(picked);

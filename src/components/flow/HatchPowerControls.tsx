@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { wheelChangesValues } from "@/lib/device-settings";
@@ -25,19 +27,20 @@ import { useBoardMotion } from "./board-motion";
 type Tier = NonNullable<FactoryNode["hatchVoltageTier"]>;
 
 function TouchPowerPanel({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  const _i18nT = useT();
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current!;
     element.showModal();
     return () => element.close();
   }, []);
-  return createPortal(<dialog ref={dialog} aria-label="Machine power settings"
+  return createPortal(<dialog ref={dialog} aria-label={_i18nT("Machine power settings")}
     className="ui-zoom nodrag nopan nowheel m-auto max-h-[calc(100*var(--ui-dvh)-24px)] w-[520px] max-w-[calc(100*var(--ui-vw)-24px)] overflow-y-auto overscroll-contain border-2 border-line bg-surface p-3 text-fg backdrop:bg-black/70"
     onCancel={onClose} onClick={(event) => { event.stopPropagation(); if (event.target === event.currentTarget) onClose(); }}
     onPointerDown={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
     <div className="mb-3 flex items-center justify-between gap-2">
-      <strong>Machine power settings</strong>
-      <button autoFocus className="min-h-11 min-w-11 border border-line px-3" onClick={onClose}>Done</button>
+      <strong><I18nText>Machine power settings</I18nText></strong>
+      <button autoFocus className="min-h-11 min-w-11 border border-line px-3" onClick={onClose}><I18nText>Done</I18nText></button>
     </div>
     {children}
   </dialog>, document.body);
@@ -68,11 +71,12 @@ export function TierBadge({ tier }: { tier: Tier }) {
   );
 }
 function Comparison({ label, current, next, unit }: { label: string; current: number; next: number; unit?: string }) {
+  const _i18nT = useT();
   const format = (value: number) => value >= 10000 ? formatCompact(value) : number(value);
   return (
     <div className="flex h-[42px] min-w-0 flex-col items-center justify-center border border-line bg-[var(--mc-33)] px-1.5">
-      <span className="text-fg-muted">{label}{unit ? <> <span className="text-[11px]">{unit}</span></> : null}</span>
-      <span className="flex items-center justify-center gap-1 font-semibold tabular-nums text-fg" title={number(current) + " → " + number(next) + (unit ? " " + unit : "")}>
+      <span className="text-fg-muted"><I18nText>{label}</I18nText>{unit ? <> <span className="text-[11px]">{unit}</span></> : null}</span>
+      <span className="flex items-center justify-center gap-1 font-semibold tabular-nums text-fg" title={_i18nT(number(current) + " → " + number(next) + (unit ? " " + unit : ""))}>
         <span>{format(current)}</span>
         <ArrowRight aria-hidden className="h-4 w-4 shrink-0 text-fg-muted" strokeWidth={3} />
         <span>{format(next)}</span>
@@ -105,7 +109,7 @@ function PowerScaleMarker({ position, label, caption, lane, kind, transition, ti
       data-power-scale-label={kind}
       title={title}
       style={{ left: percent + "%", top, transform: "translateX(-" + percent + "%)", transition }}>
-      {label}{caption ? <> <span className="font-normal text-fg-muted">{caption}</span></> : null}
+      <I18nText>{label}</I18nText>{caption ? <> <span className="font-normal text-fg-muted">{caption}</span></> : null}
     </span>
   </>;
 }
@@ -127,6 +131,7 @@ export function PowerReadout({
   shared,
   compact = false,
 }: { recipe: Recipe; node: FactoryNode; compact?: boolean } & Consumption) {
+  const _i18nT = useT();
   useRateDisplayUnits();
   const displayPower = (euT: number) => `${formatPowerValue(powerDisplayFromEuT(euT))} ${powerDisplaySuffix()}`;
   const report = getNodePowerReport(recipe, node);
@@ -193,15 +198,15 @@ export function PowerReadout({
       data-power-readout
     >
       <div className="flex h-5 shrink-0 items-center justify-between text-[15px] font-semibold leading-5 text-fg">
-        <span>Power input</span>
-        {raw ? <span className="tabular-nums">{formatCompact(report.poolEuT)} EU/t</span> : null}
+        <span><I18nText>Power input</I18nText></span>
+        {raw ? <span className="tabular-nums">{formatCompact(report.poolEuT)}<I18nText> EU/t</I18nText></span> : null}
       </div>
       {!raw ? (
         <div className={`mt-1 flex shrink-0 ${compact ? "flex-wrap gap-1" : "h-6 gap-3"} items-center justify-between whitespace-nowrap`}>
           <div className="flex min-w-0 items-center gap-1 font-medium tabular-nums text-fg">
-            <span>{number(report.amps)}A ×</span>
+            <span>{number(report.amps)}<I18nText>A ×</I18nText></span>
             <TierBadge tier={report.tier} />
-            <span className="truncate">= {number(report.poolEuT)} EU/t</span>
+            <span className="truncate">= {number(report.poolEuT)}<I18nText> EU/t</I18nText></span>
           </div>
           <span
             className="flex shrink-0 items-center justify-end gap-1 font-normal text-fg-subtle"
@@ -210,9 +215,9 @@ export function PowerReadout({
             {equivalent.toLocaleString("en-US", {
               minimumFractionDigits: 1,
               maximumFractionDigits: 1,
-            })}{" "}
-            <TierBadge tier={report.tier} /> hatches
-            <span className="ml-1 text-fg-muted">({ampsPerHatch}A per hatch)</span>
+            })}<I18nText>{" "}</I18nText>
+            <TierBadge tier={report.tier} /><I18nText> hatches
+            </I18nText><span className="ml-1 text-fg-muted">({ampsPerHatch}<I18nText>A per hatch)</I18nText></span>
           </span>
         </div>
       ) : null}
@@ -244,7 +249,7 @@ export function PowerReadout({
               key={label}
               className="flex min-w-0 items-baseline justify-between gap-x-2 whitespace-nowrap"
             >
-              <span className="text-fg-muted">{label}</span>
+              <span className="text-fg-muted"><I18nText>{label}</I18nText></span>
               <span className="truncate font-medium tabular-nums text-fg">{value}</span>
             </div>
           ))}
@@ -258,9 +263,9 @@ export function PowerReadout({
             <span className="flex items-center gap-1 font-medium text-fg">
               {next ? (
                 <>
-                  {raw
+                  <I18nText>{raw
                     ? `+${formatCompact(next.euT - report.poolEuT)} EU/t`
-                    : `+${number(extraAmps)}A`}
+                    : `+${number(extraAmps)}A`}</I18nText>
                   {!raw ? <TierBadge tier={report.tier} /> : null}
                 </>
               ) : null}
@@ -284,10 +289,10 @@ export function PowerReadout({
               next={nextReport && nextStats && nextStats.durationTicks > 0 ? nextReport.parallels * 20 / nextStats.durationTicks : 0} />
           </div>
           <div className="relative mt-1.5 h-[74px] tabular-nums" data-power-scale>
-            <span className="absolute left-0 top-0 leading-4 text-fg-muted">{raw ? "0 EU/t" : "0A"}</span>
+            <span className="absolute left-0 top-0 leading-4 text-fg-muted"><I18nText>{raw ? "0 EU/t" : "0A"}</I18nText></span>
             <div
               role="progressbar"
-              aria-label="Supplied power on the upcoming improvement scale"
+              aria-label={_i18nT("Supplied power on the upcoming improvement scale")}
               aria-valuemin={0}
               aria-valuemax={scaleEuT}
               aria-valuenow={Math.min(report.poolEuT, scaleEuT)}
@@ -310,65 +315,65 @@ export function PowerReadout({
               label={raw ? formatCompact(runningDraw) + " EU/t" : number(runningDraw / voltage) + "A"} caption="draw"
               lane="lower" kind="draw" transition={barTransition} />
             <PowerScaleMarker position={1} label={nextText} caption={parallelTarget ? "max parallels" : "next"} lane="top" kind="threshold"
-              transition={barTransition} title={targetLabel + ": " + next.euT + " EU/t"} />
+              transition={barTransition} title={_i18nT(targetLabel + ": " + next.euT + " EU/t")} />
           </div>
         </section>
       ) : null}
       <div className={`mt-2 ${compact ? "" : "h-[58px]"} shrink-0 border-t border-line pt-1`} data-power-consumption>
         {mode !== "build" ? (
           plannedEuT === undefined ? (
-            <p className="text-fg-muted">Power demand appears after calculation.</p>
+            <p className="text-fg-muted"><I18nText>Power demand appears after calculation.</I18nText></p>
           ) : (
             <>
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-fg-muted">Demand for this card</span>
+                <span className="text-fg-muted"><I18nText>Demand for this card</I18nText></span>
                 <strong className="tabular-nums text-fg">
                   {displayPower(node.enabled ? plannedEuT : 0)}
                 </strong>
               </div>
               <p className="text-fg-muted">
-                {shared
+                <I18nText>{shared
                   ? "All recipes, across the required machines."
-                  : "Across the required machines."}
+                  : "Across the required machines."}</I18nText>
               </p>
             </>
           )
         ) : usage === undefined || average === undefined ? (
-          <p className="text-fg-muted">Average consumption appears after calculation.</p>
+          <p className="text-fg-muted"><I18nText>Average consumption appears after calculation.</I18nText></p>
         ) : compact ? (
           <div className="flex flex-wrap justify-between gap-1">
-            <span>Usage: {number(usage * 100)}%</span>
-            <span>Average: {displayPower(average)} per machine</span>
+            <span><I18nText>Usage: </I18nText>{number(usage * 100)}%</span>
+            <span><I18nText>Average: </I18nText>{displayPower(average)}<I18nText> per machine</I18nText></span>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-[auto_minmax(24px,1fr)_auto_minmax(24px,1fr)_auto_minmax(24px,1fr)_auto] items-center gap-x-1 tabular-nums" aria-label="Average power consumption per machine">
+            <div className="grid grid-cols-[auto_minmax(24px,1fr)_auto_minmax(24px,1fr)_auto_minmax(24px,1fr)_auto] items-center gap-x-1 tabular-nums" aria-label={_i18nT("Average power consumption per machine")}>
               <div className="min-w-0">
-                <div className="text-fg-muted">Supplied</div>
+                <div className="text-fg-muted"><I18nText>Supplied</I18nText></div>
                 <div className="whitespace-nowrap font-medium text-fg-subtle">{displayPower(report.poolEuT)}</div>
                 <div className="flex h-[18px] items-center gap-1 text-fg-muted">
-                  {raw ? "Available" : <>{number(report.amps)}A <TierBadge tier={report.tier} /></>}
+                  {raw ? "Available" : <>{number(report.amps)}<I18nText>A </I18nText><TierBadge tier={report.tier} /></>}
                 </div>
               </div>
               <ArrowRight aria-hidden className="h-5 w-5 justify-self-center text-fg-muted" strokeWidth={2.5} />
               <div className="min-w-0">
-                <div className="text-fg-muted">{shared ? "Recipe mix" : "Actual draw"}</div>
+                <div className="text-fg-muted"><I18nText>{shared ? "Recipe mix" : "Actual draw"}</I18nText></div>
                 <div className="whitespace-nowrap font-medium text-fg">{displayPower(runningDraw)}</div>
                 <div className="flex h-[18px] items-center gap-1 text-fg-muted">
-                  {report.state !== "ok" ? "Blocked" : raw ? "While running" : <>{number(runningDraw / voltage)}A <TierBadge tier={report.tier} /></>}
+                  {report.state !== "ok" ? "Blocked" : raw ? "While running" : <>{number(runningDraw / voltage)}<I18nText>A </I18nText><TierBadge tier={report.tier} /></>}
                 </div>
               </div>
               <X aria-hidden className="h-5 w-5 justify-self-center text-fg-muted" strokeWidth={2.5} />
               <div className="h-[54px]">
-                <div className="text-fg-muted">Usage</div>
+                <div className="text-fg-muted"><I18nText>Usage</I18nText></div>
                 <div className="font-medium text-fg">{number(usage * 100)}%</div>
               </div>
               <Equal aria-hidden className="h-5 w-5 justify-self-center text-fg-muted" strokeWidth={2.5} />
-              <div className="min-w-0" title={machineCount > 1 ? displayPower(average * machineCount) + " average for this card" : "Average draw per machine"}>
-                <div className="text-fg-muted">Average draw</div>
+              <div className="min-w-0" title={_i18nT(machineCount > 1 ? displayPower(average * machineCount) + " average for this card" : "Average draw per machine")}>
+                <div className="text-fg-muted"><I18nText>Average draw</I18nText></div>
                 <div className="whitespace-nowrap font-semibold text-fg">{displayPower(average)}</div>
                 <div className="flex h-[18px] items-center gap-1 text-fg-muted">
-                  {raw ? "Per machine" : <>{number(average / voltage)}A <TierBadge tier={report.tier} /></>}
+                  {raw ? "Per machine" : <>{number(average / voltage)}<I18nText>A </I18nText><TierBadge tier={report.tier} /></>}
                 </div>
               </div>
             </div>
@@ -418,6 +423,7 @@ export function HatchPowerControls({
   onChange: (tier: Tier, amps: number, mode: "amps" | "eut") => void;
   locked: () => boolean;
 } & Consumption) {
+  const _i18nT = useT();
   const { tier, amps, poolEuT } = getNodePowerReport(recipe, node);
   const raw = node.powerInputMode === "eut";
   const [draft, setDraft] = useState<string>();
@@ -486,23 +492,23 @@ export function HatchPowerControls({
   return (<>
     {touchOpen ? <TouchPowerPanel onClose={() => { setTouchOpen(false); setDraft(undefined); }}>
       <div className="mb-4 grid gap-3" data-touch-power-controls>
-        <label className="grid gap-1">{label}
+        <label className="grid gap-1"><I18nText>{label}</I18nText>
           <input aria-label={label} inputMode="decimal" className="min-h-11 w-full border border-line bg-surface px-3 text-base"
             value={draft ?? String(amount)} onChange={(event) => setDraft(event.target.value)}
             onBlur={commit} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} />
         </label>
         <div className="grid grid-cols-4 gap-2">
           {[-10, -1, 1, 10].map(step => <button key={step} className={touchButton}
-            aria-label={`${step > 0 ? "Increase" : "Decrease"} ${raw ? "EU/t" : "amps"} by ${Math.abs(step)}`}
-            onClick={() => stepAmount(step > 0 ? 1 : -1, Math.abs(step))}>{step > 0 ? "+" : "−"}{Math.abs(step)}</button>)}
+            aria-label={_i18nT(`${step > 0 ? "Increase" : "Decrease"} ${raw ? "EU/t" : "amps"} by ${Math.abs(step)}`)}
+            onClick={() => stepAmount(step > 0 ? 1 : -1, Math.abs(step))}><I18nText>{step > 0 ? "+" : "−"}</I18nText>{Math.abs(step)}</button>)}
         </div>
-        <label className="grid gap-1">Power input unit
-          <select aria-label="Power input unit" className="min-h-11 w-full border border-line bg-surface px-3 text-base"
+        <label className="grid gap-1"><I18nText>Power input unit
+          </I18nText><select aria-label={_i18nT("Power input unit")} className="min-h-11 w-full border border-line bg-surface px-3 text-base"
             value={raw ? "eut" : tier} onChange={(event) => {
               if (event.target.value === "eut") change(tier, amps, "eut");
               else pickTier(event.target.value as Tier);
             }}>
-            <option value="eut">EU/t</option>
+            <option value="eut"><I18nText>EU/t</I18nText></option>
             {GT_VOLTAGE_TIERS.map(value => <option key={value.tier} value={value.tier}>{value.tier}</option>)}
           </select>
         </label>
@@ -579,11 +585,11 @@ export function HatchPowerControls({
             }}
           >
             {formatCompact(amount)}
-            {raw ? "" : "A"}
+            <I18nText>{raw ? "" : "A"}</I18nText>
           </button>
         )}
         <button
-          aria-label="Power input unit"
+          aria-label={_i18nT("Power input unit")}
           onMouseEnter={() => setActiveControl("tier")}
           className={`${chip} w-[64px] shrink-0`}
           style={{ ...style, textDecoration: !raw && color.underline ? "underline" : undefined }}

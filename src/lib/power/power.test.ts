@@ -676,6 +676,17 @@ describe("power search", () => {
     expect(hits[0]?.via).toBeUndefined();
     expect(hits.some((hit) => hit.source.id === "steam-turbine")).toBe(true);
   });
+
+  it("finds a generator by a Chinese name or fuel", () => {
+    const hits = searchPowerSources("苯");
+    expect(hits.map((hit) => hit.source.id)).toContain("gas-turbine");
+    expect(hits.find((hit) => hit.source.id === "gas-turbine")?.via?.direction).toBe("takes");
+    expect(searchPowerSources("燃气轮机").some((hit) => hit.source.id === "gas-turbine")).toBe(true);
+  });
+
+  it("answers nothing, not everything, for unknown Chinese", () => {
+    expect(searchPowerSources("不存在的词")).toEqual([]);
+  });
 });
 
 describe("stencil search (the recipe book's view of the generators)", () => {

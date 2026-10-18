@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT, useGameName } from "@/lib/i18n/react";
+
 
 import "./rail.css";
 import { fluidSwatchStyle } from "../fluid-swatch";
@@ -143,6 +145,7 @@ function powerIcon(sourceId: string) {
 }
 
 export function ResourceGlyph({ line }: { line: Pick<RailLine, "resource" | "energy"> }) {
+  const _i18nName = useGameName();
   if (line.energy) {
     return (
       <span className="rail-icon" style={{ background: "#7a5a12" }}>
@@ -161,7 +164,7 @@ export function ResourceGlyph({ line }: { line: Pick<RailLine, "resource" | "ene
       <span
         className="rail-icon rail-swatch"
         role="img"
-        aria-label={resource.displayName}
+        aria-label={_i18nName((resource.displayName) ?? "")}
         style={fluidSwatchStyle({ ...resource, dominantColor: color })}
       />
     );
@@ -254,12 +257,13 @@ export function ColumnStrip({
       {...tipProps(`rail|open|${label}`, () => ({ title: open }))}
     >
       <FoldGlyph direction={side === "left" ? "right" : "left"} />
-      <span className="rail-strip-label">{label}</span>
+      <span className="rail-strip-label"><I18nText>{label}</I18nText></span>
     </div>
   );
 }
 
 function OpenRail({ side, fitWidth }: { side: "left" | "right"; fitWidth: boolean }) {
+  const _i18nT = useT();
   useRateDisplayUnits();
   const view = useRailView();
   const { rail, spares } = useRailData();
@@ -408,7 +412,7 @@ function OpenRail({ side, fitWidth }: { side: "left" | "right"; fitWidth: boolea
       }}
     >
       <div className="rail-head">
-        <span className="rail-head-title">OVERVIEW</span>
+        <span className="rail-head-title"><I18nText>OVERVIEW</I18nText></span>
         <RailKey
           label="Fold the overview"
           className="rail-key-fold"
@@ -420,11 +424,11 @@ function OpenRail({ side, fitWidth }: { side: "left" | "right"; fitWidth: boolea
       </div>
       <input
         className="rail-filter"
-        placeholder="Filter resources..."
+        placeholder={_i18nT("Filter resources...")}
         value={filter}
         spellCheck={false}
         onChange={(event) => setFilter(event.target.value)}
-        aria-label="Filter resources"
+        aria-label={_i18nT("Filter resources")}
       />
       <div
         ref={scroller}
@@ -474,7 +478,7 @@ const ItemView = memo(function ItemView({
     case "section":
       return <SectionBar item={item} euText={euText} peak={peak} />;
     case "empty":
-      return <div className="rail-empty">{item.text}</div>;
+      return <div className="rail-empty"><I18nText>{item.text}</I18nText></div>;
     case "line":
       return <LineRow item={item} state={state} />;
     case "spare":
@@ -482,7 +486,7 @@ const ItemView = memo(function ItemView({
     case "power":
       return (
         <div className="rail-power" style={{ height: placed.height }}>
-          <span style={{ color: CC.muted }}>{item.label}</span>
+          <span style={{ color: CC.muted }}><I18nText>{item.label}</I18nText></span>
           <b
             style={{
               color: item.label === "Made" ? "#FCD34D" : item.value >= 0 ? CC.ok : CC.red,
@@ -511,6 +515,7 @@ function SectionBar({
   euText: string;
   peak: boolean;
 }) {
+  const _i18nT = useT();
   const shown = item.shown !== item.count;
   const filtering = shown;
   return (
@@ -526,13 +531,13 @@ function SectionBar({
         if (event.key === "Enter" || event.key === " ") toggleRailSection(item.id);
       }}
       {...tipProps(`sec|${item.id}`, () => ({
-        title: item.id,
+        title: _i18nT(item.id),
         actions: [{ input: "left", label: "Fold or unfold" }],
       }))}
     >
       <span className="rail-sec-tri" />
       <span className="rail-sec-title" style={{ color: INK[item.id] }}>
-        {item.id}
+        <I18nText>{item.id}</I18nText>
       </span>
       <span className="rail-sec-badge">
         {filtering ? `${item.shown} / ${item.count}` : item.count}
@@ -558,7 +563,7 @@ function SectionBar({
                 actions: [{ input: "left", label: peak ? "Show the average" : "Show the peak" }],
               })}
             >
-              {peak ? "Peak" : "Avg"}
+              <I18nText>{peak ? "Peak" : "Avg"}</I18nText>
             </RailKey>
           </>
         ) : item.id === "INTERNAL" ? null : (
@@ -643,7 +648,7 @@ const LineRow = memo(function LineRow({
     >
       <div className="rail-row" style={{ top: 0, height: ROW_H }}>
         <ResourceGlyph line={line} />
-        <span className="rail-name">{line.label}</span>
+        <span className="rail-name"><I18nText game>{line.label}</I18nText></span>
         <span className="rail-num" data-zero={amount > 0 ? undefined : ""}>
           {number}
           {unitText ? <i>{unitText}</i> : null}
@@ -1027,7 +1032,7 @@ function GroupRow({ name, entries }: { name: string; entries: RailMachine[] }) {
       <div className="rail-row" style={{ top: 0, height: ROW_H }}>
         <MachineGlyph entry={entries[0]!} />
         <span className="rail-name" style={{ color: hot ? CC.gold : CC.ink }}>
-          {name}
+          <I18nText game>{name}</I18nText>
         </span>
       </div>
     </div>

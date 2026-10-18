@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import { LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
@@ -46,11 +48,11 @@ export function RecipeAddChips() {
           className="flex items-center gap-2 rounded-md border border-neutral-700 bg-[#17191d]/95 px-3 py-1.5 text-xs shadow-lg [animation:recipe-add-chip-in_160ms_ease-out_150ms_both]"
         >
           {entry.error ? (
-            <span className="text-rose-300">Could not add {entry.label}. Try again.</span>
+            <span className="text-rose-300"><I18nText>Could not add </I18nText><I18nText>{entry.label}</I18nText><I18nText>. Try again.</I18nText></span>
           ) : (
             <>
               <LoaderCircle className="h-3.5 w-3.5 animate-spin text-cyan-300" />
-              <span className="text-neutral-100">Adding {entry.label}...</span>
+              <span className="text-neutral-100"><I18nText>Adding </I18nText><I18nText>{entry.label}</I18nText>...</span>
             </>
           )}
         </div>

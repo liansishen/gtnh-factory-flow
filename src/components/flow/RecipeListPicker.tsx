@@ -1,4 +1,8 @@
 "use client";
+import { matchesGameNameFilter } from "@/lib/i18n/game-search";
+
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useDropdownDismiss } from "@/lib/hooks/use-dropdown-dismiss";
 import { focusDropdownFilter } from "@/lib/dropdown-focus";
@@ -66,6 +70,7 @@ export function RecipeListPicker({
   hover,
   dimmed,
 }: RecipeListPickerProps) {
+  const _i18nT = useT();
   const datasetManifestUrl = useFactoryStore((state) => state.datasetManifestUrl);
   const datasetManifest = useFactoryStore((state) => state.datasetManifest);
   const selectedDatasetVersionId = useFactoryStore((state) => state.selectedDatasetVersionId);
@@ -118,10 +123,7 @@ export function RecipeListPicker({
     const needle = search.trim().toLowerCase();
     const matches = needle
       ? recipes.filter((recipe) =>
-          [recipeChoiceName(recipe.name), ...recipe.outputs.map((output) => output.displayName ?? output.id)]
-            .join(" ")
-            .toLowerCase()
-            .includes(needle),
+          matchesGameNameFilter(needle, [recipeChoiceName(recipe.name), ...recipe.outputs.map((output) => output.displayName ?? output.id)].join(" ")),
         )
       : recipes;
     return sort ? [...matches].sort(sort) : matches;
@@ -206,13 +208,13 @@ export function RecipeListPicker({
             onClose();
           }
         }}
-        placeholder={`Search ${noun} or drops...`}
+        placeholder={_i18nT(`Search ${noun} or drops...`)}
         className="mb-1 h-7 w-full border border-[var(--mc-33)] bg-[var(--mc-85)] px-2 text-[12px] font-bold text-[var(--mc-ink)] shadow-[inset_1px_1px_0_var(--mc-100),inset_-1px_-1px_0_var(--mc-54)] outline-none focus:border-cyan-700 focus:bg-[var(--mc-100)]"
-        aria-label={`Search ${noun}`}
+        aria-label={_i18nT(`Search ${noun}`)}
       />
       {isLoading ? (
         <div className="flex items-center gap-2 px-2 py-3 text-[12px] font-bold text-[var(--mc-ink)]">
-          <LoaderCircle className="h-4 w-4 animate-spin" /> Loading {noun}...
+          <LoaderCircle className="h-4 w-4 animate-spin" /><I18nText> Loading </I18nText>{noun}...
         </div>
       ) : error ? (
         <div className="px-2 py-3 text-[12px] font-bold text-[var(--mc-bad)]">{error}</div>
@@ -261,7 +263,7 @@ export function RecipeListPicker({
                     ) : null}
                   </span>
                   <span className="w-full overflow-hidden text-center text-[8px] font-bold leading-[9px]">
-                    {recipeChoiceName(recipe.name)}
+                    <I18nText game>{recipeChoiceName(recipe.name)}</I18nText>
                   </span>
                 </button>
                 </MinecraftTooltip>
@@ -269,9 +271,9 @@ export function RecipeListPicker({
             );
           })}
           {filtered.length === 0 ? (
-            <div className="col-span-5 px-2 py-3 text-[12px] font-bold text-[var(--mc-ink-muted)]">
-              No {noun} match.
-            </div>
+            <div className="col-span-5 px-2 py-3 text-[12px] font-bold text-[var(--mc-ink-muted)]"><I18nText>
+              No </I18nText>{noun}<I18nText> match.
+            </I18nText></div>
           ) : null}
         </div>
       )}

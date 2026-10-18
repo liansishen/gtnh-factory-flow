@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import "./tasks.css";
 import "./task-box.css";
@@ -129,6 +130,7 @@ function useBoxSize(): { w: number; h: number; rect?: DOMRect } {
 }
 
 export function TaskBox({ task, onClose }: { task: PlanTask; onClose: () => void }) {
+  const _i18nT = useT();
   const editTasks = useFactoryStore((state) => state.editTasks);
   const isReadOnly = useFactoryStore((state) => state.isReadOnly);
   const project = useFactoryStore((state) => state.project);
@@ -352,7 +354,7 @@ export function TaskBox({ task, onClose }: { task: PlanTask; onClose: () => void
         <div
           className="tbx"
           role="dialog"
-          aria-label={`Task: ${task.title}`}
+          aria-label={`${_i18nT("Task")}: ${task.title}`}
           data-task-panel={task.id}
           data-wide={wide ? "" : undefined}
           style={{
@@ -367,12 +369,12 @@ export function TaskBox({ task, onClose }: { task: PlanTask; onClose: () => void
             <span className="tbx-where">
               {boardName}
               <i>/</i>
-              {TASK_STATUS_LABEL[task.status]}
+              <I18nText>{TASK_STATUS_LABEL[task.status]}</I18nText>
             </span>
             <button
               type="button"
               className="tbx-close"
-              aria-label="Close the task"
+              aria-label={_i18nT("Close the task")}
               {...tipAttrs({ id: "task-box|close", title: "Close (Esc)" })}
               onClick={onClose}
             >
@@ -392,10 +394,12 @@ export function TaskBox({ task, onClose }: { task: PlanTask; onClose: () => void
             <div className="tbx-main">
               <TitleField task={task} readOnly={isReadOnly} />
               {wide ? null : <div className="tbx-side-under">{side}</div>}
-              <div className="tbx-label">Notes</div>
+              <div className="tbx-label">
+                <I18nText>Notes</I18nText>
+              </div>
               <NotesField task={task} readOnly={isReadOnly} />
               <div className="tbx-label tbx-things-head" data-task-things-head="">
-                Things
+                <I18nText>Things</I18nText>
                 {things.length > 0 ? (
                   <>
                     <i>
@@ -424,26 +428,33 @@ export function TaskBox({ task, onClose }: { task: PlanTask; onClose: () => void
                 }
               />
               {things.length === 0 ? (
-                <p className="tbx-faint tbx-nothing">Nothing on it yet.</p>
+                <p className="tbx-faint tbx-nothing">
+                  <I18nText>Nothing on it yet.</I18nText>
+                </p>
               ) : null}
               {gone ? (
                 <p className="tbx-gone" role="status" data-task-link-gone="">
                   {gone}
                 </p>
               ) : null}
-              <p className="tbx-faint tbx-hint">Add machines from a card&apos;s menu.</p>
+              <p className="tbx-faint tbx-hint">
+                <I18nText>Add machines from a card&apos;s menu.</I18nText>
+              </p>
               <div className="tbx-label tbx-comments-head" data-task-comments="">
-                Comments{comments.length > 0 ? <i>{comments.length}</i> : null}
+                <I18nText>Comments</I18nText>
+                {comments.length > 0 ? <i>{comments.length}</i> : null}
               </div>
               {comments.length === 0 ? (
-                <p className="tbx-faint tbx-nothing">No comments yet.</p>
+                <p className="tbx-faint tbx-nothing">
+                  <I18nText>No comments yet.</I18nText>
+                </p>
               ) : null}
               {comments.map((entry) => (
                 <div key={entry.id} className="tbx-comment" data-task-comment="">
                   <TaskFace id={entry.by} name={entry.byName || nameOf(entry.by)} />
                   <div className="tbx-comment-body">
                     <div className="tbx-comment-head">
-                      <span>{entry.byName || "Someone"}</span>
+                      <span>{entry.byName || _i18nT("Someone")}</span>
                       <i>{agoText(entry.at)}</i>
                       {(entry.by === author.id || entry.by === "local") && !isReadOnly ? (
                         <button
@@ -455,7 +466,7 @@ export function TaskBox({ task, onClose }: { task: PlanTask; onClose: () => void
                           })}
                           onClick={() => editTasks((plan) => deleteTaskComment(plan, entry.id))}
                         >
-                          Delete
+                          <I18nText>Delete</I18nText>
                         </button>
                       ) : null}
                     </div>
@@ -477,7 +488,7 @@ export function TaskBox({ task, onClose }: { task: PlanTask; onClose: () => void
                   {...tipAttrs({ id: "task-box|post", title: "Add your comment" })}
                   onClick={post}
                 >
-                  Comment
+                  <I18nText>Comment</I18nText>
                 </button>
                 {wide ? (
                   <button
@@ -490,7 +501,7 @@ export function TaskBox({ task, onClose }: { task: PlanTask; onClose: () => void
                     })}
                     onClick={(event) => askDelete(chromeAnchorOf(event.currentTarget))}
                   >
-                    Delete task
+                    <I18nText>Delete task</I18nText>
                   </button>
                 ) : null}
               </>
@@ -540,6 +551,7 @@ function useGrow(
 }
 
 function TitleField({ task, readOnly }: { task: PlanTask; readOnly: boolean }) {
+  const _i18nT = useT();
   const editTasks = useFactoryStore((state) => state.editTasks);
   const [draft, setDraft] = useState<string>();
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -553,8 +565,8 @@ function TitleField({ task, readOnly }: { task: PlanTask; readOnly: boolean }) {
       rows={1}
       maxLength={PLAN_TASK_LIMITS.titleLength}
       readOnly={readOnly}
-      placeholder="Name this task"
-      aria-label="Task title"
+      placeholder={_i18nT("Name this task")}
+      aria-label={_i18nT("Task title")}
       spellCheck={false}
       onChange={(event) => setDraft(event.target.value.replace(/\n/g, " "))}
       onKeyDown={(event) => {
@@ -575,6 +587,7 @@ function TitleField({ task, readOnly }: { task: PlanTask; readOnly: boolean }) {
 }
 
 function NotesField({ task, readOnly }: { task: PlanTask; readOnly: boolean }) {
+  const _i18nT = useT();
   const editTasks = useFactoryStore((state) => state.editTasks);
   const [draft, setDraft] = useState<string>();
   const timer = useRef<number | undefined>(undefined);
@@ -593,8 +606,8 @@ function NotesField({ task, readOnly }: { task: PlanTask; readOnly: boolean }) {
       value={value}
       maxLength={PLAN_TASK_LIMITS.textLength}
       readOnly={readOnly}
-      placeholder="Add notes"
-      aria-label="Task notes"
+      placeholder={_i18nT("Add notes")}
+      aria-label={_i18nT("Task notes")}
       onChange={(event) => {
         const text = event.target.value;
         setDraft(text);
@@ -620,6 +633,7 @@ function CommentField({
   onPost: () => void;
   mainW: number;
 }) {
+  const _i18nT = useT();
   const ref = useRef<HTMLTextAreaElement>(null);
   useGrow(ref, value, 22, 52);
   return (
@@ -629,8 +643,8 @@ function CommentField({
       style={{ width: mainW - 62 - 6 }}
       value={value}
       maxLength={PLAN_TASK_LIMITS.commentTextLength}
-      placeholder="Write a comment"
-      aria-label="New comment"
+      placeholder={_i18nT("Write a comment")}
+      aria-label={_i18nT("New comment")}
       onChange={(event) => onChange(event.target.value)}
       onKeyDown={(event) => {
         if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
@@ -804,6 +818,7 @@ function ThingRow({
   onMenu: (anchor: ChromeAnchor) => void;
   onRewrite: (text: string) => void;
 }) {
+  const _i18nT = useT();
   const { item, kind } = thing;
   let words = item.text;
   let parts: string[] = [];
@@ -876,7 +891,7 @@ function ThingRow({
         type="button"
         role="checkbox"
         aria-checked={item.done}
-        aria-label={`Done: ${words}`}
+        aria-label={`${_i18nT("Done")}: ${words}`}
         className="tbx-box"
         disabled={readOnly}
         {...tipAttrs({
@@ -906,7 +921,7 @@ function ThingRow({
             autoFocus
             defaultValue={item.text}
             maxLength={PLAN_TASK_LIMITS.itemTextLength}
-            aria-label="Change the words"
+            aria-label={_i18nT("Change the words")}
             onBlur={(event) => onRewrite(event.currentTarget.value.trim())}
             onKeyDown={(event) => {
               if (event.key === "Enter") event.currentTarget.blur();
@@ -931,7 +946,7 @@ function ThingRow({
         <button
           type="button"
           className="tb-key tbx-show"
-          aria-label="Show it on its plan"
+          aria-label={_i18nT("Show it on its plan")}
           {...tipAttrs({ id: `task-thing|show|${item.id}`, title: "Show it on its plan" })}
           onClick={onAct}
         >
@@ -942,7 +957,7 @@ function ThingRow({
         <button
           type="button"
           className="tb-key tbx-show"
-          aria-label="Copy where it is"
+          aria-label={_i18nT("Copy where it is")}
           {...tipAttrs({
             id: `task-thing|copy|${item.id}`,
             title: "Copy where it is",
@@ -950,14 +965,14 @@ function ThingRow({
           })}
           onClick={onCopy}
         >
-          Copy
+          <I18nText>Copy</I18nText>
         </button>
       ) : null}
       {readOnly ? null : (
         <button
           type="button"
           className="tbx-off"
-          aria-label={`Take it off the task: ${words}`}
+          aria-label={`${_i18nT("Take it off the task")}: ${words}`}
           {...tipAttrs({ id: `task-thing|off|${item.id}`, title: "Take it off the task" })}
           onClick={onTakeOff}
         >
@@ -1026,6 +1041,7 @@ function PictureView({
   rect: DOMRect | undefined;
   onClose: () => void;
 }) {
+  const _i18nT = useT();
   const ago = agoText(picture.takenAt);
   const said = `${ago ? `Taken ${ago}` : "Screenshot"}. The full shot is on the computer that took it`;
   return (
@@ -1039,10 +1055,12 @@ function PictureView({
         }
       >
         <div className="tbp">
-          <img src={picture.thumb} alt="Screenshot" draggable={false} />
+          <img src={picture.thumb} alt={_i18nT("Screenshot")} draggable={false} />
           <div className="tbp-caption">
             <span>{said}</span>
-            <i>Click to close</i>
+            <i>
+              <I18nText>Click to close</I18nText>
+            </i>
           </div>
         </div>
       </div>
@@ -1080,6 +1098,7 @@ function SidePanel({
   onOpen: (id: string) => void;
   onDelete: (anchor: ChromeAnchor) => void;
 }) {
+  const _i18nT = useT();
   const editTasks = useFactoryStore((state) => state.editTasks);
   const isReadOnly = useFactoryStore((state) => state.isReadOnly);
   const project = useFactoryStore((state) => state.project);
@@ -1094,10 +1113,10 @@ function SidePanel({
 
   const pickStatus = (event: React.MouseEvent<HTMLElement>) =>
     onMenu({
-      label: "Status",
+      label: _i18nT("Status"),
       anchor: chromeAnchorOf(event.currentTarget),
       entries: TASK_STATUSES.map((status) => ({
-        label: TASK_STATUS_LABEL[status],
+        label: _i18nT(TASK_STATUS_LABEL[status]),
         dot: TASK_STATUS_COLOR[status],
         current: status === task.status,
         onSelect: () => editTasks((plan) => moveTaskTo(plan, task.id, status)),
@@ -1184,11 +1203,13 @@ function SidePanel({
       data-task-status-picker=""
       disabled={isReadOnly}
       style={{ ["--pick" as string]: TASK_STATUS_COLOR[task.status] }}
-      {...tipAttrs({ id: "task-box|status", title: "Move it to another column" })}
+      {...tipAttrs({ id: "task-box|status", title: _i18nT("Move it to another column") })}
       onClick={pickStatus}
     >
       <StatusDot status={task.status} />
-      <span>{TASK_STATUS_LABEL[task.status]}</span>
+      <span>
+        <I18nText>{TASK_STATUS_LABEL[task.status]}</I18nText>
+      </span>
       <Caret />
     </button>
   );
@@ -1213,7 +1234,9 @@ function SidePanel({
         assignees.map((id) => (
           <div key={id} className="tbx-person">
             <TaskFace id={id} name={id === me.id ? me.username : nameOf(id)} />
-            <span>{id === me.id || id === "local" ? "You" : (nameOf(id) ?? "Someone")}</span>
+            <span>
+              {id === me.id || id === "local" ? _i18nT("You") : (nameOf(id) ?? "Someone")}
+            </span>
           </div>
         ))
       ) : assignees.length > 0 ? (
@@ -1225,14 +1248,18 @@ function SidePanel({
       ) : null}
       {!user ? (
         <>
-          {assignees.length === 0 ? <p className="tbx-faint">No one yet.</p> : null}
+          {assignees.length === 0 ? (
+            <p className="tbx-faint">
+              <I18nText>No one yet.</I18nText>
+            </p>
+          ) : null}
           <button
             type="button"
             className="tbx-sign-in"
             {...tipAttrs({ id: "task-box|sign-in", title: "Sign in to your account" })}
             onClick={() => document.querySelector<HTMLElement>('[data-mb="account"]')?.click()}
           >
-            Sign in to assign
+            <I18nText>Sign in to assign</I18nText>
           </button>
         </>
       ) : isReadOnly ? null : (
@@ -1245,7 +1272,11 @@ function SidePanel({
           })}
           onClick={assign}
         >
-          {shared ? "Assign" : assignees.includes(me.id) ? "Unassign me" : "Assign me"}
+          {shared
+            ? _i18nT("Assign")
+            : assignees.includes(me.id)
+              ? _i18nT("Unassign me")
+              : _i18nT("Assign me")}
         </button>
       )}
     </div>
@@ -1273,7 +1304,7 @@ function SidePanel({
           onClick={pickBlocker}
         >
           <PixelIcon name="plus" style={{ color: "#22d3ee" }} />
-          Add
+          <I18nText>Add</I18nText>
         </button>
       )}
       {refused ? (
@@ -1285,7 +1316,11 @@ function SidePanel({
   );
   const unblocksField = (
     <div className="tbx-links" data-task-unblocks="">
-      {unblocks.length === 0 ? <p className="tbx-faint">Nothing waits on it.</p> : null}
+      {unblocks.length === 0 ? (
+        <p className="tbx-faint">
+          <I18nText>Nothing waits on it.</I18nText>
+        </p>
+      ) : null}
       {unblocks.map((other) => (
         <TaskLinkRow
           key={other.id}
@@ -1352,7 +1387,7 @@ function SidePanel({
             })}
             onClick={(event) => onDelete(chromeAnchorOf(event.currentTarget))}
           >
-            Delete task
+            <I18nText>Delete task</I18nText>
           </button>
         )}
       </div>
@@ -1421,6 +1456,7 @@ function TaskLinkRow({
   onOpen: () => void;
   onRemove?: () => void;
 }) {
+  const _i18nT = useT();
   return (
     <div
       className="tbx-link"
@@ -1448,8 +1484,11 @@ function TaskLinkRow({
         <button
           type="button"
           className="tbx-off"
-          aria-label={`It waits on ${task.title} no more`}
-          {...tipAttrs({ id: `task-box|unblock|${task.id}`, title: "It waits on this no more" })}
+          aria-label={_i18nT(`It waits on ${task.title} no more`)}
+          {...tipAttrs({
+            id: `task-box|unblock|${task.id}`,
+            title: _i18nT("It waits on this no more"),
+          })}
           onClick={onRemove}
         >
           <Cross />

@@ -1,3 +1,4 @@
+import { matchesGameNameFilter } from "@/lib/i18n/game-search";
 import { makeResourceKey } from "@/lib/model/resources";
 import type { FactoryProject, FactoryStorage, ResourceBalance } from "@/lib/model/types";
 
@@ -97,10 +98,11 @@ export function filterFlowBalances(items: ResourceBalance[], filter: string) {
   }
 
   return items.filter((balance) => {
-    if (balance.displayName && balance.displayName.toLowerCase().includes(normalized)) {
+    if (balance.displayName && matchesGameNameFilter(filter, balance.displayName)) {
       return true;
     }
 
+    // The id and key are registry strings, not labels: English only.
     return (
       balance.resourceId.toLowerCase().includes(normalized) ||
       balance.key.toLowerCase().includes(normalized)

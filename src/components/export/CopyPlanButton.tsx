@@ -1,4 +1,6 @@
 "use client";
+import { useT, I18nText } from "@/lib/i18n/react";
+
 
 import { Check, ClipboardCopy, LoaderCircle } from "lucide-react";
 import { useState } from "react";
@@ -15,6 +17,7 @@ type CopyState = "idle" | "working" | "copied" | "failed";
  * copy; players read that as programming.
  */
 export function CopyPlanButton() {
+  const _i18nT = useT();
   const isEmpty = useFactoryStore((state) => state.project.nodes.length === 0);
   const [state, setState] = useState<CopyState>("idle");
 
@@ -43,7 +46,7 @@ export function CopyPlanButton() {
       onClick={() => void copy()}
       disabled={isEmpty || state === "working"}
       title={title}
-      aria-label="Copy plan to clipboard"
+      aria-label={_i18nT("Copy plan to clipboard")}
       className="plan-summary-action inline-flex h-6 shrink-0 items-center justify-center gap-1.5 rounded border border-line-strong bg-surface px-2 text-fg-subtle hover:bg-surface-raised hover:text-fg disabled:opacity-40"
     >
       {state === "working" ? (
@@ -53,7 +56,7 @@ export function CopyPlanButton() {
       ) : (
         <ClipboardCopy aria-hidden className="h-3 w-3" />
       )}
-      <span>{state === "copied" ? "Copied" : state === "failed" ? "Failed" : "Copy plan"}</span>
+      <span><I18nText>{state === "copied" ? "Copied" : state === "failed" ? "Failed" : "Copy plan"}</I18nText></span>
     </button>
   );
 }

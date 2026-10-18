@@ -58,6 +58,7 @@ import {
   type SearchVocabulary,
   type TextSearchIndex,
 } from "@/lib/search";
+import { bilingualSearch } from "@/lib/i18n/game-search";
 
 type TierFilter = "all" | Exclude<MachineTier, "DEMO">;
 type SearchableResource = Pick<
@@ -646,60 +647,80 @@ async function searchDatasetResources(
   request: Parameters<typeof queryDatasetResources>[1],
 ) {
   const indexes = ensureResourceIndexes(catalog);
+  const bilingual = bilingualSearch(request.query);
+  if (bilingual?.unresolved) {
+    // An unknown Chinese word resolved to nothing. Falling through would parse
+    // an empty query, which is the "list everything" browse; answer with none.
+    return {
+      matches: [],
+      modCounts: new Map<string, number>(),
+      resolved: { query: parseSearchQuery(""), phase: "exact" as const },
+    };
+  }
+  const queryText = bilingual ? bilingual.text : request.query;
   const sourceKeys = request.source
     ? await getPassiveSourceResourceKeys(catalog, request.source)
     : undefined;
   let modCounts = new Map<string, number>();
 
-  const resolved = resolveSearchPhases(
-    parseSearchQuery(request.query),
-    indexes.vocabulary,
-    (query, options) => {
-      // Counted per pass, because which mods are on offer depends on which
-      // reading of the query the results came from.
-      const counts = new Map<string, number>();
-      const candidateIndexes =
-        queryTextSearchIndex(indexes.searchIndex, query, options) ?? indexes.sortedResourceIndexes;
-      const matches: Array<{ resourceIndex: number; score: number }> = [];
+  const run = (query: SearchQuery, options: { partial?: boolean }) => {
+    // Counted per pass, because which mods are on offer depends on which
+    // reading of the query the results came from.
+    const counts = new Map<string, number>();
+    const candidateIndexes =
+      queryTextSearchIndex(indexes.searchIndex, query, options) ?? indexes.sortedResourceIndexes;
+    const matches: Array<{ resourceIndex: number; score: number }> = [];
 
-      for (const resourceIndex of candidateIndexes) {
-        const resource = catalog.resourceIndex[resourceIndex];
-        if (
-          !resource ||
-          isVirtualChoiceResource(resource) ||
-          (!resource.iconPath && !resource.iconAtlas)
-        ) {
-          continue;
-        }
-        if (request.kind && resource.kind !== request.kind) {
-          continue;
-        }
-        if (sourceKeys && !sourceKeys.has(`${resource.kind}:${resource.id}`)) {
-          continue;
-        }
-
-        const score = matchSearchEntry(query, indexes.fields[resourceIndex] ?? {}, options);
-        if (score === undefined) {
-          continue;
-        }
-
-        // Mod counts reflect the search+kind scope, so the mod dropdown always
-        // shows what picking each mod would leave.
-        const modId = getResourceModId(resource);
-        counts.set(modId, (counts.get(modId) ?? 0) + 1);
-        if (request.mod && modId !== request.mod) {
-          continue;
-        }
-        matches.push({
-          resourceIndex,
-          score: score > 0 ? score + resourceRelevanceBias(resource) : score,
-        });
+    for (const resourceIndex of candidateIndexes) {
+      const resource = catalog.resourceIndex[resourceIndex];
+      if (
+        !resource ||
+        isVirtualChoiceResource(resource) ||
+        (!resource.iconPath && !resource.iconAtlas)
+      ) {
+        continue;
+      }
+      if (request.kind && resource.kind !== request.kind) {
+        continue;
+      }
+      if (sourceKeys && !sourceKeys.has(`${resource.kind}:${resource.id}`)) {
+        continue;
       }
 
-      modCounts = counts;
-      return matches;
-    },
-  );
+      const score = matchSearchEntry(query, indexes.fields[resourceIndex] ?? {}, options);
+      if (score === undefined) {
+        continue;
+      }
+
+      // Mod counts reflect the search+kind scope, so the mod dropdown always
+      // shows what picking each mod would leave.
+      const modId = getResourceModId(resource);
+      counts.set(modId, (counts.get(modId) ?? 0) + 1);
+      if (request.mod && modId !== request.mod) {
+        continue;
+      }
+      matches.push({
+        resourceIndex,
+        score: score > 0 ? score + resourceRelevanceBias(resource) : score,
+      });
+    }
+
+    modCounts = counts;
+    return matches;
+  };
+
+  let resolved = resolveSearchPhases(parseSearchQuery(queryText), indexes.vocabulary, run);
+  if (bilingual && resolved.results.length === 0) {
+    // Whole-name alternatives can find a distinct alias after every search
+    // phase misses. Token-subset alternatives add nothing after partial matching.
+    for (const alternative of bilingual.alternatives) {
+      const attempt = resolveSearchPhases(parseSearchQuery(alternative), indexes.vocabulary, run);
+      if (attempt.results.length > 0) {
+        resolved = attempt;
+        break;
+      }
+    }
+  }
 
   const directionCounts = await getResourceDirectionCounts(catalog);
   const matches = sortResourceMatches(
@@ -1101,12 +1122,28 @@ function resolveRecipeSearch(
   phase: SearchPhase;
   searchScores: Map<number, number> | undefined;
 } {
-  const parsed = parseSearchQuery(rawQuery);
+  const bilingual = bilingualSearch(rawQuery);
+  const parsed = parseSearchQuery(bilingual ? bilingual.text : rawQuery);
   if (parsed.terms.length === 0) {
-    return { query: parsed, phase: "exact", searchScores: undefined };
+    // An unknown Chinese word must not fall through to "no filter", which lists
+    // every recipe in scope; an empty score map means nothing matched.
+    return {
+      query: parsed,
+      phase: "exact",
+      searchScores: bilingual?.unresolved ? new Map<number, number>() : undefined,
+    };
   }
 
-  const resolved = resolveSearchPhases(parsed, getVocabulary(), run);
+  let resolved = resolveSearchPhases(parsed, getVocabulary(), run);
+  if (bilingual && resolved.results.length === 0) {
+    for (const alternative of bilingual.alternatives) {
+      const attempt = resolveSearchPhases(parseSearchQuery(alternative), getVocabulary(), run);
+      if (attempt.results.length > 0) {
+        resolved = attempt;
+        break;
+      }
+    }
+  }
   return {
     query: resolved.query,
     phase: resolved.phase,
@@ -1198,7 +1235,10 @@ async function queryDatasetRecipesFromLookup(
   request: DatasetRecipeQueryRequest,
 ) {
   const lookup = await loadRecipeLookupIndex(catalog.version);
-  const parsedQuery = parseSearchQuery(request.query);
+  // A Chinese query becomes English before the tokenizer sees it; an unresolved
+  // one keeps no terms, so it answers nothing rather than every recipe.
+  const bilingual = bilingualSearch(request.query);
+  const parsedQuery = parseSearchQuery(bilingual ? bilingual.text : request.query);
   const clauses = normalizedRecipeQueryClauses(request);
 
   if (clauses.length === 0 && parsedQuery.terms.length === 0) {

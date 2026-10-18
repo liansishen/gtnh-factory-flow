@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT, useGameName } from "@/lib/i18n/react";
+
 
 import { memo, useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import {
@@ -82,6 +84,7 @@ function ResourceIconComponent({
   showConsumedState = true,
   alternativeState,
 }: ResourceIconProps) {
+  const _i18nT = useT();
   // Artwork deliberately exceeds its clipped slot. Every art renderer below
   // must opt out of flex shrinking: Firefox shrinks percentage-sized <img>
   // widths where Chromium keeps their aspect-ratio minimum; atlas spans shrink
@@ -114,11 +117,11 @@ function ResourceIconComponent({
       {/* Circuits get no "NC" marker: they are a machine setting, never consumed. */}
       {showConsumedState && resource?.consumed === false && !isProgrammedCircuitResource(resource) ? (
         <span
-          title="Not consumed"
+          title={_i18nT("Not consumed")}
           className="absolute left-0 top-0 font-mono text-[8px] font-black leading-none text-[#ffff55] drop-shadow-[1px_1px_0_#000]"
-        >
+        ><I18nText>
           NC
-        </span>
+        </I18nText></span>
       ) : null}
 
       {resource && alternativeState === "locked" && shouldShowAlternativeMarker(resource) ? (
@@ -131,7 +134,7 @@ function ResourceIconComponent({
 
       {resource && showName ? (
         <span className="absolute left-0.5 top-0.5 max-w-[calc(100%-4px)] truncate font-mono text-[8px] leading-none text-white drop-shadow-[1px_1px_0_#000]">
-          {resourceLabel(resource)}
+          <I18nText game>{resourceLabel(resource)}</I18nText>
         </span>
       ) : null}
     </div>
@@ -533,6 +536,7 @@ function SpriteImage({
   iconPixelSize?: number;
   onReady?: () => void;
 }) {
+  const _i18nName = useGameName();
   const [status, setStatus] = useState<"loading" | "loaded" | "failed">("loading");
   const [fitScale, setFitScale] = useState<number>();
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -582,7 +586,7 @@ function SpriteImage({
         <img
           ref={imageRef}
           src={iconPath}
-          alt={resourceLabel(resource)}
+          alt={_i18nName((resourceLabel(resource)) ?? "")}
           draggable={false}
           onLoad={(event) => {
             setFitScale(resource.kind === "item" ? getSpriteFitScale(event.currentTarget) : undefined);
@@ -624,13 +628,14 @@ function AspectIconImage({
   iconPath: string;
   iconPixelSize?: number;
 }) {
+  const _i18nName = useGameName();
   const color = resource.dominantColor ?? getFallbackAspectColor(resource.id);
   const sizeStyle = iconPixelSize ? { width: iconPixelSize, height: iconPixelSize } : undefined;
 
   return (
     <span
       role="img"
-      aria-label={resourceLabel(resource)}
+      aria-label={_i18nName((resourceLabel(resource)) ?? "")}
       className={
         iconPixelSize
           ? "minecraft-pixel-art relative block shrink-0 max-w-none"
@@ -680,12 +685,13 @@ function FluidIconImage({
   resource: Pick<ResourceAmount, "id" | "displayName" | "dominantColor">;
   iconPixelSize?: number;
 }) {
+  const _i18nName = useGameName();
   const color = resource.dominantColor ?? getFallbackFluidColor(resource.id);
 
   return (
     <span
       role="img"
-      aria-label={resourceLabel(resource)}
+      aria-label={_i18nName((resourceLabel(resource)) ?? "")}
       className={`minecraft-pixel-art relative block shrink-0 overflow-hidden rounded-[1px] ${RESOURCE_ART_SHADOW}`}
       style={
         iconPixelSize
@@ -857,6 +863,7 @@ function AtlasIconImage({
   iconPixelSize?: number;
   onReady?: () => void;
 }) {
+  const _i18nName = useGameName();
   const positionX = getAtlasBackgroundPosition(atlas.x, atlas.atlasWidth, atlas.width);
   const positionY = getAtlasBackgroundPosition(atlas.y, atlas.atlasHeight, atlas.height);
   const [fitScale, setFitScale] = useState<number>();
@@ -884,7 +891,7 @@ function AtlasIconImage({
   return (
     <span
       role="img"
-      aria-label={resourceLabel(resource)}
+      aria-label={_i18nName((resourceLabel(resource)) ?? "")}
       className={[
         iconPixelSize
           ? "minecraft-pixel-art block shrink-0 max-w-none"
@@ -936,7 +943,7 @@ function AmountLabel({ resource }: { resource: Pick<ResourceAmount, "kind" | "am
       ].join(" ")}
       style={style}
     >
-      {label}
+      <I18nText>{label}</I18nText>
     </span>
   );
 }

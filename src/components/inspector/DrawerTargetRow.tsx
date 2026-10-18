@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { LocateFixed } from "lucide-react";
 import type { FactoryStorage } from "@/lib/model/types";
@@ -11,6 +13,7 @@ import { RateBox, RuleButton, useRateRule } from "../flow/rate-rule";
  * the same hook as on the drawer card so they behave identically.
  */
 export function DrawerTargetRow({ storage, input, isLast }: { storage: FactoryStorage; input: boolean; isLast: boolean }) {
+  const _i18nT = useT();
   useRateDisplayUnits();
   const locked = useFactoryStore((s) => s.isReadOnly || !(s.project.solveMode || s.project.poolMode));
   const result = useFactoryStore((s) => s.lastResult.storages[storage.id]);
@@ -33,8 +36,8 @@ export function DrawerTargetRow({ storage, input, isLast }: { storage: FactorySt
       <button
         type="button"
         className="flex h-5 w-5 shrink-0 items-center justify-center text-neutral-500 hover:text-neutral-100"
-        title="Locate this drawer on the board"
-        aria-label={input ? "Locate source drawer" : "Locate product drawer"}
+        title={_i18nT("Locate this drawer on the board")}
+        aria-label={_i18nT(input ? "Locate source drawer" : "Locate product drawer")}
         onClick={() => useFactoryStore.getState().focusBoardNode(storage.id)}
       >
         <LocateFixed className="h-3 w-3" />

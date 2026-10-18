@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import "../clean.css";
 import { useDeviceSettings } from "@/lib/device-settings";
@@ -200,7 +202,7 @@ function Sockets({ view }: { view: SpecialView }) {
         ],
       })}
     >
-      <span className="sp-socket-word">{label}</span>
+      <span className="sp-socket-word"><I18nText>{label}</I18nText></span>
       <span className="sp-socket-hint">{hint}</span>
       <Handle
         id={handle}
@@ -248,7 +250,7 @@ function Rail({
   return (
     <div className="cc-rail" data-side={side} style={{ gridRow: row }} data-section={section}>
       {ports.length === 0 && shared ? (
-        <div className="sp-none">{side === "input" ? "No input" : "No output"}</div>
+        <div className="sp-none"><I18nText>{side === "input" ? "No input" : "No output"}</I18nText></div>
       ) : null}
       {ports.map((p) => (
         <CleanPortRow key={p.key} p={p} wasClick={wasClick} unset={unset} />
@@ -366,6 +368,7 @@ export interface SpecialCardProps {
  * plain card, in the same classes.
  */
 export function SpecialCard({ model, recipe, node }: SpecialCardProps) {
+  const _i18nT = useT();
   const { view, actions, context } = model;
   const { wasClick, onPointerDownCapture } = useClickSlop();
   const { zoomedOutNames: glanceNames, problemOutlines } = useDeviceSettings();
@@ -505,7 +508,7 @@ export function SpecialCard({ model, recipe, node }: SpecialCardProps) {
           className="cc-key"
           data-glyph="menu"
           data-hatch-menu-anchor=""
-          aria-label="Card actions"
+          aria-label={_i18nT("Card actions")}
           aria-haspopup="menu"
           aria-expanded={menu?.kind === "actions"}
           {...tipAttrs(menuTip(view.nodeId))}
@@ -517,7 +520,7 @@ export function SpecialCard({ model, recipe, node }: SpecialCardProps) {
           className="cc-key"
           data-glyph="gear"
           data-hatch-menu-anchor=""
-          aria-label="Machine settings"
+          aria-label={_i18nT("Machine settings")}
           aria-haspopup="menu"
           data-menu-anchor=""
           aria-expanded={sheetAnchor !== undefined}
@@ -536,7 +539,7 @@ export function SpecialCard({ model, recipe, node }: SpecialCardProps) {
             className="cc-key"
             data-glyph="sprout"
             data-crop-picker-toggle=""
-            aria-label="Pick a crop"
+            aria-label={_i18nT("Pick a crop")}
             aria-haspopup="dialog"
             aria-expanded={cropOpen}
             {...tipAttrs({
@@ -597,7 +600,7 @@ export function SpecialCard({ model, recipe, node }: SpecialCardProps) {
               : undefined
           }
         >
-          {view.name}
+          <I18nText game>{view.name}</I18nText>
           {listOpen && listAnchor ? (
             <MachineListMenu
               anchor={listAnchor}
@@ -819,9 +822,9 @@ function SectionBlock({
             if (wasClick(event) && !checklistLocked()) onPick();
           }}
         >
-          <span className="sp-pick-icon" />
+          <span className="sp-pick-icon" /><I18nText>
           Pick a crop
-        </div>
+        </I18nText></div>
       ) : null}
       {empty || pick ? null : (
         <>

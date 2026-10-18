@@ -86,6 +86,14 @@ describe("Pool worksheet books", () => {
     expect(filterWorksheetGroups(groups, "foil")[0].sections).toHaveLength(2);
   });
 
+  it("filters by a Chinese resource name", () => {
+    const project = worksheetFixture();
+    const groups = buildWorksheetGroups(project, calculateThroughput(project));
+    expect(filterWorksheetGroups(groups, "铜")).toHaveLength(1);
+    // An unknown Chinese word shows nothing, not the whole worksheet.
+    expect(filterWorksheetGroups(groups, "不存在的词")).toEqual([]);
+  });
+
   it("keeps duplicate cards and disabled cards separately", () => {
     const project = worksheetFixture();
     project.nodes.push({ ...project.nodes[0], id: "second", enabled: false });

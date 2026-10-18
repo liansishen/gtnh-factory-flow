@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 import { useState } from "react";
 import { Copy, Menu, Plus, RefreshCw, Skull, Trash2 } from "lucide-react";
 import { MenuShell } from "./EnergyHatchMenu";
@@ -16,11 +18,12 @@ export function CardActionsMenu({
   /** An Extreme Entity Crusher swaps the spawner in its controller slot. */
   onChangeMob?: () => void;
 }) {
+  const _i18nT = useT();
   const [anchor, setAnchor] = useState<{ x: number; top: number; bottom: number; hangsFrom?: Element }>();
   return (
     <div className="relative">
       <button
-        aria-label="Card actions"
+        aria-label={_i18nT("Card actions")}
         aria-haspopup="menu"
         aria-expanded={!!anchor}
         data-hatch-menu-anchor
@@ -40,7 +43,7 @@ export function CardActionsMenu({
         <MenuShell anchor={anchor} align="left" width={224} maxHeight={240} onClose={() => setAnchor(undefined)}>
           <div
             role="menu"
-            aria-label="Card actions"
+            aria-label={_i18nT("Card actions")}
             className="text-[13px] leading-[18px]"
             onKeyDown={(e) => {
               if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
@@ -79,7 +82,7 @@ export function CardActionsMenu({
                 className="flex min-h-8 w-full items-center gap-2 px-2 py-1.5 text-left text-[var(--mc-ink)] hover:bg-[var(--mc-93)] focus-visible:bg-[var(--mc-93)] focus-visible:outline-none"
               >
                 <Icon className="h-3 w-3 shrink-0" />
-                <span className="min-w-0">{label}</span>
+                <span className="min-w-0"><I18nText>{label}</I18nText></span>
               </button>
             ))}
           </div>

@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import { ReactFlowProvider } from "@xyflow/react";
 import type { FactoryNode, Recipe, ResourceKind } from "@/lib/model/types";
 import type { RailPort } from "../node-verdict";
 import { CleanCard, StripChip } from "./CleanCard";
 import { writeDeviceSettings } from "@/lib/device-settings";
+import { setLocale } from "@/lib/i18n/locale";
 import type {
   CleanCardActions,
   CleanCardContext,
@@ -31,7 +32,7 @@ beforeAll(() => {
     disconnect() {}
   } as unknown as typeof ResizeObserver;
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); setLocale("en"); });
 
 /**
  * The most elements one reference card may cost: 3 inputs + power + 2 outputs + 2 chips + 3 strip chips + the circuit
@@ -191,6 +192,28 @@ it("costs at most 70 elements as an Up to card with its bar", () => {
   console.info(`[clean card] Up to reference card with its bar, DOM elements: ${elements}`);
   expect(container.querySelector(".cc-foot")).not.toBeNull();
   expect(elements).toBeLessThanOrEqual(BUDGET);
+});
+
+it("localizes CSS-painted count prompts and verdicts without changing the model", () => {
+  const plain = referenceView();
+  const plainBefore = JSON.stringify(plain);
+  const { container, unmount } = renderCard(plain);
+  act(() => setLocale("zh-CN"));
+  expect(container.querySelector(".cc-count")?.getAttribute("data-set")).toBe("（设置数量）");
+  expect(JSON.stringify(plain)).toBe(plainBefore);
+  unmount();
+  const view = upToView();
+  view.foot = { ...view.foot!, say: "short of Steel Ingot", facts: { ...view.foot!.facts, resource: "Steel Ingot" } };
+  const before = JSON.stringify(view);
+  const card = renderCard(view).container;
+  expect(card.querySelector(".cc-foot")?.getAttribute("data-word")).toBe("断料");
+  expect(card.querySelector(".cc-foot")?.textContent).toBe("缺少 钢锭");
+  expect(card.querySelector(".cc-foot")?.getAttribute("data-frac")).toBe(view.foot.frac);
+  expect(card.querySelector(".cc-count")?.getAttribute("aria-label")).not.toContain("I18nText");
+  expect(JSON.stringify(view)).toBe(before);
+  act(() => setLocale("en"));
+  expect(card.querySelector(".cc-foot")?.getAttribute("data-word")).toBe("STARVED");
+  expect(card.querySelector(".cc-foot")?.textContent).toBe("short of Steel Ingot");
 });
 
 it("keeps every control a div, so the button font rule cannot reach it", () => {

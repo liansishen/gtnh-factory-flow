@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import "./chrome.css";
 import "./library.css";
@@ -13,6 +14,7 @@ import { CHROME_SCREEN_K, type ChromeAnchor } from "./ChromeMenu";
 
 /** The sign-in form, hung from the account key: sign in, or make an account (a name and a password, no email). */
 export function SignInPanel({ anchor, onClose }: { anchor: ChromeAnchor; onClose: () => void }) {
+  const _i18nT = useT();
   const ref = useRef<HTMLDivElement>(null);
   const { setUser } = useCommunityUser();
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -31,7 +33,9 @@ export function SignInPanel({ anchor, onClose }: { anchor: ChromeAnchor; onClose
     setError(undefined);
     try {
       const signedIn =
-        mode === "login" ? await loginCommunityUser(username, password) : await registerCommunityUser(username, password);
+        mode === "login"
+          ? await loginCommunityUser(username, password)
+          : await registerCommunityUser(username, password);
       setUser(signedIn);
       onClose();
     } catch (failure) {
@@ -45,9 +49,12 @@ export function SignInPanel({ anchor, onClose }: { anchor: ChromeAnchor; onClose
     <div
       ref={ref}
       role="dialog"
-      aria-label="Sign in"
+      aria-label={_i18nT("Sign in")}
       className="mm ml-signpanel ui-zoom"
-      style={{ top: anchor.bottom / scale + 2, right: Math.max(2, vw - (anchor.right ?? anchor.left) / scale) }}
+      style={{
+        top: anchor.bottom / scale + 2,
+        right: Math.max(2, vw - (anchor.right ?? anchor.left) / scale),
+      }}
       onPointerDown={(event) => event.stopPropagation()}
     >
       <form
@@ -56,31 +63,43 @@ export function SignInPanel({ anchor, onClose }: { anchor: ChromeAnchor; onClose
           void submit();
         }}
       >
-        <div className="ml-sign-title">{mode === "login" ? "Sign in" : "Create an account"}</div>
-        <div className="ml-sign-sub">Your plans are kept in your account</div>
-        <label className="ml-sign-label">USERNAME</label>
+        <div className="ml-sign-title">
+          {mode === "login" ? _i18nT("Sign in") : _i18nT("Create an account")}
+        </div>
+        <div className="ml-sign-sub">
+          <I18nText>Your plans are kept in your account</I18nText>
+        </div>
+        <label className="ml-sign-label">
+          <I18nText>USERNAME</I18nText>
+        </label>
         <input
           autoFocus
           className="ml-search ml-sign-field"
-          placeholder="Username"
+          placeholder={_i18nT("Username")}
           autoComplete="username"
           maxLength={24}
           value={username}
           onChange={(event) => setUsername(event.target.value)}
         />
-        <label className="ml-sign-label">PASSWORD</label>
+        <label className="ml-sign-label">
+          <I18nText>PASSWORD</I18nText>
+        </label>
         <input
           className="ml-search ml-sign-field"
           type="password"
-          placeholder="Password"
+          placeholder={_i18nT("Password")}
           autoComplete={mode === "login" ? "current-password" : "new-password"}
           maxLength={128}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
         {error ? <div className="ml-sign-error">{error}</div> : <div className="ml-sign-gap" />}
-        <button className="ml-sign-go" type="submit" disabled={busy || username.trim().length < 3 || password.length < 6}>
-          {busy ? "..." : mode === "login" ? "Sign in" : "Create account"}
+        <button
+          className="ml-sign-go"
+          type="submit"
+          disabled={busy || username.trim().length < 3 || password.length < 6}
+        >
+          {busy ? "..." : mode === "login" ? _i18nT("Sign in") : _i18nT("Create account")}
         </button>
         <div
           className="ml-sign-switch"
@@ -90,7 +109,9 @@ export function SignInPanel({ anchor, onClose }: { anchor: ChromeAnchor; onClose
             setError(undefined);
           }}
         >
-          {mode === "login" ? "No account yet? Create one" : "Have an account? Sign in"}
+          {mode === "login"
+            ? _i18nT("No account yet? Create one")
+            : _i18nT("Have an account? Sign in")}
         </div>
       </form>
     </div>,

@@ -11,6 +11,8 @@ export interface TipSpec {
   /** The thing's identity, `${nodeId}|${part}[|${index}]`: moving about on it keeps the wait. */
   id: string;
   title: string;
+  /** User-authored titles bypass message and game-name lookup. */
+  verbatimTitle?: boolean;
   /** Grey line under the title. */
   sub?: string;
   rows?: Array<{ label: string; value: string; tone?: TipTone }>;

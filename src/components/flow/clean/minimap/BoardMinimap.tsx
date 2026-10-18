@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { useReactFlow, useStore, useStoreApi } from "@xyflow/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -22,6 +24,7 @@ function isTyping(target: EventTarget | null): boolean {
 }
 
 export function BoardMinimap({ hidden = false }: { hidden?: boolean }) {
+  const _i18nT = useT();
   const settings = useMinimapSettings();
   const flow = useReactFlow();
   const storeApi = useStoreApi();
@@ -108,7 +111,7 @@ export function BoardMinimap({ hidden = false }: { hidden?: boolean }) {
         ref={canvasRef}
         className="mmap-canvas"
         style={{ width: size, height: size }}
-        aria-label="Minimap"
+        aria-label={_i18nT("Minimap")}
         onPointerDown={(event) => {
           if (event.button !== 0) return;
           event.currentTarget.setPointerCapture(event.pointerId);
@@ -125,8 +128,8 @@ export function BoardMinimap({ hidden = false }: { hidden?: boolean }) {
       />
       <div
         role="button"
-        aria-label="Minimap settings"
-        title="Minimap settings"
+        aria-label={_i18nT("Minimap settings")}
+        title={_i18nT("Minimap settings")}
         className="mmap-gear"
         onClick={() => setSettingsOpen((open) => !open)}
       />

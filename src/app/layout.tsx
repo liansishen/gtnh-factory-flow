@@ -11,6 +11,7 @@ import localFont from "next/font/local";
 import { APP_FONT_STORAGE_KEY, DEFAULT_APP_FONT } from "@/lib/app-font";
 import { AppFontRestore } from "@/components/AppFontRestore";
 import { UiScaleRestore } from "@/components/UiScaleRestore";
+import { LocaleRestore } from "@/lib/i18n/react";
 import { uiScaleBootScript } from "@/lib/ui-scale-boot";
 import {
   COMPACT_MAX_HEIGHT,
@@ -248,6 +249,9 @@ export default function RootLayout({
         {/* Puts the saved font back if anything took it off after the boot
             script above; see the component. */}
         <AppFontRestore />
+        {/* Puts the saved language on <html lang> once the app runs; the
+            server renders English, so hydration matches. */}
+        <LocaleRestore />
         {/* Every `title` attribute in the app, worn as the planner's own
             tooltip: the browser's grey box never renders again. */}
         <GlobalTitleTooltip />

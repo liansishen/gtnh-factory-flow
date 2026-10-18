@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import "../chrome/mod-panel.css";
 
@@ -11,6 +13,7 @@ import { openPlanCode } from "@/lib/open-plan-code";
  * (`chrome/mod-panel.css`). The other half of Copy plan code.
  */
 export function PastePlanDialog({ onClose }: { onClose: () => void }) {
+  const _i18nT = useT();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogA11y(dialogRef, { onClose, initialFocus: "textarea" });
   const [text, setText] = useState("");
@@ -42,13 +45,13 @@ export function PastePlanDialog({ onClose }: { onClose: () => void }) {
         }
       }}
     >
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Paste a plan" className="pn">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={_i18nT("Paste a plan")} className="pn">
         <div className="pn-title">
-          <span>Paste a plan</span>
-          <button type="button" onClick={onClose} aria-label="Close" className="pn-x" />
+          <span><I18nText>Paste a plan</I18nText></span>
+          <button type="button" onClick={onClose} aria-label={_i18nT("Close")} className="pn-x" />
         </div>
         <div className="pn-body">
-          <p className="pn-note">Paste a plan link, a code or a plan file&apos;s text. It opens in a new tab.</p>
+          <p className="pn-note"><I18nText>Paste a plan link, a code or a plan file&apos;s text. It opens in a new tab.</I18nText></p>
           <textarea
             autoFocus
             value={text}
@@ -61,24 +64,24 @@ export function PastePlanDialog({ onClose }: { onClose: () => void }) {
             }}
             rows={5}
             spellCheck={false}
-            placeholder="gtnh1.… or a plan link"
+            placeholder={_i18nT("gtnh1.… or a plan link")}
             className="pn-field"
             style={{ wordBreak: "break-all" }}
           />
           {error ? <p className="pn-err">{error}</p> : null}
           <div className="pn-keys">
-            <button type="button" onClick={onClose} className="pn-key">
+            <button type="button" onClick={onClose} className="pn-key"><I18nText>
               Cancel
-            </button>
+            </I18nText></button>
             <button
               type="button"
               onClick={() => void open()}
               disabled={!text.trim() || isOpening}
               data-primary=""
               className="pn-key"
-            >
+            ><I18nText>
               Open
-            </button>
+            </I18nText></button>
           </div>
         </div>
       </div>

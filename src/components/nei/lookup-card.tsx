@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT, useGameName } from "@/lib/i18n/react";
+
 
 import "../flow/clean/clean.css";
 import "./nei-recipe.css";
@@ -369,7 +371,7 @@ export const LookupRecipeCard = memo(function LookupRecipeCard({
         circuit={circuit}
         press={headPress}
       >
-        <div className="cc-name nrw-card-time">{`${formatRate(seconds, seconds >= 10 ? 0 : 1)} s`}</div>
+        <div className="cc-name nrw-card-time"><I18nText>{`${formatRate(seconds, seconds >= 10 ? 0 : 1)} s`}</I18nText></div>
       </CardHead>
       <div className="cc-rail" data-side="input">
         {byKind(used, (chip) => chip.resource.kind).map((chip, index) =>
@@ -421,6 +423,7 @@ export function LookupPowerCard({
   handlers: LookupHandlers;
 }) {
   const headPress = useLongPress(onCardMenu);
+  const gameName = useGameName();
   const model = useMemo(() => {
     try {
       return hit.source.compute(buildPowerSettingsReader(hit.source, hit.settings));
@@ -428,7 +431,7 @@ export function LookupPowerCard({
       return undefined;
     }
   }, [hit]);
-  const name = headName(hit.source.name, hit.source.unlock !== undefined);
+  const name = headName(gameName(hit.source.name), hit.source.unlock !== undefined);
   const flowRow = (direction: "takes" | "makes", flow: { name: string; perSecond: number }) => {
     const resolved = resolvePowerResource(flow.name);
     const resource = resolved
@@ -446,7 +449,7 @@ export function LookupPowerCard({
           <span className="cc-num" data-unit={amount.unit ?? ""}>
             {amount.text}
           </span>
-          <span className="cc-pname">{flow.name}</span>
+          <span className="cc-pname"><I18nText game>{flow.name}</I18nText></span>
         </div>
       );
     }
@@ -472,7 +475,7 @@ export function LookupPowerCard({
     >
       <CardHead
         add={onPlace}
-        label={`Add ${hit.source.name}`}
+        label={`Add ${gameName(hit.source.name)}`}
         tier={hit.source.unlock}
         press={headPress}
       >
@@ -481,7 +484,7 @@ export function LookupPowerCard({
           data-wrap={name.wrap ? "" : undefined}
           style={{ "--cc-name-size": `${name.size}px` } as CSSProperties}
         >
-          {hit.source.name}
+          <I18nText game>{hit.source.name}</I18nText>
         </div>
       </CardHead>
       <div className="cc-rail" data-side="input">
@@ -537,6 +540,7 @@ function CardHead({
   press: ReturnType<typeof useLongPress>;
   children: ReactNode;
 }) {
+  const _i18nT = useT();
   const chip = tier ? tierChipColors(tier) : undefined;
   const number = circuit ? circuitNumber(circuit) : undefined;
   return (
@@ -546,9 +550,9 @@ function CardHead({
         tabIndex={readOnly ? -1 : 0}
         className="cc-key"
         data-glyph="plus"
-        aria-label={label}
+        aria-label={_i18nT(label)}
         aria-disabled={readOnly || undefined}
-        title={readOnly ? "Open a copy to add recipes" : undefined}
+        title={readOnly ? _i18nT("Open a copy to add recipes") : undefined}
         onClick={(event) => {
           event.stopPropagation();
           if (press.consumeClick() || readOnly) {
@@ -566,7 +570,7 @@ function CardHead({
       {children}
       <span className="nrw-grow" />
       {circuit?.resource ? (
-        <span className="nrw-card-circuit" title={number ? `Circuit ${number}` : "Circuit"}>
+        <span className="nrw-card-circuit" title={_i18nT(number ? `Circuit ${number}` : "Circuit")}>
           <ResourceIcon
             itemZoom={1.5}
             resource={{ ...circuit.resource, amount: 1, chance: undefined }}
@@ -620,7 +624,7 @@ function PowerRow({
       >
         {number}
       </span>
-      <span className="cc-pname">Power</span>
+      <span className="cc-pname"><I18nText>Power</I18nText></span>
     </div>
   );
 }
@@ -665,6 +669,8 @@ function LookupRow({
   handlers: LookupHandlers;
 }) {
   const { onBrowseResource, onChipMenu, onChipDragStart, onHoverSlot } = handlers;
+  const t = useT();
+  const gameName = useGameName();
   // The wheel listener is attached by hand, non-passive: React's synthetic wheel cannot preventDefault, and without it
   // every cycle also turns the page.
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -690,11 +696,12 @@ function LookupRow({
   const press = useLongPress(menu);
   const [hover, setHover] = useState<{ x: number; y: number }>();
   const name = resourceLabel(resource);
+  const displayName = gameName(name);
   const chanceText =
     chance !== undefined && chance < 1 ? `${Math.round(chance * 1000) / 10}%` : undefined;
   const unit = amount.unit ?? "";
-  const nameSmall = mcTextWidth(name) > 71;
-  const nameWraps = measureClean(name, nameSmall ? 6 : 8) > WORDS;
+  const nameSmall = mcTextWidth(displayName) > 71;
+  const nameWraps = measureClean(displayName, nameSmall ? 6 : 8) > WORDS;
   const numberSmall = kept || !numberFits(amount.text, unit);
   const lines = useMemo<McTipLine[] | undefined>(() => {
     if (!hover) return undefined;
@@ -734,7 +741,7 @@ function LookupRow({
       data-side={side}
       data-kept={kept ? "" : undefined}
       data-choice={picker ? "" : undefined}
-      aria-label={name}
+      aria-label={displayName}
       {...press.handlers}
       onPointerDown={(event) => {
         press.handlers.onPointerDown(event);
@@ -779,14 +786,14 @@ function LookupRow({
         data-small={numberSmall ? "" : undefined}
         data-energy={amount.energy ? "" : undefined}
       >
-        {amount.text}
+        {t(amount.text)}
       </span>
       <span
         className="cc-pname"
         data-small={nameSmall || nameWraps || undefined}
         data-wrap={nameWraps || undefined}
       >
-        {name}
+        {displayName}
       </span>
       {lines && hover ? <McFloatingTip x={hover.x} y={hover.y} lines={lines} /> : null}
     </div>
@@ -795,6 +802,7 @@ function LookupRow({
 
 /** A row's picture, as the card draws it: an item's sprite, a fluid's flat square in its own colour. */
 function RowIcon({ resource }: { resource: ResourceAmount }) {
+  const _i18nName = useGameName();
   if (resource.kind === "fluid") {
     const color =
       resource.dominantColor ??
@@ -804,7 +812,7 @@ function RowIcon({ resource }: { resource: ResourceAmount }) {
       <span
         className="cc-icon cc-swatch"
         role="img"
-        aria-label={resource.displayName}
+        aria-label={_i18nName((resource.displayName) ?? "")}
         style={fluidSwatchStyle({ ...resource, dominantColor: color })}
       />
     );

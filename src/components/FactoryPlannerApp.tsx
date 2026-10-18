@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import {
   noteRecipesRefreshed,
@@ -672,6 +674,7 @@ const TASKS_ENABLED = isLiveConfigured();
  * edge, which fires by accident whenever the mouse crosses it.
  */
 function PanelRail({ side, label }: { side: "left" | "right"; label: "Items" | "Resources" }) {
+  const _i18nT = useT();
   // The flag follows what the column holds, not which side it sits on.
   const open = () => {
     writeWorkspaceView(label === "Items" ? { leftPanelOpen: true } : { rightPanelOpen: true });
@@ -687,7 +690,7 @@ function PanelRail({ side, label }: { side: "left" | "right"; label: "Items" | "
     <button
       type="button"
       onClick={open}
-      aria-label={`Show ${label}`}
+      aria-label={_i18nT(`Show ${label}`)}
       className={[
         "flex h-full w-full flex-col items-center gap-2 bg-surface pt-1.5 text-fg-muted transition-colors hover:bg-[#2a2d33]",
         side === "left" ? "border-r border-line" : "border-l border-line",
@@ -702,7 +705,7 @@ function PanelRail({ side, label }: { side: "left" | "right"; label: "Items" | "
         className="min-h-0 flex-1 text-[12px] font-semibold uppercase tracking-widest"
         style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
       >
-        <span className={side === "right" ? "rotate-180" : undefined}>{label}</span>
+        <span className={side === "right" ? "rotate-180" : undefined}><I18nText>{label}</I18nText></span>
       </span>
     </button>
   );

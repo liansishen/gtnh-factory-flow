@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { Bug, Lightbulb, CircleHelp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -55,6 +57,7 @@ const KIND_ICONS = { bug: Bug, idea: Lightbulb, help: CircleHelp } as const;
 type Sent = { number: number; url: string };
 
 export function FeedbackPanel({ onClose }: { onClose: () => void }) {
+  const _i18nT = useT();
   const [kind, setKind] = useState<FeedbackKind>("bug");
   const [mood, setMood] = useState<FeedbackMood | undefined>(undefined);
   const [text, setText] = useState("");
@@ -115,10 +118,10 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fb-backdrop" data-feedback-backdrop="">
-      <div ref={dialogRef} className="fb" role="dialog" aria-modal="true" aria-label="Send feedback">
+      <div ref={dialogRef} className="fb" role="dialog" aria-modal="true" aria-label={_i18nT("Send feedback")}>
         <div className="fb-title">
-          <span>Send feedback</span>
-          <div role="button" tabIndex={0} aria-label="Close" className="fb-x" data-sfx-own="" onClick={() => {
+          <span><I18nText>Send feedback</I18nText></span>
+          <div role="button" tabIndex={0} aria-label={_i18nT("Close")} className="fb-x" data-sfx-own="" onClick={() => {
             playSfx("ui.close");
             onClose();
           }} onKeyDown={activateOnKey} />
@@ -126,24 +129,24 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
         {sent ? (
           <div className="fb-sent">
             <Face mood={0} picked hot={false} size={50} />
-            <div className="fb-sent-line">Thanks! It&apos;s sent.</div>
-            <div className="fb-sent-sub">Issue #{sent.number} on GitHub</div>
+            <div className="fb-sent-line"><I18nText>Thanks! It&apos;s sent.</I18nText></div>
+            <div className="fb-sent-sub"><I18nText>Issue #</I18nText>{sent.number}<I18nText> on GitHub</I18nText></div>
             <div className="fb-keys">
-              <div role="button" tabIndex={0} onKeyDown={activateOnKey} className="fb-key fb-key-primary" onClick={() => window.open(sent.url, "_blank", "noopener")}>
+              <div role="button" tabIndex={0} onKeyDown={activateOnKey} className="fb-key fb-key-primary" onClick={() => window.open(sent.url, "_blank", "noopener")}><I18nText>
                 Open it
-              </div>
+              </I18nText></div>
               <div
                 role="button"
                 tabIndex={0}
                 onKeyDown={activateOnKey}
                 className="fb-key"
                 onClick={() => void navigator.clipboard?.writeText(sent.url).catch(() => undefined)}
-              >
+              ><I18nText>
                 Copy link
-              </div>
-              <div role="button" tabIndex={0} onKeyDown={activateOnKey} className="fb-key" onClick={onClose}>
+              </I18nText></div>
+              <div role="button" tabIndex={0} onKeyDown={activateOnKey} className="fb-key" onClick={onClose}><I18nText>
                 Done
-              </div>
+              </I18nText></div>
             </div>
           </div>
         ) : (
@@ -153,7 +156,7 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
                 <div
                   key={m}
                   role="button"
-                  aria-label={m === "happy" ? "Happy" : m === "okay" ? "Okay" : "Unhappy"}
+                  aria-label={_i18nT(m === "happy" ? "Happy" : m === "okay" ? "Okay" : "Unhappy")}
                   aria-pressed={mood === m}
                   tabIndex={0}
                   onKeyDown={activateOnKey}
@@ -171,7 +174,7 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
                 </div>
               ))}
             </div>
-            <div className="fb-kinds" role="radiogroup" aria-label="What it is">
+            <div className="fb-kinds" role="radiogroup" aria-label={_i18nT("What it is")}>
               {KINDS.map((k) => {
                 const Icon = KIND_ICONS[k.id];
                 return (
@@ -192,7 +195,7 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
                     }}
                   >
                     <Icon size={12} strokeWidth={2.4} />
-                    <span>{k.label}</span>
+                    <span><I18nText>{k.label}</I18nText></span>
                   </div>
                 );
               })}
@@ -200,9 +203,9 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
             <div className="fb-prompt">
               <span>{promptFor(kind)}</span>
               {kind === "help" ? (
-                <a className="fb-discord" href={DISCORD_URL} target="_blank" rel="noopener noreferrer">
+                <a className="fb-discord" href={DISCORD_URL} target="_blank" rel="noopener noreferrer"><I18nText>
                   Open Discord
-                </a>
+                </I18nText></a>
               ) : null}
             </div>
             <textarea
@@ -212,7 +215,7 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
               disabled={sending}
               maxLength={8000}
               onChange={(e) => setText(e.target.value)}
-              aria-label="Your feedback"
+              aria-label={_i18nT("Your feedback")}
             />
             <div className="fb-sends">{sendsLine(hasPlan ? planName || "Plan" : undefined, pictureAvailable)}</div>
             <div className="fb-foot">
@@ -228,7 +231,7 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
                 data-sending={sending ? "" : undefined}
                 onClick={() => !sending && void send()}
               >
-                {sending ? "Sending..." : "Send"}
+                <I18nText>{sending ? "Sending..." : "Send"}</I18nText>
               </div>
             </div>
           </div>

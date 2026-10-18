@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { materialRuleHelp } from "./material-rule-help";
 
@@ -31,7 +33,7 @@ export function ProductionGroupSelect({
   );
   return (
     <label className="pool-production-move">
-      <span>{exclude ? "Inside" : "Group"}</span>
+      <span><I18nText>{exclude ? "Inside" : "Group"}</I18nText></span>
       <select
         className="pool-production-select"
         aria-label={label}
@@ -39,7 +41,7 @@ export function ProductionGroupSelect({
         disabled={disabled || !options.length}
         onChange={(event) => onChange(event.target.value || undefined)}
       >
-        <option value="">Top level</option>
+        <option value=""><I18nText>Top level</I18nText></option>
         {options.map(({ group, depth }) => (
           <option key={group.id} value={group.id}>
             {"· ".repeat(depth)}
@@ -76,6 +78,7 @@ export function ProductionScopeHeader({
   outputs: GroupFlow[];
   renderResource: (resource: ResourceAmount) => ReactNode;
 }) {
+  const _i18nT = useT();
   useRateDisplayUnits();
   const groups = useFactoryStore((state) => state.project.productionGroups);
   const { begin } = useWorksheetPointerDrag();
@@ -144,7 +147,7 @@ export function ProductionScopeHeader({
                   <button
                     type="button"
                     className="pool-order-handle"
-                    aria-label={"Move group " + name}
+                    aria-label={_i18nT("Move group " + name)}
                     onPointerDown={(event) =>
                       begin(event, { kind: "groups", id: group.id, label: name })
                     }
@@ -169,7 +172,7 @@ export function ProductionScopeHeader({
               <input
                 key={group.name}
                 className="pool-production-name"
-                aria-label="Production group name"
+                aria-label={_i18nT("Production group name")}
                 defaultValue={group.name}
                 onBlur={(event) => {
                   useFactoryStore
@@ -186,23 +189,23 @@ export function ProductionScopeHeader({
                 }}
               />
             ) : (
-              <strong>{name}</strong>
+              <strong>{group ? name : <I18nText>{name}</I18nText>}</strong>
             )}
             {materials.size > 0 && !collapsed ? (
               <span className="pool-balance-hint">
                 <span className="pool-balance-hint-part">
-                  <span className="pool-balance-legend" data-on><Scale aria-hidden /><strong>On:</strong></span>{" "}
+                  <span className="pool-balance-legend" data-on><Scale aria-hidden /><strong><I18nText>On:</I18nText></strong></span><I18nText>{" "}</I18nText><I18nText>
                   If recipes here both make and use a material, the amounts must match.
-                </span>{" "}
+                </I18nText></span><I18nText>{" "}</I18nText>
                 <span className="pool-balance-hint-part">
-                  <span className="pool-balance-legend"><Scale aria-hidden /><strong>Off:</strong></span>{" "}
-                  {group ? "Share that material with the parent group." : "Allow outside supply for shortages and let surplus leave."}
-                </span>{" "}
-                <span className="pool-balance-hint-part">Materials only made here can leave; materials only used here can come in.</span>
+                  <span className="pool-balance-legend"><Scale aria-hidden /><strong><I18nText>Off:</I18nText></strong></span><I18nText>{" "}</I18nText>
+                  <I18nText>{group ? "Share that material with the parent group." : "Allow outside supply for shortages and let surplus leave."}</I18nText>
+                </span><I18nText>{" "}</I18nText>
+                <span className="pool-balance-hint-part"><I18nText>Materials only made here can leave; materials only used here can come in.</I18nText></span>
               </span>
             ) : null}
             {group && !hasContents ? (
-              <span className="pool-production-summary">Empty · drag recipes here</span>
+              <span className="pool-production-summary"><I18nText>Empty · drag recipes here</I18nText></span>
             ) : null}
             {group && hasContents ? <div className="pool-group-power-inline">{power}</div> : null}
             <div className="pool-group-actions">
@@ -221,10 +224,10 @@ export function ProductionScopeHeader({
                   <button
                     type="button"
                     className="pool-production-key pool-balance-all"
-                    aria-label={"Balance all materials in " + name}
+                    aria-label={_i18nT("Balance all materials in " + name)}
                     aria-pressed={allBalanced ? true : someBalanced ? "mixed" : false}
                     disabled={!resources.length}
-                    title={"Turn Balance " + (allBalanced ? "off" : "on") + " for every material in " + name + "."}
+                    title={_i18nT("Turn Balance " + (allBalanced ? "off" : "on") + " for every material in " + name + ".")}
                     onClick={() => useFactoryStore.getState().setPoolResourceRules(
                       group?.id, resources.map((row) => row.key), allBalanced ? (group ? "share" : "import") : undefined,
                     )}
@@ -234,8 +237,8 @@ export function ProductionScopeHeader({
                   <button
                     type="button"
                     className="pool-production-key"
-                    aria-label={group ? "Add subgroup to " + name : "Add production group"}
-                    title={group ? "Add subgroup to " + name : "Add production group"}
+                    aria-label={_i18nT(group ? "Add subgroup to " + name : "Add production group")}
+                    title={_i18nT(group ? "Add subgroup to " + name : "Add production group")}
                     onClick={() =>
                       useFactoryStore
                         .getState()
@@ -243,18 +246,18 @@ export function ProductionScopeHeader({
                     }
                   >
                     <FolderPlus size={14} />
-                    <span className="sr-only">Add group</span>
+                    <span className="sr-only"><I18nText>Add group</I18nText></span>
                   </button>
                   {group ? (
                     <button
                       type="button"
                       className="pool-production-key"
-                      aria-label={"Delete group " + name}
-                      title="Delete group; keep its recipes and subgroups."
+                      aria-label={_i18nT("Delete group " + name)}
+                      title={_i18nT("Delete group; keep its recipes and subgroups.")}
                       onClick={() => useFactoryStore.getState().dissolveProductionGroup(group.id)}
                     >
                       <Trash2 size={14} />
-                      <span className="sr-only">Delete group</span>
+                      <span className="sr-only"><I18nText>Delete group</I18nText></span>
                     </button>
                   ) : null}
                 </>
@@ -263,13 +266,13 @@ export function ProductionScopeHeader({
           </div>
             <div className="pool-scope-content">
           {materials.size ? (
-            <section className="pool-scope-materials" aria-label={"Materials for " + name}>
+            <section className="pool-scope-materials" aria-label={_i18nT("Materials for " + name)}>
               <div className="pool-material-strip">
                 {["Inputs", "Outputs", "Internal"].map((label, index) => {
                   const entries = visibleMaterials.filter(([, entry]) => direction(entry) === index);
                   if (!entries.length) return null;
-                  return <table className="pool-material-table" key={label} aria-label={label + " for " + name}>
-                    <caption title={index === 2 ? "Made and used within this scope, with no net flow." : undefined}>{label}</caption>
+                  return <table className="pool-material-table" key={label} aria-label={_i18nT(label + " for " + name)}>
+                    <caption title={index === 2 ? "Made and used within this scope, with no net flow." : undefined}><I18nText>{label}</I18nText></caption>
                     <tbody><tr>
                       <td><div className="pool-material-columns" style={{ "--pool-material-rule-width": entries.some(([, entry]) => !entry.row) ? "80px" : "22px" } as CSSProperties}>
                 {entries.map(([key, { resource, row, input, output }]) => {
@@ -287,16 +290,16 @@ export function ProductionScopeHeader({
                     }}>
                     {renderResource(resource)}
                       <span className={"pool-material-rate " + (sign < 0 ? "pool-flow-input" : sign > 0 ? "pool-flow-output" : "pool-flow-internal")}
-                        aria-label={material + ": " + (sign < 0 ? "net input " : sign > 0 ? "net output " : "no net flow ") + formatSlotRateBare(Math.abs(net), resource.kind) + unit}
-                        title={"Input: " + formatSlotRateBare(input, resource.kind) + unit + "; output: " + formatSlotRateBare(output, resource.kind) + unit}>
+                        aria-label={_i18nT(material + ": " + (sign < 0 ? "net input " : sign > 0 ? "net output " : "no net flow ") + formatSlotRateBare(Math.abs(net), resource.kind) + unit)}
+                        title={_i18nT("Input: " + formatSlotRateBare(input, resource.kind) + unit + "; output: " + formatSlotRateBare(output, resource.kind) + unit)}>
                         <strong>{rate}</strong><small>{unit}</small>
                       </span>
                     {row ? <button type="button" className="pool-material-balance"
-                      aria-label={"Balance " + material + " in " + name} aria-pressed={!row.rule}
+                      aria-label={_i18nT("Balance " + material + " in " + name)} aria-pressed={!row.rule}
                       title={materialRuleHelp(row.rule, Boolean(group))} disabled={readOnly}
                       onClick={() => useFactoryStore.getState().setPoolResourceRule(group?.id, row.key, row.rule ? undefined : group ? "share" : "import")}>
                       <Scale aria-hidden />
-                    </button> : <span className="pool-material-inherited" title="This total includes a child group's local material. Change its rule in that group.">Within groups</span>}
+                    </button> : <span className="pool-material-inherited" title={_i18nT("This total includes a child group's local material. Change its rule in that group.")}><I18nText>Within groups</I18nText></span>}
                   </div>;
                 })}
                       </div></td>

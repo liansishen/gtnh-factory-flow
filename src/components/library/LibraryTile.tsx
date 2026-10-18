@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import {
   ArrowBigUp,
@@ -129,6 +130,7 @@ export function LibraryTile({
   onSelect,
   renaming,
 }: LibraryTileProps) {
+  const _i18nT = useT();
   // A finger on a tile is a scroll, a tap, or a HELD press for the menu
   // (iPhones send no contextmenu event). It is never a drag: the drag would
   // swallow the swipe. Filing into collections is in the menu on a phone.
@@ -167,7 +169,10 @@ export function LibraryTile({
       onPointerCancel={cancelPress}
       onPointerMove={(event) => {
         // A finger drifts; a scroll travels. Only travel cancels the press.
-        if (press.current && Math.hypot(event.clientX - press.current.x, event.clientY - press.current.y) > 8) {
+        if (
+          press.current &&
+          Math.hypot(event.clientX - press.current.x, event.clientY - press.current.y) > 8
+        ) {
           cancelPress();
         }
       }}
@@ -212,7 +217,11 @@ export function LibraryTile({
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-center gap-2">
             {renaming ? (
-              <InlineName initialName={name} onCommit={renaming.onCommit} onCancel={renaming.onCancel} />
+              <InlineName
+                initialName={name}
+                onCommit={renaming.onCommit}
+                onCancel={renaming.onCancel}
+              />
             ) : (
               <span className="min-w-0 flex-1 truncate text-[13px] font-bold leading-tight text-white">
                 {name}
@@ -223,8 +232,8 @@ export function LibraryTile({
                 <button
                   type="button"
                   onClick={onTier}
-                  aria-label={`Show setups up to ${tier}`}
-                  title={`Show setups up to ${tier}`}
+                  aria-label={`${_i18nT("Show setups up to")} ${tier}`}
+                  title={`${_i18nT("Show setups up to")} ${tier}`}
                   className="flex shrink-0 ring-cyan-400 hover:ring-2"
                 >
                   <TierBadge tier={tier} />
@@ -242,8 +251,8 @@ export function LibraryTile({
                   <button
                     type="button"
                     onClick={onCreator}
-                    aria-label={`Show setups by ${creator}`}
-                    title={`Show setups by ${creator}`}
+                    aria-label={`${_i18nT("Show setups by")} ${creator}`}
+                    title={`${_i18nT("Show setups by")} ${creator}`}
                     className="text-neutral-400 hover:bg-[var(--mc-61)] hover:text-cyan-200"
                   >
                     {creator}
@@ -253,7 +262,7 @@ export function LibraryTile({
                 )
               ) : null}
               {creator ? " · " : ""}
-              {when}
+              <I18nText>{when}</I18nText>
             </span>
           </div>
         </div>
@@ -271,11 +280,13 @@ export function LibraryTile({
             <button
               type="button"
               onClick={onFavorite}
-              aria-label={favorite ? "Remove from Favorites" : "Add to Favorites"}
-              title={favorite ? "Remove from Favorites" : "Add to Favorites"}
+              aria-label={favorite ? _i18nT("Remove from Favorites") : _i18nT("Add to Favorites")}
+              title={favorite ? _i18nT("Remove from Favorites") : _i18nT("Add to Favorites")}
               className={[
                 "flex h-4 w-4 items-center justify-center",
-                favorite ? "text-amber-300" : "text-[var(--mc-ink-muted)] opacity-50 hover:opacity-100 hover:text-amber-200",
+                favorite
+                  ? "text-amber-300"
+                  : "text-[var(--mc-ink-muted)] opacity-50 hover:opacity-100 hover:text-amber-200",
               ].join(" ")}
             >
               <Star className="h-3.5 w-3.5" fill={favorite ? "currentColor" : "none"} aria-hidden />
@@ -285,29 +296,35 @@ export function LibraryTile({
             <button
               type="button"
               onClick={onSave}
-              aria-label={saved ? "Remove from Saved" : "Add to Saved"}
-              title={saved ? "Remove from Saved" : "Add to Saved"}
+              aria-label={saved ? _i18nT("Remove from Saved") : _i18nT("Add to Saved")}
+              title={saved ? _i18nT("Remove from Saved") : _i18nT("Add to Saved")}
               className={[
                 "flex h-4 w-4 items-center justify-center",
-                saved ? "text-cyan-300" : "text-[var(--mc-ink-muted)] opacity-50 hover:opacity-100 hover:text-cyan-200",
+                saved
+                  ? "text-cyan-300"
+                  : "text-[var(--mc-ink-muted)] opacity-50 hover:opacity-100 hover:text-cyan-200",
               ].join(" ")}
             >
-              <Bookmark className="h-3.5 w-3.5" fill={saved ? "currentColor" : "none"} aria-hidden />
+              <Bookmark
+                className="h-3.5 w-3.5"
+                fill={saved ? "currentColor" : "none"}
+                aria-hidden
+              />
             </button>
           ) : null}
           {marks.open ? (
             <span
-              title="Open as a tab"
+              title={_i18nT("Open as a tab")}
               className="bg-[var(--mc-61)] px-1 text-[9px] font-black uppercase tracking-wide text-neutral-300"
             >
-              open
+              <I18nText>open</I18nText>
             </span>
           ) : null}
           {marks.privatePost ? (
             <span
               className="text-[var(--mc-ink-muted)]"
-              aria-label="Private: only you can see it"
-              title="Private: only you can see it"
+              aria-label={_i18nT("Private: only you can see it")}
+              title={_i18nT("Private: only you can see it")}
             >
               <EyeOff className="h-3 w-3" aria-hidden />
             </span>
@@ -319,8 +336,8 @@ export function LibraryTile({
                 type="button"
                 disabled={!social.onVote}
                 onClick={social.onVote}
-                aria-label={social.myVote === 1 ? "Remove your vote" : "Vote up"}
-                title={social.myVote === 1 ? "Remove your vote" : "Vote up"}
+                aria-label={social.myVote === 1 ? _i18nT("Remove your vote") : _i18nT("Vote up")}
+                title={social.myVote === 1 ? _i18nT("Remove your vote") : _i18nT("Vote up")}
                 className={[
                   "flex items-center gap-0.5 px-0.5",
                   social.myVote === 1
@@ -332,13 +349,17 @@ export function LibraryTile({
                 {social.score}
               </button>
               {social.comments !== undefined ? (
-                <span className="flex items-center gap-0.5" aria-label="Comments" title="Comments">
+                <span
+                  className="flex items-center gap-0.5"
+                  aria-label={_i18nT("Comments")}
+                  title={_i18nT("Comments")}
+                >
                   <MessageSquare className="h-3 w-3" aria-hidden />
                   {social.comments}
                 </span>
               ) : null}
               {social.downloads !== undefined ? (
-                <span className="flex items-center gap-0.5" aria-label="Downloads">
+                <span className="flex items-center gap-0.5" aria-label={_i18nT("Downloads")}>
                   <Download className="h-3 w-3" aria-hidden />
                   {social.downloads}
                 </span>
@@ -374,11 +395,12 @@ function PostGlyph({
   onPost?: () => void;
   onCopyLink?: () => void;
 }) {
+  const _i18nT = useT();
   if (marks.fromNetwork) {
     return (
       <span
-        aria-label="Opened from a shared setup"
-        title="Opened from a shared setup"
+        aria-label={_i18nT("Opened from a shared setup")}
+        title={_i18nT("Opened from a shared setup")}
         className="text-[var(--mc-ink-muted)]"
       >
         <Download className="h-3 w-3" aria-hidden />
@@ -389,8 +411,8 @@ function PostGlyph({
     return (
       <>
         <span
-          aria-label={marks.privatePost ? "Posted, private" : "Posted"}
-          title={marks.privatePost ? "Posted, private" : "Posted"}
+          aria-label={marks.privatePost ? _i18nT("Posted, private") : _i18nT("Posted")}
+          title={marks.privatePost ? _i18nT("Posted, private") : _i18nT("Posted")}
           className="relative inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-emerald-400"
         >
           <Globe className="h-3 w-3" aria-hidden />
@@ -399,8 +421,8 @@ function PostGlyph({
           <button
             type="button"
             onClick={onCopyLink}
-            aria-label="Copy link"
-            title="Copy link"
+            aria-label={_i18nT("Copy link")}
+            title={_i18nT("Copy link")}
             className="p-0.5 text-[var(--mc-ink-muted)] hover:bg-[var(--mc-61)] hover:text-cyan-200"
           >
             <Link2 className="h-3 w-3" aria-hidden />
@@ -411,7 +433,11 @@ function PostGlyph({
   }
   if (marks.linked) {
     return (
-      <span aria-label="Linked to a post" title="Linked to a post" className="text-[var(--mc-ink-muted)]">
+      <span
+        aria-label={_i18nT("Linked to a post")}
+        title={_i18nT("Linked to a post")}
+        className="text-[var(--mc-ink-muted)]"
+      >
         <Link2 className="h-3 w-3" aria-hidden />
       </span>
     );
@@ -421,8 +447,8 @@ function PostGlyph({
       <button
         type="button"
         onClick={onPost}
-        aria-label="Post to Community"
-        title="Post to Community"
+        aria-label={_i18nT("Post to Community")}
+        title={_i18nT("Post to Community")}
         className="p-0.5 text-[var(--mc-ink-muted)] opacity-70 hover:bg-[var(--mc-61)] hover:text-emerald-300"
       >
         <Globe className="h-3 w-3" aria-hidden />
@@ -487,6 +513,7 @@ export function InlineName({
   onCommit: (name: string) => void;
   onCancel: () => void;
 }) {
+  const _i18nT = useT();
   const [value, setValue] = useState(initialName);
   // Committing on blur keeps a click elsewhere from silently discarding the
   // edit. Escape is the one way out without saving, and it must not also
@@ -513,7 +540,7 @@ export function InlineName({
         }
       }}
       onClick={(event) => event.stopPropagation()}
-      aria-label="Name"
+      aria-label={_i18nT("Name")}
       className="min-w-0 w-full border-2 border-cyan-500 bg-[#17191d] px-1 text-xs text-neutral-100 outline-none"
     />
   );
@@ -535,6 +562,7 @@ export function TagEditor({
   initialTags: string[];
   onClose: (tags: string[]) => void;
 }) {
+  const _i18nT = useT();
   const [draft, setDraft] = useState<string[]>(initialTags);
   const [input, setInput] = useState("");
   const boxRef = useRef<HTMLDivElement>(null);
@@ -585,7 +613,7 @@ export function TagEditor({
           key={tag}
           type="button"
           onClick={() => setDraft(draft.filter((entry) => entry !== tag))}
-          aria-label={`Remove tag ${tag}`}
+          aria-label={`${_i18nT("Remove tag")} ${tag}`}
           className="border border-neutral-700 bg-[#17191d] px-1.5 text-[11px] text-neutral-300 hover:border-red-700 hover:text-red-300"
         >
           #{tag}
@@ -594,7 +622,7 @@ export function TagEditor({
       <input
         autoFocus
         value={input}
-        placeholder={draft.length === 0 ? "add tags..." : ""}
+        placeholder={draft.length === 0 ? _i18nT("add tags...") : ""}
         onChange={(event) => setInput(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === ",") {
@@ -609,7 +637,7 @@ export function TagEditor({
             onClose(initialTags);
           }
         }}
-        aria-label="Add a tag"
+        aria-label={_i18nT("Add a tag")}
         className="min-w-[80px] flex-1 bg-transparent text-xs text-[var(--mc-ink)] outline-none placeholder:text-[var(--mc-ink-muted)]"
       />
     </div>,

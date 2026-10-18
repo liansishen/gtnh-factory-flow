@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import "./chrome.css";
 
@@ -7,6 +8,7 @@ import { createPortal } from "react-dom";
 import { useDeviceSettings } from "@/lib/device-settings";
 import { useDropdownDismiss } from "@/lib/hooks/use-dropdown-dismiss";
 import { getUiScale } from "@/lib/ui-scale";
+import { CHROME_SCREEN_K } from "./ChromeMenu";
 
 /** The wheel's row; with "Scroll changes values" off the wheel only zooms. */
 const WHEEL_ROW = "Zoom; over a value, change it";
@@ -21,7 +23,10 @@ export const CONTROLS: ReadonlyArray<readonly [string, string]> = [
   ["Right-click a wire", "Add a drawer on it, or delete it"],
   ["Middle-click a rate", "Clear the rate"],
   ["Right-click empty board", "Add a sticky note"],
-  ["Click a sticky note", "Write on it (Esc or a click elsewhere when done); drag it anywhere to move it"],
+  [
+    "Click a sticky note",
+    "Write on it (Esc or a click elsewhere when done); drag it anywhere to move it",
+  ],
   ["Click a card or drawer", "Select it (Shift-click adds to the selection)"],
   ["Drag the board", "Pan (Shift-drag selects a box)"],
   ["Drag a selected card", "Move the selection"],
@@ -34,34 +39,56 @@ export const CONTROLS: ReadonlyArray<readonly [string, string]> = [
   ["Double-click an overview row", "Show the cards that make or use it"],
 ];
 
+/**
+ * Gestures that ARE the key rather than a phrase: shown verbatim so the key
+ * stays readable (the Ctrl/R/U and other key tokens in translated phrases too).
+ */
+const KEY_TOKEN_GESTURES = new Set([
+  "Ctrl+A",
+  "Ctrl+C, Ctrl+X, Ctrl+V",
+  "Ctrl+Z, Ctrl+Shift+Z",
+  "Delete",
+]);
+
 /** The controls list: a menu-skinned panel under the bar, closed like any dropdown. */
 export function ControlsList({ onClose }: { onClose: () => void }) {
+  const _i18nT = useT();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollChangesValues } = useDeviceSettings();
   useDropdownDismiss(true, { refs: [ref], onClose, insideSelector: "[data-menu-anchor]" });
   useEffect(() => ref.current?.focus(), []);
   // Hung from the Help key's right edge, as its menu is: the items column sits at the window's right edge now, and a
   // panel pinned to the window would slide under it.
-  const scale = getUiScale();
-  const helpKey = typeof document === "undefined" ? null : document.querySelector(".mb-key[data-mb='help']");
-  const right = helpKey ? Math.max(2, (window.innerWidth - helpKey.getBoundingClientRect().right) / scale) : 8;
+  const scale = getUiScale() * CHROME_SCREEN_K;
+  const helpKey =
+    typeof document === "undefined" ? null : document.querySelector(".mb-key[data-mb='help']");
+  const width = Math.min(420, (window.innerWidth - 16) / scale);
+  const right = Math.max(8 / scale, Math.min(
+    helpKey ? (window.innerWidth - helpKey.getBoundingClientRect().right) / scale : 8 / scale,
+    (window.innerWidth - 8) / scale - width,
+  ));
+  const top = helpKey ? (helpKey.getBoundingClientRect().bottom + 4) / scale : 24;
   return createPortal(
     <div
       ref={ref}
       role="dialog"
-      aria-label="How the board works"
+      aria-label={_i18nT("How the board works")}
       tabIndex={-1}
       className="mm mc-controls ui-zoom nodrag nowheel"
-      style={{ top: 24, right }}
+      style={{ top, right, width, maxHeight: (window.innerHeight - top * scale - 8) / scale }}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      <div className="mm-title">HOW THE BOARD WORKS</div>
+      <div className="mm-title">
+        <I18nText>HOW THE BOARD WORKS</I18nText>
+      </div>
       <div className="mc-controls-grid">
         {CONTROLS.map(([gesture, effect]) => (
           <div key={gesture} className="mc-controls-row">
-            <span className="mc-controls-key">{gesture}</span>
+            <span className="mc-controls-key">
+              {KEY_TOKEN_GESTURES.has(gesture) ? gesture : _i18nT(gesture)}
+            </span>
             <span className="mc-controls-effect">
-              {effect === WHEEL_ROW && !scrollChangesValues ? "Zoom" : effect}
+              {effect === WHEEL_ROW && !scrollChangesValues ? _i18nT("Zoom") : _i18nT(effect)}
             </span>
           </div>
         ))}

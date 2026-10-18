@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT, useGameName } from "@/lib/i18n/react";
+
 
 import "./clean.css";
 import { fluidSwatchStyle } from "./fluid-swatch";
@@ -97,6 +99,7 @@ export function CleanPortRow({
   wasClick: (event: MouseEvent) => boolean;
   unset?: boolean;
 }) {
+  const _i18nT = useT();
   const browseResource = useFactoryStore((state) => state.browseResource);
   const setHoveredFlowScope = useFactoryStore((state) => state.setHoveredFlowScope);
   const readOnly = useFactoryStore((state) => state.isReadOnly);
@@ -176,14 +179,14 @@ export function CleanPortRow({
       >
         {port.resource ? <PortIcon resource={port.resource} iconProps={iconProps} /> : null}
         <span className="cc-num" data-small="" data-unit="">
-          {controller ? "in controller" : "free"}
+          <I18nText>{controller ? "in controller" : "free"}</I18nText>
         </span>
         <span
           className="cc-pname"
           data-small={p.nameSmall || undefined}
           data-clip={p.nameClipped || undefined}
         >
-          {p.name}
+          <I18nText game>{p.name}</I18nText>
         </span>
         {controller && mobOpen ? (
           <MobPickerMenu nodeId={p.nodeId} onClose={() => setMobOpen(false)} />
@@ -277,7 +280,7 @@ export function CleanPortRow({
           <span className="cc-num" data-unit={p.forced.unit}>
             {p.forced.number}
           </span>
-          <span className="cc-pname">Forced</span>
+          <span className="cc-pname"><I18nText>Forced</I18nText></span>
         </div>
       ) : null}
       {!p.wired && !p.forced && port.kind !== "power" ? (
@@ -290,7 +293,7 @@ export function CleanPortRow({
         data-resource-handle="true"
         data-resource-node-id={p.nodeId}
         data-resource-handle-id={p.handleId}
-        aria-label={`${isInput ? "Input" : "Output"}: ${p.name}${readOnly ? "" : ". Left click or R for recipes, right click or U for uses, drag to connect"}`}
+        aria-label={_i18nT(`${isInput ? "Input" : "Output"}: ${p.name}${readOnly ? "" : ". Left click or R for recipes, right click or U for uses, drag to connect"}`)}
         className={[
           "resource-slot-handle nodrag !absolute !left-0 !right-auto !top-0 !z-30 !h-full !w-full !min-w-0 !translate-x-0 !translate-y-0",
           "!rounded-none !border-0 !bg-transparent !opacity-0",
@@ -321,6 +324,7 @@ function PortIcon({
   resource: NonNullable<CleanPortView["port"]["resource"]>;
   iconProps: Record<string, unknown>;
 }) {
+  const _i18nName = useGameName();
   if (resource.kind === "fluid") {
     const color =
       resource.dominantColor ??
@@ -330,7 +334,7 @@ function PortIcon({
       <span
         className="cc-icon cc-swatch"
         role="img"
-        aria-label={resource.displayName}
+        aria-label={_i18nName((resource.displayName) ?? "")}
         style={fluidSwatchStyle({ ...resource, dominantColor: color })}
       />
     );
@@ -368,7 +372,7 @@ function Words({ p, iconProps }: { p: CleanPortView; iconProps: Record<string, u
         data-small={p.nameSmall || undefined}
         data-clip={p.nameClipped || undefined}
       >
-        {p.name}
+        <I18nText game>{p.name}</I18nText>
       </span>
     </>
   );
@@ -397,6 +401,7 @@ export function CountBox({
   onRule: (rule: PinRule) => void;
   wasClick: (event: MouseEvent) => boolean;
 }) {
+  const _i18nT = useT();
   const [draft, setDraft] = useState<string>();
   const [ruleMenu, setRuleMenu] = useState<MenuAnchor>();
   const editing = draft !== undefined;
@@ -417,14 +422,12 @@ export function CountBox({
       tabIndex={0}
       className="cc-count nowheel"
       data-wheel-value=""
-      aria-label={
-        view.pinned
+      aria-label={_i18nT(view.pinned
           ? `${view.text} running, ${view.ruleWord} ${view.setText}`
-          : `${view.text} machines`
-      }
+          : `${view.text} machines`)}
       data-rule={view.rule}
       data-run={view.text}
-      data-set={view.pinned ? view.setText : view.note}
+      data-set={view.pinned ? view.setText : _i18nT(view.note)}
       data-pinned={view.pinned ? "" : undefined}
       data-zero={view.zero ? "" : undefined}
       data-prompt={view.prompt ? "" : undefined}
@@ -477,7 +480,7 @@ export function CountBox({
             setRuleMenu(ruleMenu ? undefined : anchorOf(event.currentTarget));
           }}
         >
-          {view.ruleWord}
+          <I18nText>{view.ruleWord}</I18nText>
         </div>
       ) : null}
       {editing ? (
@@ -485,7 +488,7 @@ export function CountBox({
           autoFocus
           value={draft}
           inputMode="decimal"
-          aria-label="Machine count"
+          aria-label={_i18nT("Machine count")}
           size={1}
           className="nodrag"
           // As wide as the number it replaces, a few characters, growing with what is typed.
@@ -561,11 +564,15 @@ export function CardFoot({
   foot: CleanFootView;
   gridRow?: number;
 }) {
+  const t = useT();
+  const gameName = useGameName();
+  const resource = foot.facts.resource;
+  const say = resource ? foot.say.replace(resource, gameName(resource)) : foot.say;
   return (
     <div
       className="cc-foot"
       data-tone={foot.tone}
-      data-word={foot.word || undefined}
+      data-word={foot.word ? t(foot.word) : undefined}
       data-frac={foot.frac || undefined}
       data-ghost={foot.ghost ? "" : undefined}
       {...tipAttrs(footTip(nodeId, foot))}
@@ -579,7 +586,7 @@ export function CardFoot({
         } as CSSProperties
       }
     >
-      {foot.say}
+      {t(say)}
     </div>
   );
 }
@@ -599,6 +606,7 @@ export function TierChip({
   wasClick: (event: MouseEvent) => boolean;
   extraData?: Record<string, string>;
 }) {
+  const _i18nT = useT();
   const colors = tierChipColors(label);
   const style = colors
     ? ({
@@ -617,7 +625,7 @@ export function TierChip({
       data-wheel-value=""
       style={style}
       {...tipAttrs(tip)}
-      aria-label={`Tier ${label}`}
+      aria-label={_i18nT(`Tier ${label}`)}
       data-hatch-menu-anchor=""
       data-fixed={fixed ? "" : undefined}
       data-underline={colors?.underline ? "" : undefined}
@@ -637,7 +645,7 @@ export function TierChip({
         if (!fixed) onStep(event.deltaY < 0 ? 1 : -1);
       }}
     >
-      {label}
+      <I18nText>{label}</I18nText>
     </div>
   );
 }
@@ -655,6 +663,7 @@ export function AmpsChip({
   onSet: (value: number) => void;
   wasClick: (event: MouseEvent) => boolean;
 }) {
+  const _i18nT = useT();
   const [draft, setDraft] = useState<string>();
   // The chip's width as the box opens: the box fills exactly that, so typing never widens the head.
   const [openWidth, setOpenWidth] = useState<number>();
@@ -718,7 +727,7 @@ export function AmpsChip({
           autoFocus
           value={draft}
           inputMode="numeric"
-          aria-label="Amps"
+          aria-label={_i18nT("Amps")}
           size={1}
           className="nodrag"
           onChange={(event) => setDraft(event.target.value)}
@@ -806,6 +815,7 @@ export interface CleanCardProps {
 
 /** The clean recipe card: header, hairline, port rails around the picture, power row, settings strip. */
 export function CleanCard({ view, actions, context, recipe, node }: CleanCardProps) {
+  const _i18nT = useT();
   const { wasClick, onPointerDownCapture } = useClickSlop();
   const { zoomedOutNames: glanceNames, problemOutlines } = useDeviceSettings();
   const glance = glanceFace(view.glanceArt ? `url(${view.glanceArt})` : undefined, view.glance);
@@ -890,7 +900,7 @@ export function CleanCard({ view, actions, context, recipe, node }: CleanCardPro
           className="cc-key"
           data-glyph="menu"
           data-hatch-menu-anchor=""
-          aria-label="Card actions"
+          aria-label={_i18nT("Card actions")}
           aria-haspopup="menu"
           aria-expanded={menu?.kind === "actions"}
           {...tipAttrs(menuTip(view.nodeId))}
@@ -903,7 +913,7 @@ export function CleanCard({ view, actions, context, recipe, node }: CleanCardPro
           data-glyph="gear"
           data-hatch-menu-anchor=""
           data-warn={undefined}
-          aria-label="Machine settings"
+          aria-label={_i18nT("Machine settings")}
           aria-haspopup="menu"
           data-menu-anchor=""
           aria-expanded={sheetAnchor !== undefined}
@@ -959,7 +969,7 @@ export function CleanCard({ view, actions, context, recipe, node }: CleanCardPro
               : undefined
           }
         >
-          {view.name}
+          <I18nText game>{view.name}</I18nText>
           {listOpen && listAnchor ? (
             <MachineListMenu
               anchor={listAnchor}
@@ -1010,7 +1020,7 @@ export function CleanCard({ view, actions, context, recipe, node }: CleanCardPro
             <span className="cc-num" data-unit={view.power.unit}>
               {view.power.number}
             </span>
-            <span className="cc-pname">{view.power.name}</span>
+            <span className="cc-pname"><I18nText>{view.power.name}</I18nText></span>
           </div>
         ) : null}
       </div>

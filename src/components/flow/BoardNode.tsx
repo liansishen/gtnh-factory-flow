@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useDropdownDismiss } from "@/lib/hooks/use-dropdown-dismiss";
 
@@ -398,6 +400,7 @@ function BoardNodeComponent({
   height,
   selected,
 }: NodeProps<BoardWindowFlowNode>) {
+  const _i18nT = useT();
   const { pocket, memberCount } = data;
   const minimizePocket = useFactoryStore((state) => state.minimizePocket);
   const renamePocket = useFactoryStore((state) => state.renamePocket);
@@ -494,8 +497,8 @@ function BoardNodeComponent({
                 : "border-[var(--mc-47)]",
             ].join(" ")}
             style={{ backgroundColor: ownPaper.base, backgroundImage: ownPaper.texture }}
-            title="Its own colour"
-            aria-label={`Clear the paper on board ${pocket.name}`}
+            title={_i18nT("Its own colour")}
+            aria-label={_i18nT(`Clear the paper on board ${pocket.name}`)}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -515,7 +518,7 @@ function BoardNodeComponent({
               ].join(" ")}
               style={{ backgroundColor: theme.base, backgroundImage: theme.texture }}
               title={theme.name}
-              aria-label={`Paper board ${pocket.name} in ${theme.name}`}
+              aria-label={_i18nT(`Paper board ${pocket.name} in ${theme.name}`)}
             >
               {[0, 1, 2].map((dot) => (
                 <span
@@ -550,13 +553,13 @@ function BoardNodeComponent({
                 // beats a four-letter abbreviation of its name.
                 ...boardRuling(pattern, chrome.dotColor, undefined, 7),
               }}
-              title={`Rule this board's paper: ${pattern}`}
-              aria-label={`Rule board ${pocket.name} with ${pattern}`}
+              title={_i18nT(`Rule this board's paper: ${pattern}`)}
+              aria-label={_i18nT(`Rule board ${pocket.name} with ${pattern}`)}
             >
               {pattern === "none" ? (
-                <span aria-hidden className="text-[9px] uppercase" style={{ color: chrome.inkMuted }}>
+                <span aria-hidden className="text-[9px] uppercase" style={{ color: chrome.inkMuted }}><I18nText>
                   off
-                </span>
+                </I18nText></span>
               ) : null}
             </button>
           ))}
@@ -596,11 +599,9 @@ function BoardNodeComponent({
           borderWidth: `${BOARD_EDGE}px ${BOARD_EDGE}px 2px`,
           boxShadow: `inset 2px 2px 0 ${chrome.barBevelHi}, inset -2px -2px 0 ${chrome.barBevelLo}`,
         }}
-        title={
-          calmMode
+        title={_i18nT(calmMode
             ? `${pocket.name} (drag to move the board and everything on it)`
-            : `${pocket.name} (drag to move the board and everything on it, double-click the name to rename)`
-        }
+            : `${pocket.name} (drag to move the board and everything on it, double-click the name to rename)`)}
       >
         {!calmMode && !isRenaming ? (
           <>
@@ -612,8 +613,8 @@ function BoardNodeComponent({
               }}
               className="nodrag flex h-6 w-6 shrink-0 items-center justify-center border-2 hover:!bg-red-700 hover:!text-white"
               style={buttonStyle}
-              title="Delete board"
-              aria-label={`Delete board ${pocket.name}`}
+              title={_i18nT("Delete board")}
+              aria-label={_i18nT(`Delete board ${pocket.name}`)}
             >
               {/* Drawn rather than a "-" glyph: at this size Monocraft's
                   metrics baseline-align the hyphen low instead of centring. */}
@@ -627,8 +628,8 @@ function BoardNodeComponent({
               }}
               className="nodrag flex h-6 w-6 shrink-0 items-center justify-center border-2 hover:brightness-125"
               style={buttonStyle}
-              title="Clone board"
-              aria-label={`Clone board ${pocket.name}`}
+              title={_i18nT("Clone board")}
+              aria-label={_i18nT(`Clone board ${pocket.name}`)}
             >
               <Copy aria-hidden className="h-3.5 w-3.5" />
             </button>
@@ -653,7 +654,7 @@ function BoardNodeComponent({
           >
             <span className="min-w-0 truncate">✦ {pocket.name}</span>
             <span className="ml-auto shrink-0 pl-2 text-[11px]" style={{ color: chrome.inkMuted }}>
-              {memberCount} {memberCount === 1 ? "card" : "cards"}
+              {memberCount} <I18nText>{memberCount === 1 ? "card" : "cards"}</I18nText>
             </span>
           </div>
         ) : (
@@ -691,8 +692,8 @@ function BoardNodeComponent({
               data-board-palette-toggle=""
               className="nodrag flex h-6 w-6 shrink-0 items-center justify-center border-2 hover:brightness-125"
               style={buttonStyle}
-              title="Paper"
-              aria-label={`Choose paper for board ${pocket.name}`}
+              title={_i18nT("Paper")}
+              aria-label={_i18nT(`Choose paper for board ${pocket.name}`)}
             >
               <span
                 aria-hidden
@@ -712,8 +713,8 @@ function BoardNodeComponent({
               }}
               className="nodrag flex h-6 w-6 shrink-0 items-center justify-center border-2 hover:brightness-125"
               style={buttonStyle}
-              title="Remove board, keep its cards"
-              aria-label={`Remove board ${pocket.name}, keep its cards`}
+              title={_i18nT("Remove board, keep its cards")}
+              aria-label={_i18nT(`Remove board ${pocket.name}, keep its cards`)}
             >
               <PackageOpen aria-hidden className="h-3.5 w-3.5" />
             </button>
@@ -725,8 +726,8 @@ function BoardNodeComponent({
               }}
               className="nodrag flex h-6 w-6 shrink-0 items-center justify-center border-2 hover:brightness-125"
               style={buttonStyle}
-              title="Fold board"
-              aria-label={`Fold board ${pocket.name} into a pocket card`}
+              title={_i18nT("Fold board")}
+              aria-label={_i18nT(`Fold board ${pocket.name} into a pocket card`)}
             >
               <Minimize2 aria-hidden className="h-3.5 w-3.5" />
             </button>
@@ -743,8 +744,8 @@ function BoardNodeComponent({
           onPointerDown={(event) => beginResize(grip.side, event)}
           className={`nodrag absolute ${grip.cursor}`}
           style={{ ...grip.hitBox, pointerEvents: "all" }}
-          title="Resize board"
-          aria-label={`Resize board ${pocket.name}`}
+          title={_i18nT("Resize board")}
+          aria-label={_i18nT(`Resize board ${pocket.name}`)}
         />
       ))}
       {RESIZE_CORNERS.map((corner) => (

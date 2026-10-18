@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { NodeResizer, useReactFlow, useStore, type NodeProps } from "@xyflow/react";
 import { memo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
@@ -150,6 +152,7 @@ function Zone({
 type Pt = { x: number; y: number };
 
 function Arrow({ annotation, color }: { annotation: FactoryAnnotation; color: string }) {
+  const _i18nT = useT();
   const flow = useReactFlow();
   const updateAnnotation = useFactoryStore((state) => state.updateAnnotation);
   const { width: w, height: h } = annotation.size;
@@ -213,13 +216,13 @@ function Arrow({ annotation, color }: { annotation: FactoryAnnotation; color: st
       </svg>
       <div
         className="dw-end nodrag nopan"
-        aria-label="Arrow tail"
+        aria-label={_i18nT("Arrow tail")}
         style={{ left: from.x, top: from.y }}
         onPointerDown={grab("from")}
       />
       <div
         className="dw-end nodrag nopan"
-        aria-label="Arrow head"
+        aria-label={_i18nT("Arrow head")}
         style={{ left: to.x, top: to.y }}
         onPointerDown={grab("to")}
       />

@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { useState } from "react";
 import type { FactoryPocket } from "@/lib/model/types";
@@ -15,6 +17,7 @@ import { requestGroupRename } from "./group-rename";
  * Ungroup (keeps contents), and in red Delete group and contents. The mod's twin is `ui/group/GroupCard.openMenu`.
  */
 export function GroupMenu({ pocket, x, y, onClose }: { pocket: FactoryPocket; x: number; y: number; onClose: () => void }) {
+  const _i18nT = useT();
   const [view, setView] = useState<"main" | "colour">("main");
   const store = () => useFactoryStore.getState();
   const run = (action: () => void) => () => {
@@ -24,7 +27,7 @@ export function GroupMenu({ pocket, x, y, onClose }: { pocket: FactoryPocket; x:
   if (view === "colour") {
     const current = groupColorTag(pocket);
     return (
-      <BoardMenu x={x} y={y} label="Group colour" title="Colour" onClose={onClose}>
+      <BoardMenu x={x} y={y} label="Group colour" title={_i18nT("Colour")} onClose={onClose}>
         {NOTE_COLOR_MENU.map(([tag, name]) => (
           <MenuRow
             key={tag}

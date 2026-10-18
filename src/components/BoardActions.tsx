@@ -1,4 +1,6 @@
 ﻿"use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useDropdownDismiss } from "@/lib/hooks/use-dropdown-dismiss";
 
@@ -60,6 +62,7 @@ export function BoardActions({
   onShare,
   onExportImage,
 }: BoardActionsProps = {}) {
+  const _i18nT = useT();
   const isReadOnly = useFactoryStore((state) => state.isReadOnly);
   const projectInputRef = useRef<HTMLInputElement>(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
@@ -303,8 +306,8 @@ export function BoardActions({
           <button
             type="button"
             onClick={() => setExportMenuOpen((isOpen) => !isOpen)}
-            title="Plan: share, import, export"
-            aria-label="Plan menu: share, import, export"
+            title={_i18nT("Plan: share, import, export")}
+            aria-label={_i18nT("Plan menu: share, import, export")}
             aria-expanded={isExportMenuOpen}
             aria-busy={pendingExport ? true : undefined}
             disabled={Boolean(pendingExport)}
@@ -408,7 +411,7 @@ function MenuAction({
       className="flex h-10 w-full items-center gap-2.5 rounded px-2 text-left text-sm text-fg-subtle hover:bg-surface-sunken disabled:cursor-not-allowed disabled:text-fg-muted"
     >
       <Icon className="h-4 w-4 shrink-0" />
-      <span className="truncate">{label}</span>
+      <span className="truncate"><I18nText>{label}</I18nText></span>
     </button>
   );
 }
@@ -439,7 +442,7 @@ function ExportMenuItem({
       className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-fg-subtle hover:bg-surface-sunken disabled:cursor-not-allowed disabled:text-fg-muted"
     >
       <Icon className="h-4 w-4" />
-      <span>{label}</span>
+      <span><I18nText>{label}</I18nText></span>
     </button>
   );
 }

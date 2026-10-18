@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import "./rail.css";
 
@@ -93,7 +95,7 @@ export function NoticeRow({
   return (
     <div className="rail-notice" data-severity={notice.severity} role="status">
       <span ref={text} className="rail-notice-text">
-        {notice.text}
+        <I18nText>{notice.text}</I18nText>
       </span>
       {notice.focus.length > 0 ? (
         <span
@@ -104,9 +106,9 @@ export function NoticeRow({
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") onShow(notice);
           }}
-        >
+        ><I18nText>
           Show me
-        </span>
+        </I18nText></span>
       ) : null}
       {notice.dismiss ? (
         <span
@@ -117,9 +119,9 @@ export function NoticeRow({
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") notice.dismiss?.();
           }}
-        >
+        ><I18nText>
           Dismiss
-        </span>
+        </I18nText></span>
       ) : null}
     </div>
   );
@@ -154,7 +156,7 @@ export function PlanNoticeStack() {
       ))}
       {more > 0 ? (
         <div className="rail-notice rail-notice-more">
-          <span className="rail-notice-text">+{more} more</span>
+          <span className="rail-notice-text">+{more}<I18nText> more</I18nText></span>
         </div>
       ) : null}
     </div>

@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
 
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { activateOnKey } from "@/lib/hooks/button-keys";
@@ -46,11 +47,12 @@ export function BarKey({
   ariaLabel?: string;
   menuAnchor?: boolean;
 }) {
+  const t = useT();
   return (
     <div
       role="button"
       tabIndex={off ? -1 : 0}
-      aria-label={ariaLabel ?? label ?? id}
+      aria-label={t(ariaLabel ?? label ?? id)}
       aria-haspopup={menuAnchor ? "menu" : undefined}
       aria-expanded={menuAnchor ? Boolean(open) : undefined}
       onKeyDown={activateOnKey}
@@ -85,9 +87,9 @@ export function BarKey({
             }
           : undefined
       }
-      {...tipAttrs({ id: `bar|${id}`, title: tip, sub: tipSub })}
+      {...tipAttrs({ id: `bar|${id}`, title: t(tip), sub: tipSub ? t(tipSub) : undefined })}
     >
-      {children ?? label}
+      {children ?? (label ? t(label) : label)}
     </div>
   );
 }

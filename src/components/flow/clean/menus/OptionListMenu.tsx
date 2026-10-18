@@ -1,4 +1,8 @@
 "use client";
+import { matchesGameNameFilter } from "@/lib/i18n/game-search";
+
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useState } from "react";
 import { ArtBox } from "./ArtBox";
@@ -21,17 +25,18 @@ export function OptionListMenu({
   onPick: (optionKey: string) => void;
   onClose: () => void;
 }) {
+  const _i18nT = useT();
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
-  const shown = control.options.filter((option) => option.label.toLowerCase().includes(needle));
+  const shown = control.options.filter((option) => matchesGameNameFilter(needle, option.label));
   return (
     <MenuPortal anchor={anchor} width={292} maxHeight={457} label={control.label} onClose={onClose}>
       <input
         autoFocus
         className="cm-filter nodrag"
-        placeholder="Filter..."
+        placeholder={_i18nT("Filter...")}
         value={query}
-        aria-label={`Filter ${control.label}`}
+        aria-label={_i18nT(`Filter ${control.label}`)}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={(event) => {
           event.stopPropagation();
@@ -40,7 +45,7 @@ export function OptionListMenu({
         }}
       />
       <div className="cm-scroll">
-        {shown.length === 0 ? <div className="cm-empty">Nothing matches.</div> : null}
+        {shown.length === 0 ? <div className="cm-empty"><I18nText>Nothing matches.</I18nText></div> : null}
         {shown.map((option) => (
           <div
             key={option.key}
@@ -50,7 +55,7 @@ export function OptionListMenu({
             onClick={() => onPick(option.key)}
           >
             <ArtBox src={option.icon} size={18} />
-            <span className="cm-name">{option.label}</span>
+            <span className="cm-name"><I18nText>{option.label}</I18nText></span>
           </div>
         ))}
       </div>

@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { useState } from "react";
 import { BoardMenu, MenuLine, MenuRow } from "../menus/BoardMenu";
@@ -28,6 +30,7 @@ export function AnnotationMenu({
   y: number;
   onClose: () => void;
 }) {
+  const _i18nT = useT();
   const [view, setView] = useState<View>("main");
   const patch = (change: Partial<FactoryAnnotation>) => () => {
     useFactoryStore.getState().updateAnnotation(annotation.id, change);
@@ -43,7 +46,7 @@ export function AnnotationMenu({
   if (view === "colour") {
     const current = annotation.colorTag ?? "yellow";
     return (
-      <BoardMenu x={x} y={y} label="Colour" title="Colour" onClose={onClose}>
+      <BoardMenu x={x} y={y} label="Colour" title={_i18nT("Colour")} onClose={onClose}>
         {NOTE_COLOR_MENU.map(([tag, name]) => (
           <MenuRow key={tag} label={name} swatch={GT_NODE_COLORS[tag]?.swatch} checked={tag === current} onClick={patch(recolour(annotation, tag))} />
         ))}

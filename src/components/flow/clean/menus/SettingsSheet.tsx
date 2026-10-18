@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useMemo, useRef, useState } from "react";
 import { wheelChangesValues } from "@/lib/device-settings";
@@ -51,17 +53,17 @@ function Term({ term }: { term: FormulaTerm }) {
 function FormulaRows({ lines }: { lines: FormulaLine[] }) {
   return (
     <>
-      <div className="cs-title">Formulas</div>
+      <div className="cs-title"><I18nText>Formulas</I18nText></div>
       {lines.map((entry, index) => (
         <div key={`${index}:${entry.label}`} className="cs-f">
-          <span className="cs-f-label">{entry.label}</span>
+          <span className="cs-f-label"><I18nText>{entry.label}</I18nText></span>
           <span className="cs-f-math">
             {entry.math.map((term, i) => (
               <Term key={i} term={term} />
             ))}
           </span>
           <span className="cs-f-result" data-tone={entry.tone}>
-            {entry.math.length > 0 ? "= " : ""}
+            <I18nText>{entry.math.length > 0 ? "= " : ""}</I18nText>
             {entry.result}
           </span>
         </div>
@@ -86,6 +88,7 @@ function PinGlyph() {
  * Pinned settings show on the card as chips, on every card of the machine; the sheet stays open while settings change.
  */
 export function SettingsSheet({ nodeId, anchor, onClose }: { nodeId: string; anchor: MenuAnchor; onClose: () => void }) {
+  const _i18nT = useT();
   const project = useFactoryStore((state) => state.project);
   const locked = useFactoryStore((state) => state.isReadOnly || state.checklistMode);
   const updateNode = useFactoryStore((state) => state.updateNode);
@@ -117,7 +120,7 @@ export function SettingsSheet({ nodeId, anchor, onClose }: { nodeId: string; anc
         <div ref={sheetRef} className="cs-body" data-cc-sheet="" style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
           <div style={{ display: "flex", alignItems: "stretch", minHeight: 0, overflowY: "auto" }}>
             <div className="cs-col" style={{ flex: wide ? "0 0 auto" : "1 1 auto", minWidth: wide ? (none ? 220 : 250) : 0 }}>
-              <div className="cs-title">Settings</div>
+              <div className="cs-title"><I18nText>Settings</I18nText></div>
               {none ? <div className="cs-none">{NONE}</div> : null}
               {controls.map((control) => {
                 const pinned = isPinned(project, machine, control);
@@ -141,14 +144,14 @@ export function SettingsSheet({ nodeId, anchor, onClose }: { nodeId: string; anc
                       className="cs-pin"
                       data-on={pinned ? "" : undefined}
                       aria-pressed={pinned}
-                      aria-label={pinned ? `Unpin ${control.label} from the card` : `Pin ${control.label} to the card`}
+                      aria-label={_i18nT(pinned ? `Unpin ${control.label} from the card` : `Pin ${control.label} to the card`)}
                       onClick={() => {
                         if (!locked) setSettingPins(machine, toggledPins(project, machine, controls, control.id));
                       }}
                     >
                       <PinGlyph />
                     </button>
-                    <span className="cs-label">{control.label}</span>
+                    <span className="cs-label"><I18nText>{control.label}</I18nText></span>
                     <div
                       role="button"
                       tabIndex={0}
@@ -172,9 +175,9 @@ export function SettingsSheet({ nodeId, anchor, onClose }: { nodeId: string; anc
             ) : null}
           </div>
           {none ? null : (
-            <div className="cs-foot">
+            <div className="cs-foot"><I18nText>
               Pinned settings show on the card. Click, right-click or scroll to change.
-            </div>
+            </I18nText></div>
           )}
         </div>
       </MenuPortal>

@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { PIN_RULE_LABEL, PIN_RULE_ORDER, type PinRule } from "@/lib/model/pin-rule";
 import { BoardMenu, MenuRow } from "./BoardMenu";
@@ -26,12 +28,13 @@ export function CountRuleMenu({
   onPick: (rule: PinRule) => void;
   onClose: () => void;
 }) {
+  const _i18nT = useT();
   return (
     <BoardMenu
       x={anchor.left}
       y={anchor.bottom + 2}
       label="Machine count"
-      title="Machine count"
+      title={_i18nT("Machine count")}
       onClose={onClose}
     >
       {PIN_RULE_ORDER.map((entry) => (

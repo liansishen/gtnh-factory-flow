@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import {
   memo,
@@ -298,6 +300,7 @@ export function InspectorPanel() {
 }
 
 function FlowIOPanel() {
+  const _i18nT = useT();
   const readOnly = useFactoryStore(state => state.isReadOnly);
   const project = useFactoryStore((state) => state.project);
   const result = useFactoryStore((state) => state.lastResult);
@@ -527,14 +530,14 @@ function FlowIOPanel() {
       ) : null}
 
       <div className="inspector-section-heading">
-        <h2>Resources</h2>
+        <h2><I18nText>Resources</I18nText></h2>
         <div hidden={readOnly} className={readOnly ? "ml-auto hidden" : "inspector-header-actions ml-auto flex items-center gap-1"}>
           <ToolbarToggle
             on={workspace.showHiddenResources}
             onClick={() =>
               writeWorkspaceView({ showHiddenResources: !workspace.showHiddenResources })
             }
-            title={`Hidden resources (${hiddenCount})`}
+            title={_i18nT(`Hidden resources (${hiddenCount})`)}
             label={
               workspace.showHiddenResources
                 ? "Stop showing hidden resources"
@@ -550,7 +553,7 @@ function FlowIOPanel() {
             <ToolbarToggle
               on={workspace.trendsOpen}
               onClick={() => writeWorkspaceView({ trendsOpen: !workspace.trendsOpen })}
-              title="Charts"
+              title={_i18nT("Charts")}
               label={workspace.trendsOpen ? "Hide all charts" : "Show all charts"}
               tone="amber"
             >
@@ -561,7 +564,7 @@ function FlowIOPanel() {
           <ToolbarToggle
             on={workspace.favouritesOnly}
             onClick={() => writeWorkspaceView({ favouritesOnly: !workspace.favouritesOnly })}
-            title="Starred only"
+            title={_i18nT("Starred only")}
             label={
               workspace.favouritesOnly ? "List every resource again" : "List only starred resources"
             }
@@ -575,8 +578,8 @@ function FlowIOPanel() {
           <button
             type="button"
             onClick={() => writeWorkspaceView({ rightPanelOpen: false })}
-            title="Hide"
-            aria-label="Hide the resources column"
+            title={_i18nT("Hide")}
+            aria-label={_i18nT("Hide the resources column")}
             className={[
               "ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded border border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-neutral-100",
 
@@ -600,15 +603,15 @@ function FlowIOPanel() {
           <input
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
-            placeholder="Filter resources…"
-            aria-label="Filter flow resources"
+            placeholder={_i18nT("Filter resources…")}
+            aria-label={_i18nT("Filter flow resources")}
             className="h-7 w-full rounded-[4px] border border-neutral-700 bg-[#17191d] pl-2 pr-14 text-base shadow-[inset_1px_1px_0_rgba(255,255,255,0.08)] text-neutral-100 outline-none placeholder:text-neutral-500 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-300"
           />
           {filter ? (
             <button
               type="button"
               onClick={() => setFilter("")}
-              aria-label="Clear filter"
+              aria-label={_i18nT("Clear filter")}
               className="absolute right-1 top-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400 hover:bg-[#1b1d21] hover:text-neutral-100"
             >
               {matchCount} ✕
@@ -726,9 +729,9 @@ function ScopeStrip({
 
   return (
     <div className="flex shrink-0 items-center gap-2 border-b border-[var(--selection-line)] bg-[var(--selection-wash)] px-2 py-1">
-      <span className="text-xs font-bold uppercase tracking-wider text-[var(--selection-ink)]">
+      <span className="text-xs font-bold uppercase tracking-wider text-[var(--selection-ink)]"><I18nText>
         Selection
-      </span>
+      </I18nText></span>
       <span className="ml-auto truncate text-xs text-[var(--selection-ink-dim)]">
         {parts.join(", ")}
       </span>
@@ -1287,6 +1290,7 @@ function FlowSectionHeader({
   isFiltered: boolean;
   onToggle: (id: FlowSectionId) => void;
 }) {
+  const _i18nT = useT();
   const tone = TONE_STYLES[section.tone];
   const showRatio = isFiltered && section.items.length !== section.totalCount;
 
@@ -1300,15 +1304,15 @@ function FlowSectionHeader({
     >
       <button type="button" onClick={() => onToggle(section.id)} aria-expanded={!collapsed} className="flex min-w-0 flex-1 items-center gap-1 text-left">
       <span className={["text-[11px] leading-none", collapsed ? "" : "rotate-90"].join(" ")}>▶</span>
-      <span className="text-sm font-bold uppercase tracking-wider">{section.label}</span>
+      <span className="text-sm font-bold uppercase tracking-wider"><I18nText>{section.label}</I18nText></span>
       <span className={["rounded px-1.5 py-0.5 text-xs font-bold tabular-nums", tone.badge].join(" ")}>
         {showRatio ? `${section.items.length} / ${section.totalCount}` : section.totalCount}
       </span>
       </button>
-      {section.id === "need" && <span className="inspector-rate-selector ml-auto flex shrink-0 justify-end gap-0.5" role="group" aria-label="Resource rate display">
+      {section.id === "need" && <span className="inspector-rate-selector ml-auto flex shrink-0 justify-end gap-0.5" role="group" aria-label={_i18nT("Resource rate display")}>
         {(["raw", "net"] as const).map(value => <button key={value} type="button" aria-pressed={rateColumn === value}
-          onClick={() => onRateColumnChange(value)} className="px-2 py-0.5" aria-label={value === "raw" ? "Show raw rates" : "Show net rates"}>
-          {value === "raw" ? "Raw" : "Net"}
+          onClick={() => onRateColumnChange(value)} className="px-2 py-0.5" aria-label={_i18nT(value === "raw" ? "Show raw rates" : "Show net rates")}>
+          <I18nText>{value === "raw" ? "Raw" : "Net"}</I18nText>
         </button>)}
       </span>}
     </div>
@@ -1359,6 +1363,7 @@ const FlowResourceRow = memo(function FlowResourceRow({
   onMarkChanged?: () => void;
   onFocusBoard: (resourceKey: string) => void;
 }) {
+  const _i18nT = useT();
   // Memoized rows keep the same balance when only a display dial changes.
   useRateDisplayUnits();
   const readOnly = useFactoryStore(state => state.isReadOnly);
@@ -1464,14 +1469,14 @@ const FlowResourceRow = memo(function FlowResourceRow({
             tooltip={false}
             className="!h-full !w-full"
           />
-          {productMarker ? <span className="inspector-product-marker" role="img" aria-label="Product">◆</span> : null}
+          {productMarker ? <span className="inspector-product-marker" role="img" aria-label={_i18nT("Product")}>◆</span> : null}
         </span>
 
         {/* Truncates in the wide copy too. The extra width fits most names in
             full, which is the point, but a name longer than even that has to
             end in an ellipsis rather than run under the rate. */}
         <span className="inspector-resource-name ml-2 flex min-w-0 items-center gap-1.5">
-          <span className="min-w-0 truncate text-base font-medium text-neutral-100">{name}</span>
+          <span className="min-w-0 truncate text-base font-medium text-neutral-100"><I18nText game>{name}</I18nText></span>
         </span>
 
         {rateColumn === "raw" && <span
@@ -1579,11 +1584,11 @@ const FlowResourceRow = memo(function FlowResourceRow({
             toggleResourceFavourite(balance.key);
             onMarkChanged?.();
           }}
-          title={isFavourite ? "Unwatch" : "Watch"}
+          title={_i18nT(isFavourite ? "Unwatch" : "Watch")}
           on={isFavourite}
           onClass="text-amber-300"
         >
-          {isFavourite ? "★" : "☆"}
+          <I18nText>{isFavourite ? "★" : "☆"}</I18nText>
         </RowMarkButton>
         {/* A starred resource has no hide button. Starring a hidden one
             unhides it, so this can never strand a row. */}
@@ -1593,7 +1598,7 @@ const FlowResourceRow = memo(function FlowResourceRow({
               toggleResourceHidden(balance.key);
               onMarkChanged?.();
             }}
-            title={isHidden ? "Unhide" : "Hide"}
+            title={_i18nT(isHidden ? "Unhide" : "Hide")}
             on={isHidden}
             onClass="text-cyan-300"
           >

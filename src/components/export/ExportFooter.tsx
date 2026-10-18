@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import type { CommunityPlanStats, EntryIcon, PlanResourceStat } from "@/lib/community/types";
 import { formatSlotRate } from "@/components/flow/flow-explainers";
@@ -169,15 +171,15 @@ export function ExportFooter({
               style={{ color: palette.subtle }}
               className="flex items-center justify-end gap-2 text-[13px] tabular-nums"
             >
-              <span>{stats.machineCount} machines</span>
+              <span>{stats.machineCount}<I18nText> machines</I18nText></span>
               <span aria-hidden>·</span>
-              <span>{stats.nodeCount} cards</span>
+              <span>{stats.nodeCount}<I18nText> cards</I18nText></span>
               {stats.highestTier ? <TierBadge tier={stats.highestTier} /> : null}
             </div>
             <div className="mt-0.5 text-[12px]">
-              <span style={{ color: palette.brand }} className="font-semibold">
+              <span style={{ color: palette.brand }} className="font-semibold"><I18nText>
                 gtnhplanner.com
-              </span>
+              </I18nText></span>
             </div>
           </div>
         </div>
@@ -233,12 +235,12 @@ function IoColumn({
       style={{ backgroundColor: panel, border: `1px solid ${panelEdge}` }}
     >
       <div style={{ color: accent }} className="text-[12px] font-bold uppercase tracking-[0.14em]">
-        {label}
+        <I18nText>{label}</I18nText>
       </div>
       {stats.length === 0 ? (
-        <div style={{ color: palette.muted }} className="mt-1.5 text-[13px]">
+        <div style={{ color: palette.muted }} className="mt-1.5 text-[13px]"><I18nText>
           Nothing
-        </div>
+        </I18nText></div>
       ) : (
         <div
           className="mt-1 grid gap-x-3"
@@ -271,7 +273,7 @@ function IoColumn({
                 />
               </span>
               <span className="min-w-0 flex-1 truncate text-[14px]">
-                {stat.displayName ?? stat.resourceId}
+                <I18nText game>{stat.displayName ?? stat.resourceId}</I18nText>
               </span>
               <span
                 style={{ color: palette.subtle }}

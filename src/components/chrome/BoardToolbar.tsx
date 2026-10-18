@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
 
 import "./chrome.css";
 
@@ -21,7 +22,13 @@ const LIVE = isLiveConfigured();
 
 /** The rate unit key's four clocks, in the mod's order. */
 const RATE_ORDER: RateUnit[] = ["tick", "second", "minute", "hour"];
-const RATE_LABEL: Record<string, string> = { tick: "/t", second: "/s", minute: "/min", hour: "/hr", eu: "/s" };
+const RATE_LABEL: Record<string, string> = {
+  tick: "/t",
+  second: "/s",
+  minute: "/min",
+  hour: "/hr",
+  eu: "/s",
+};
 
 /** This strip has fewer keys than the top bar: it tightens at its own width (its own px); its two groups wrap by themselves. */
 const STRIP_FIT = { tightBelow: 390, foldedBelow: 0 } as const;
@@ -48,6 +55,7 @@ export function BoardToolbar() {
  * words, then Board / Chain (remembered per board in this browser) and New task at the right.
  */
 function TaskBoardHeader() {
+  const _i18nT = useT();
   const designId = useDesignStore((state) => state.activeDesignId);
   const name = useDesignStore(
     (state) => state.designs.find((entry) => entry.id === state.activeDesignId)?.name,
@@ -68,14 +76,19 @@ function TaskBoardHeader() {
     <>
       <div className="mb-group mb-group-left">
         <span className="mb-title" data-plain="" data-task-board-title="">
-          {name?.trim() ? name : "Tasks"}
+          {name?.trim() ? name : _i18nT("Tasks")}
         </span>
         <span className="mb-count" data-plain="">
-          {count === 1 ? "1 task" : `${count} tasks`}
+          {count === 1 ? _i18nT("1 task") : `${count} tasks`}
         </span>
       </div>
       <div className="mb-group mb-group-right">
-        <span className="tb-switch" role="group" aria-label="View" data-task-view-switch="">
+        <span
+          className="tb-switch"
+          role="group"
+          aria-label={_i18nT("View")}
+          data-task-view-switch=""
+        >
           {views.map((each) => (
             <button
               key={each.id}
@@ -104,8 +117,12 @@ function TaskBoardHeader() {
 
 function BoardKeys({ tight }: { tight: boolean }) {
   // A live plan's undo is its own (recorded inverses of this person's edits): the keys read it when it is set.
-  const canUndo = useFactoryStore((state) => (state.liveUndo ? state.liveUndo.canUndo : state.undoHistory.length > 0));
-  const canRedo = useFactoryStore((state) => (state.liveUndo ? state.liveUndo.canRedo : state.redoHistory.length > 0));
+  const canUndo = useFactoryStore((state) =>
+    state.liveUndo ? state.liveUndo.canUndo : state.undoHistory.length > 0,
+  );
+  const canRedo = useFactoryStore((state) =>
+    state.liveUndo ? state.liveUndo.canRedo : state.redoHistory.length > 0,
+  );
   const undo = useFactoryStore((state) => state.undo);
   const redo = useFactoryStore((state) => state.redo);
   const rateUnit = useFactoryStore((state) => state.rateUnit);
@@ -132,93 +149,99 @@ function BoardKeys({ tight }: { tight: boolean }) {
   return (
     <>
       <div className="mb-group mb-group-left">
-      <BarKey
-        id="nonrecipe"
-        glyph="bolt"
-        width={tight ? undefined : 78}
-        ariaLabel="Non-recipe machines"
-        tip="Non-recipe machines: generators, turbines, boilers, reactors"
-        open={powerMenuOpen}
-        off={isReadOnly}
-        onClick={() => {
-          // The key opens the picker and closes it again.
-          if (powerMenuOpen) closePowerMenu();
-          else {
-            leaveLibrary();
-            openPowerMenu();
-          }
-        }}
-        menuAnchor
-      >
-        <PixelBolt className="mb-bolt" />
-        {tight ? null : "Non-recipe"}
-      </BarKey>
-      <BarKey
-        id="undo"
-        gap
-        icon
-        off={!canUndo || isReadOnly}
-        ariaLabel="Undo"
-        tip="Undo (Ctrl+Z)"
-        onClick={() => undo()}
-      >
-        <PixelIcon name="undo" />
-      </BarKey>
-      <BarKey
-        id="redo"
-        icon
-        off={!canRedo || isReadOnly}
-        ariaLabel="Redo"
-        tip="Redo (Ctrl+Shift+Z or Ctrl+Y)"
-        onClick={() => redo()}
-      >
-        <PixelIcon name="undo" mirror />
-      </BarKey>
+        <BarKey
+          id="nonrecipe"
+          glyph="bolt"
+          width={tight ? undefined : 78}
+          ariaLabel="Non-recipe machines"
+          tip="Non-recipe machines: generators, turbines, boilers, reactors"
+          open={powerMenuOpen}
+          off={isReadOnly}
+          onClick={() => {
+            // The key opens the picker and closes it again.
+            if (powerMenuOpen) closePowerMenu();
+            else {
+              leaveLibrary();
+              openPowerMenu();
+            }
+          }}
+          menuAnchor
+        >
+          <PixelBolt className="mb-bolt" />
+          {tight ? null : "Non-recipe"}
+        </BarKey>
+        <BarKey
+          id="undo"
+          gap
+          icon
+          off={!canUndo || isReadOnly}
+          ariaLabel="Undo"
+          tip="Undo (Ctrl+Z)"
+          onClick={() => undo()}
+        >
+          <PixelIcon name="undo" />
+        </BarKey>
+        <BarKey
+          id="redo"
+          icon
+          off={!canRedo || isReadOnly}
+          ariaLabel="Redo"
+          tip="Redo (Ctrl+Shift+Z or Ctrl+Y)"
+          onClick={() => redo()}
+        >
+          <PixelIcon name="undo" mirror />
+        </BarKey>
       </div>
       <div className="mb-group mb-group-right">
-      <BarKey
-        id="arrange"
-        label={arrangeLabel(arrange)}
-        width={arrange.running ? 90 : undefined}
-        tip="Auto-arrange the plan (press again to stop)"
-        off={isReadOnly}
-        onClick={() => pressArrange()}
-      />
-      <BarKey id="fit" label="Fit" width={24} tip="Zoom to fit the whole plan" onClick={() => getBoardCommands()?.fit()} />
-      <BarKey
-        id="rate"
-        gap
-        label={RATE_LABEL[rateUnit] ?? "/s"}
-        width={32}
-        tip="Rate unit: per tick, second, minute or hour"
-        onClick={() => stepRate(1)}
-        onContext={() => stepRate(-1)}
-        onWheel={scrollChangesValues ? stepRate : undefined}
-      />
-      <BarKey
-        id="power"
-        label={isAmps ? "Amps" : "EU/t"}
-        width={36}
-        tip="Show power as EU/t, or as amps at each machine's tier"
-        onClick={togglePower}
-        onContext={togglePower}
-        onWheel={scrollChangesValues ? togglePower : undefined}
-      />
-      <BarKey
-        id="annotate"
-        gap
-        icon
-        off={isReadOnly}
-        ariaLabel="Annotations"
-        tip="Add a sticky note, box or arrow, or change the background"
-        menuAnchor
-        onClick={(event) => {
-          const rect = event.currentTarget.getBoundingClientRect();
-          getBoardCommands()?.openBoardMenu?.({ x: rect.left, y: rect.bottom + 2 });
-        }}
-      >
-        <PixelIcon name="pencil" />
-      </BarKey>
+        <BarKey
+          id="arrange"
+          label={arrangeLabel(arrange)}
+          width={arrange.running ? 90 : undefined}
+          tip="Auto-arrange the plan (press again to stop)"
+          off={isReadOnly}
+          onClick={() => pressArrange()}
+        />
+        <BarKey
+          id="fit"
+          label="Fit"
+          width={24}
+          tip="Zoom to fit the whole plan"
+          onClick={() => getBoardCommands()?.fit()}
+        />
+        <BarKey
+          id="rate"
+          gap
+          label={RATE_LABEL[rateUnit] ?? "/s"}
+          width={32}
+          tip="Rate unit: per tick, second, minute or hour"
+          onClick={() => stepRate(1)}
+          onContext={() => stepRate(-1)}
+          onWheel={scrollChangesValues ? stepRate : undefined}
+        />
+        <BarKey
+          id="power"
+          label={isAmps ? "Amps" : "EU/t"}
+          width={36}
+          tip="Show power as EU/t, or as amps at each machine's tier"
+          onClick={togglePower}
+          onContext={togglePower}
+          onWheel={scrollChangesValues ? togglePower : undefined}
+        />
+        <BarKey
+          id="annotate"
+          gap
+          icon
+          off={isReadOnly}
+          ariaLabel="Annotations"
+          tip="Add a sticky note, box or arrow, or change the background"
+          menuAnchor
+          onClick={(event) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            getBoardCommands()?.openBoardMenu?.({ x: rect.left, y: rect.bottom + 2 });
+          }}
+        >
+          <PixelIcon name="pencil" />
+        </BarKey>
       </div>
     </>
   );

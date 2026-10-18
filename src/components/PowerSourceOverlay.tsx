@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -36,6 +38,7 @@ const TIER_FILTER_OPTIONS = GT_VOLTAGE_TIERS.map((entry) => entry.tier).filter((
 );
 
 export function PowerSourceOverlay() {
+  const _i18nT = useT();
   const open = useFactoryStore((state) => state.powerMenuOpen);
   const closePowerMenu = useFactoryStore((state) => state.closePowerMenu);
   const addPowerSourceNode = useFactoryStore((state) => state.addPowerSourceNode);
@@ -93,8 +96,8 @@ export function PowerSourceOverlay() {
   const closeButton = (
     <button
       type="button"
-      title="Close (Esc)"
-      aria-label="Close power sources"
+      title={_i18nT("Close (Esc)")}
+      aria-label={_i18nT("Close power sources")}
       onClick={closePowerMenu}
       className={[
         "flex shrink-0 cursor-pointer items-center justify-center border-2 border-[var(--mc-33)] bg-[var(--mc-61)] hover:bg-[var(--mc-85)]",
@@ -121,7 +124,7 @@ export function PowerSourceOverlay() {
     >
       <section
         className="pointer-events-auto relative flex flex-col font-mono"
-        aria-label="Power sources"
+        aria-label={_i18nT("Power sources")}
         style={{
           // Browsing is five columns at most, so past their reach the panel
           // stops and centers instead of trailing a bare right half; a
@@ -147,7 +150,7 @@ export function PowerSourceOverlay() {
           >
             <div className={compact ? "flex items-center gap-2" : "contents"}>
               <Zap className="h-4 w-4 shrink-0 text-amber-300" aria-hidden />
-              <span className="shrink-0 text-sm uppercase tracking-wide">Power sources</span>
+              <span className="shrink-0 text-sm uppercase tracking-wide"><I18nText>Power sources</I18nText></span>
               {compact ? closeButton : null}
             </div>
             <div className={compact ? "flex items-center gap-2" : "contents"}>
@@ -157,21 +160,21 @@ export function PowerSourceOverlay() {
                   autoFocus={!compact}
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Machine, fuel, or product..."
+                  placeholder={_i18nT("Machine, fuel, or product...")}
                   className="h-9 w-full border-2 border-[var(--mc-33)] bg-[var(--mc-61)] pl-7 pr-2 text-sm text-[var(--mc-ink)] placeholder:text-[var(--mc-ink)]/50 focus:outline-none"
                 />
               </label>
               <select
                 value={groupFilter}
                 onChange={(event) => setGroupFilter(event.target.value as PowerGroupId | "all")}
-                title="Power type"
-                aria-label="Power type"
+                title={_i18nT("Power type")}
+                aria-label={_i18nT("Power type")}
                 className={[
                   "h-9 shrink-0 border-2 border-[var(--mc-33)] bg-[#17191d] px-1.5 text-sm text-neutral-100 shadow-[inset_2px_2px_0_#30343b,inset_-2px_-2px_0_#050607] outline-none",
                   compact ? "w-28" : "w-36",
                 ].join(" ")}
               >
-                <option value="all">All types</option>
+                <option value="all"><I18nText>All types</I18nText></option>
                 {POWER_GROUPS.map((group) => (
                   <option key={group.id} value={group.id}>
                     {group.name}
@@ -181,14 +184,14 @@ export function PowerSourceOverlay() {
               <select
                 value={tierFilter}
                 onChange={(event) => setTierFilter(event.target.value)}
-                title="Unlock tier"
-                aria-label="Unlock tier"
+                title={_i18nT("Unlock tier")}
+                aria-label={_i18nT("Unlock tier")}
                 className={[
                   "h-9 shrink-0 border-2 border-[var(--mc-33)] bg-[#17191d] px-1.5 text-sm text-neutral-100 shadow-[inset_2px_2px_0_#30343b,inset_-2px_-2px_0_#050607] outline-none",
                   compact ? "w-20" : "w-24",
                 ].join(" ")}
               >
-                <option value="all">All tiers</option>
+                <option value="all"><I18nText>All tiers</I18nText></option>
                 {TIER_FILTER_OPTIONS.map((tier) => (
                   <option key={tier} value={tier}>
                     {tier}
@@ -202,10 +205,10 @@ export function PowerSourceOverlay() {
           <div className="recipe-search-scroll min-h-0 flex-1 overflow-y-auto p-3">
             {searching ? (
               hits.length === 0 ? (
-                <p className="p-2 text-sm text-[var(--mc-ink)]/60">
+                <p className="p-2 text-sm text-[var(--mc-ink)]/60"><I18nText>
                   No power source matches. Machines are searched by name and by every fuel and
                   product they can run on.
-                </p>
+                </I18nText></p>
               ) : (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] items-start gap-3">
                   {hits.map((hit) => (
@@ -375,7 +378,7 @@ function PowerSourceCard({
             ) : (
               <ArrowLeft className="h-3 w-3 shrink-0" aria-hidden />
             )}
-            {via.direction === "takes" ? `Takes ${via.name}` : `Makes ${via.name}`}
+            <I18nText>{via.direction === "takes" ? `Takes ${via.name}` : `Makes ${via.name}`}</I18nText>
           </span>
         ) : null}
       </span>

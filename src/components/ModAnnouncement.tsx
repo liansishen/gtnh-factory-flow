@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useEffect, useRef, useState } from "react";
 import "./chrome/mod-panel.css";
@@ -40,6 +42,7 @@ function markDismissed(): void {
  * trailer and the download. Shown once per browser; closing it is final.
  */
 export function ModAnnouncement() {
+  const _i18nT = useT();
   const [isOpen, setOpen] = useState(false);
 
   useEffect(() => {
@@ -94,7 +97,7 @@ export function ModAnnouncement() {
           <button
             type="button"
             onClick={close}
-            aria-label="Close"
+            aria-label={_i18nT("Close")}
             className="absolute right-3 top-3 z-10 rounded p-1.5 text-fg-subtle hover:bg-surface-raised hover:text-fg"
           >
             <X className="h-5 w-5" />
@@ -102,12 +105,12 @@ export function ModAnnouncement() {
           <h2
             id="mod-announcement-title"
             className="pr-8 text-[22px] leading-tight compact:text-[16px]"
-          >
-            GTNH <span className="text-cyan-400">Planner</span> is now in the game!
-          </h2>
-          <p className="mt-2 text-lg text-fg-muted compact:text-base">
+          ><I18nText>
+            GTNH </I18nText><span className="text-cyan-400"><I18nText>Planner</I18nText></span><I18nText> is now in the game!
+          </I18nText></h2>
+          <p className="mt-2 text-lg text-fg-muted compact:text-base"><I18nText>
             Plan your factories right from NEI, just like the site. Check out the video!
-          </p>
+          </I18nText></p>
         </div>
 
         <TrailerPlayer />
@@ -117,9 +120,9 @@ export function ModAnnouncement() {
             type="button"
             onClick={close}
             className={`${ACTION} border-line-strong text-fg-subtle hover:bg-surface-raised`}
-          >
+          ><I18nText>
             Dismiss
-          </button>
+          </I18nText></button>
           <a
             href={MOD_RELEASE_URL}
             target="_blank"
@@ -127,9 +130,9 @@ export function ModAnnouncement() {
             onClick={markDismissed}
             className={`${ACTION} border-cyan-600 bg-cyan-600/20 text-cyan-200 hover:bg-cyan-600/30`}
           >
-            <Download className="h-4 w-4" aria-hidden />
+            <Download className="h-4 w-4" aria-hidden /><I18nText>
             Get the mod
-          </a>
+          </I18nText></a>
         </div>
       </div>
     </div>
@@ -147,6 +150,7 @@ const ACTION =
  * player's to spend.
  */
 function TrailerPlayer() {
+  const _i18nT = useT();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [started, setStarted] = useState(false);
   return (
@@ -165,7 +169,7 @@ function TrailerPlayer() {
       {started ? null : (
         <button
           type="button"
-          aria-label="Play the trailer"
+          aria-label={_i18nT("Play the trailer")}
           onClick={() => {
             setStarted(true);
             void videoRef.current?.play();

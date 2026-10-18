@@ -35,7 +35,7 @@ describe("the settings box", () => {
   it("is a centred box with the mod's sections and a picture beside the rows", () => {
     render(<ModSettings onClose={vi.fn()} />);
     expect(screen.getByRole("dialog", { name: "Settings" })).toBeTruthy();
-    expect(sections()).toEqual(["Board", "Minimap", "Sound", "Controls"]);
+    expect(sections()).toEqual(["Board", "Minimap", "Sound", "Controls", "Language"]);
     expect(rowLabels()).toEqual([
       "Size",
       "Names when zoomed out",
@@ -156,6 +156,18 @@ describe("the settings box", () => {
     fireEvent.click(screen.getByText("Loud"));
     expect(areBoardSoundsEnabled()).toBe(true);
     expect(getBoardSoundVolume()).toBeGreaterThan(0.8);
+  });
+
+  it("Language is the planner's language, a native select of English and 中文", () => {
+    render(<ModSettings onClose={vi.fn()} />);
+    fireEvent.click(screen.getByText("Language"));
+    const select = document.querySelector<HTMLSelectElement>(".ms-select");
+    expect(select).toBeTruthy();
+    expect([...select!.options].map((option) => option.value)).toEqual(["en", "zh-CN"]);
+    expect([...select!.options].map((option) => option.textContent)).toEqual([
+      "English",
+      "简体中文",
+    ]);
   });
 
   it("Controls hands over to the controls list, and Escape and the close key close the box", () => {

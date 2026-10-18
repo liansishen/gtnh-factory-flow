@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { parseRateInput } from "./rail-math";
@@ -136,6 +138,7 @@ export function RateBox({
   label: string;
   width?: number;
 }) {
+  const _i18nT = useT();
   const style = width ? { width } : undefined;
   if (editing) {
     return (
@@ -181,7 +184,7 @@ export function RateBox({
         onMiddle();
       }}
     >
-      <span>{gold ? text : placeholder}</span>
+      <span>{gold ? text : _i18nT(placeholder)}</span>
     </div>
   );
 }
@@ -199,6 +202,7 @@ function RateEditor({
   style?: { width: number };
   label: string;
 }) {
+  const _i18nT = useT();
   const [value, setValue] = useState(initial);
   const input = useRef<HTMLInputElement>(null);
   const done = useRef(false);
@@ -227,7 +231,7 @@ function RateEditor({
       ref={input}
       className="rail-box rail-box-edit"
       style={style}
-      aria-label={`${label} (type a number: 2.5k, 1M, 1/3)`}
+      aria-label={_i18nT(`${label} (type a number: 2.5k, 1M, 1/3)`)}
       value={value}
       inputMode="decimal"
       spellCheck={false}

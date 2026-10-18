@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ChevronDown, History, X } from "lucide-react";
@@ -22,6 +24,7 @@ export function ChangelogDialog({
   /** Which versions this reader has not seen; these are what opens on top. */
   unseenVersions?: ReadonlySet<string>;
 }) {
+  const _i18nT = useT();
   // Memoized because it feeds the useMemo below: a fresh empty Set every
   // render would re-split the list on every keystroke the dialog ever sees.
   const unseen = useMemo(() => unseenVersions ?? new Set<string>(), [unseenVersions]);
@@ -66,7 +69,7 @@ export function ChangelogDialog({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="What's new in GTNH Planner"
+        aria-label={_i18nT("What's new in GTNH Planner")}
         className="flex max-h-[calc(88*var(--ui-vh))] w-full max-w-4xl flex-col overflow-hidden rounded-lg border border-line-strong bg-surface shadow-2xl compact:max-h-[calc(92*var(--ui-vh))]"
         onClick={(event) => event.stopPropagation()}
       >
@@ -83,9 +86,9 @@ export function ChangelogDialog({
             <div className="border-t border-line py-4">
               {showHistory ? (
                 <div ref={historyRef}>
-                  <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-fg-muted">
+                  <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-fg-muted"><I18nText>
                     Earlier releases
-                  </p>
+                  </I18nText></p>
                   <ul>
                     {history.map((entry) => (
                       <EntryRow key={entry.version} entry={entry} />
@@ -110,7 +113,7 @@ export function ChangelogDialog({
                   className="flex w-full items-center justify-center gap-2 rounded border border-line-strong px-3 py-2.5 text-xs font-bold text-fg-subtle hover:border-cyan-700 hover:bg-surface-raised hover:text-cyan-300"
                 >
                   <History className="h-3.5 w-3.5" aria-hidden />
-                  {`Full history (${history.length} earlier release${history.length === 1 ? "" : "s"})`}
+                  <I18nText>{`Full history (${history.length} earlier release${history.length === 1 ? "" : "s"})`}</I18nText>
                   <ChevronDown className="h-3.5 w-3.5" aria-hidden />
                 </button>
               )}
@@ -132,6 +135,7 @@ function Masthead({
   oldestMissed?: string;
   onClose: () => void;
 }) {
+  const _i18nT = useT();
   return (
     <div
       className="relative shrink-0 overflow-hidden border-b border-line bg-gradient-to-br from-surface-raised to-surface px-6 py-5 compact:px-4 compact:py-4"
@@ -139,7 +143,7 @@ function Masthead({
       <button
         type="button"
         onClick={onClose}
-        aria-label="Close"
+        aria-label={_i18nT("Close")}
         // Above the title block, which is `relative` to clear the glow behind
         // it and would otherwise paint over this button and eat the click.
         className="absolute right-3 top-3 z-10 rounded p-1.5 text-fg-subtle hover:bg-surface-raised hover:text-fg"
@@ -147,19 +151,19 @@ function Masthead({
         <X className="h-4 w-4" />
       </button>
 
-      <p className="relative text-sm font-black tracking-tight">
-        GTNH <span className="text-cyan-400">Planner</span>
+      <p className="relative text-sm font-black tracking-tight"><I18nText>
+        GTNH </I18nText><span className="text-cyan-400"><I18nText>Planner</I18nText></span>
       </p>
 
       {/* No version number up here. The entry below leads with its own, the
           header chip carries the one you are running, and a third copy in the
           title just made the reader check whether the three agreed. */}
-      <h2 className="relative mt-1.5 text-2xl font-black leading-none tracking-tight compact:text-xl">
+      <h2 className="relative mt-1.5 text-2xl font-black leading-none tracking-tight compact:text-xl"><I18nText>
         What&apos;s new
-      </h2>
+      </I18nText></h2>
 
       <p className="relative mt-2 text-sm text-fg-muted">
-        {missedCount === 1
+        <I18nText>{missedCount === 1
           ? "One release since your last visit."
           : missedCount > 1
             ? // Counted and dated, because "some updates" is not a reason to
@@ -168,13 +172,14 @@ function Masthead({
                 oldestMissed ? ` (v${oldestMissed} onwards)` : ""
               }. Here they are.`
             : // Not "you are up to date": the sheet still shows the recent notes.
-              "Everything that has changed, newest first."}
+              "Everything that has changed, newest first."}</I18nText>
       </p>
     </div>
   );
 }
 
 function EntryRow({ entry }: { entry: ChangelogEntry }) {
+  const t = useT();
   return (
     <li
       // A rule between releases, not a gap: at this width the eye needs telling
@@ -188,26 +193,26 @@ function EntryRow({ entry }: { entry: ChangelogEntry }) {
             "text-lg font-black leading-none tabular-nums",
             entry.version === APP_VERSION ? "text-cyan-300" : "text-fg",
           ].join(" ")}
-        >
-          v{entry.version}
+        ><I18nText>
+          v</I18nText>{entry.version}
         </p>
         <p className="mt-1 text-[11px] tabular-nums text-fg-muted">{formatEntryDate(entry.date)}</p>
         {/* Marks the entry as one to actually stop at, in the rail where the
             eye is already scanning for a version. */}
         {entry.warning ? (
           <span className="mt-1.5 inline-flex items-center gap-1 rounded border border-amber-500/70 bg-amber-500/20 px-1.5 py-px text-[10px] font-black uppercase tracking-wide text-amber-200">
-            <AlertTriangle className="h-3 w-3" aria-hidden />
+            <AlertTriangle className="h-3 w-3" aria-hidden /><I18nText>
             Read this
-          </span>
+          </I18nText></span>
         ) : null}
       </div>
       <div className="min-w-0">
-        <h3 className="text-base font-bold leading-snug text-fg">{entry.headline}</h3>
+        <h3 className="text-base font-bold leading-snug text-fg"><I18nText>{entry.headline}</I18nText></h3>
         <ul className="mt-2 space-y-2">
           {entry.notes.map((note) => (
             <li key={note} className="flex gap-2 text-sm leading-relaxed text-fg-muted">
               <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-500" />
-              <span>{renderEmphasis(note)}</span>
+              <span>{renderEmphasis(t(note))}</span>
             </li>
           ))}
         </ul>
@@ -223,13 +228,13 @@ function EntryRow({ entry }: { entry: ChangelogEntry }) {
               <div className="mb-2.5 flex items-start gap-2.5">
                 <AlertTriangle className="mt-px h-4 w-4 shrink-0 text-amber-400" aria-hidden />
                 <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-wide text-amber-300">
+                  <p className="text-xs font-black uppercase tracking-wide text-amber-300"><I18nText>
                     Heads up
-                  </p>
+                  </I18nText></p>
                   {/* Lit in the callout's OWN colour: the notes' cyan means
                       "all fine" and would clash inside an amber warning. */}
                   <p className="mt-1 text-sm leading-relaxed text-amber-100/90">
-                    {renderEmphasis(entry.warning, "text-amber-200")}
+                    {renderEmphasis(t(entry.warning), "text-amber-200")}
                   </p>
                 </div>
               </div>
@@ -243,7 +248,7 @@ function EntryRow({ entry }: { entry: ChangelogEntry }) {
                   rel="noreferrer"
                   className="rounded border border-line-strong px-3 py-1.5 text-xs font-bold text-fg-subtle hover:bg-surface-raised"
                 >
-                  {action.label}
+                  <I18nText>{action.label}</I18nText>
                 </a>
               ))}
             </div>

@@ -242,6 +242,15 @@ describe("the rail's layout", () => {
     expect(names.length).toBeGreaterThan(0);
   });
 
+  it("filters by a Chinese resource name", () => {
+    const { placed } = layoutRail({ rail, spares, filter: "铜", folded: new Set(), peak: true });
+    const names = placed
+      .filter((p) => p.item.t === "line")
+      .map((p) => (p.item as { line: { label: string } }).line.label);
+    expect(names.length).toBeGreaterThan(0);
+    expect(names.every((n) => n.toLowerCase().includes("copper"))).toBe(true);
+  });
+
   it("says so when nothing matches or nothing is there", () => {
     const empty = buildRailModel(mockForced.project, undefined);
     const { placed } = layoutRail({

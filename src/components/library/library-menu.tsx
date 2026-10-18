@@ -1,6 +1,7 @@
 "use client";
 
 import { useDropdownDismiss } from "@/lib/hooks/use-dropdown-dismiss";
+import { I18nText } from "@/lib/i18n/react";
 
 import { useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -96,7 +97,9 @@ export function MenuItem({
         tone === "danger" ? "text-red-400" : "text-[var(--mc-ink)]",
       ].join(" ")}
     >
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="min-w-0 flex-1 truncate">
+        <I18nText>{label}</I18nText>
+      </span>
       {checked ? <span className="text-cyan-300">✓</span> : null}
     </button>
   );
@@ -120,10 +123,6 @@ export function ArmedMenuItem({
   onFire: () => void;
 }) {
   return (
-    <MenuItem
-      label={armed ? armedLabel : label}
-      tone="danger"
-      onClick={armed ? onFire : onArm}
-    />
+    <MenuItem label={armed ? armedLabel : label} tone="danger" onClick={armed ? onFire : onArm} />
   );
 }

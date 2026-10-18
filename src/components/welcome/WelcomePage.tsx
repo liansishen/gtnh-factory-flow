@@ -1,13 +1,7 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
 
-import {
-  Download,
-  Factory,
-  Library,
-  Plus,
-  Search,
-  ThumbsUp,
-} from "lucide-react";
+import { Download, Factory, Library, Plus, Search, ThumbsUp } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { FLUID_ICON_SCALE, ResourceIcon } from "@/components/nei/ResourceIcon";
 import { DEFAULT_DATASET_MANIFEST_URL } from "@/lib/datasets";
@@ -102,16 +96,20 @@ export function WelcomePage() {
           <header className="flex flex-col items-start gap-3">
             <div className="flex items-baseline gap-3">
               <h1 className="text-[22px] leading-none text-white compact:text-[18px]">
-                <span className="text-cyan-300">GTNH</span> Planner
+                <span className="text-cyan-300">
+                  <I18nText>GTNH</I18nText>
+                </span>
+                <I18nText> Planner</I18nText>
               </h1>
               <span className="border border-line-strong px-1.5 py-0.5 text-[11px] text-fg-muted">
                 v{APP_VERSION}
               </span>
             </div>
             <p className="max-w-[600px] text-[13px] leading-relaxed text-fg-subtle">
-              Draw a GregTech: New Horizons factory as a flowchart. Every card is a
-              real recipe, every wire carries a real rate, and
-              the board counts the machines you need.
+              <I18nText>
+                Draw a GregTech: New Horizons factory as a flowchart. Every card is a real recipe,
+                every wire carries a real rate, and the board counts the machines you need.
+              </I18nText>
             </p>
             <div className="mt-1 flex flex-wrap gap-2">
               <PrimaryButton
@@ -123,20 +121,19 @@ export function WelcomePage() {
                   // An empty untitled plan already open is the new design: a second one would only sit beside it.
                   const { project } = useFactoryStore.getState();
                   const blank =
-                    project.nodes.length === 0 && (project.storages ?? []).length === 0 && (project.annotations ?? []).length === 0;
+                    project.nodes.length === 0 &&
+                    (project.storages ?? []).length === 0 &&
+                    (project.annotations ?? []).length === 0;
                   const open = useDesignStore.getState();
                   const current = open.designs.find((design) => design.id === open.activeDesignId);
                   if (blank && current?.name === UNTITLED_DESIGN_NAME && !current.closed) return;
                   void addDesign();
                 }}
               >
-                New design
+                <I18nText>New design</I18nText>
               </PrimaryButton>
-              <SecondaryButton
-                icon={Factory}
-                onClick={() => openLibrary({ kind: "public" })}
-              >
-                Browse shared setups
+              <SecondaryButton icon={Factory} onClick={() => openLibrary({ kind: "public" })}>
+                <I18nText>Browse shared setups</I18nText>
               </SecondaryButton>
               <SecondaryButton
                 icon={Search}
@@ -145,11 +142,11 @@ export function WelcomePage() {
                   openSidebarTab("items", { focusSearch: true });
                 }}
               >
-                Find a recipe
+                <I18nText>Find a recipe</I18nText>
               </SecondaryButton>
               {/* Your own designs live in the library, not on this page. */}
               <SecondaryButton icon={Library} onClick={() => openLibrary()}>
-                Your plans
+                <I18nText>Your plans</I18nText>
               </SecondaryButton>
             </div>
           </header>
@@ -164,7 +161,7 @@ export function WelcomePage() {
                 onChange={(event) => setWelcomeOnStartup(event.target.checked)}
                 className="h-3.5 w-3.5 accent-cyan-400"
               />
-              Open on this tab when I arrive
+              <I18nText>Open on this tab when I arrive</I18nText>
             </label>
           </footer>
         </div>
@@ -177,9 +174,7 @@ export function WelcomePage() {
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 className="flex items-center gap-2 text-[11px] uppercase text-[#aebccd]">
-      {children}
-    </h2>
+    <h2 className="flex items-center gap-2 text-[11px] uppercase text-[#aebccd]">{children}</h2>
   );
 }
 
@@ -287,7 +282,12 @@ function CommunityShelf() {
   const open = async (plan: CommunityPlanSummary) => {
     setBusyId(plan.id);
     try {
-      await openCommunityPost({ id: plan.id, name: plan.name, isMine: plan.isMine === true, authorName: plan.authorName });
+      await openCommunityPost({
+        id: plan.id,
+        name: plan.name,
+        isMine: plan.isMine === true,
+        authorName: plan.authorName,
+      });
     } catch (openError) {
       setError(openError instanceof Error ? openError.message : "Opening the setup failed.");
     } finally {
@@ -299,7 +299,7 @@ function CommunityShelf() {
     <section className="flex flex-col gap-2">
       <SectionTitle>
         <Factory className="h-3.5 w-3.5 text-cyan-300" aria-hidden />
-        New from the community
+        <I18nText>New from the community</I18nText>
       </SectionTitle>
       {error ? <p className="text-[12px] text-amber-300">{error}</p> : null}
       <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">

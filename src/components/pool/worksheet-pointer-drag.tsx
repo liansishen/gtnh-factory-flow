@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import {
   createContext,
@@ -252,9 +254,9 @@ export function WorksheetPointerDrag({ children }: { children: ReactNode }) {
                 <GripVertical size={20} />
               )}
               <span>
-                {"resource" in preview.payload
+                <I18nText game>{"resource" in preview.payload
                   ? resourceLabel(preview.payload.resource)
-                  : preview.payload.label}
+                  : preview.payload.label}</I18nText>
               </span>
             </div>,
             document.body,

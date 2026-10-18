@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { forwardRef, type CSSProperties } from "react";
 import { wheelChangesValues } from "@/lib/device-settings";
@@ -28,9 +30,10 @@ export function MouseIcon({ input }: { input: TipInput }) {
 }
 
 function Gold({ text }: { text: string }) {
+  const t = useT();
   return (
     <>
-      {splitGold(text).map((run, index) =>
+      {splitGold(t(text)).map((run, index) =>
         run.gold ? (
           <span key={index} className="tp-gold">
             {run.text}
@@ -58,13 +61,13 @@ export const TipPanel = forwardRef<HTMLDivElement, TipPanelProps>(function TipPa
   const actions = spec.actions?.filter((action) => action.input !== "wheel" || wheelChangesValues());
   return (
     <div ref={ref} className="tp ui-zoom" data-clean-tip="" data-tip-panel={spec.panel ? spec.panel.kind : undefined} style={style}>
-      <div className="tp-title">{spec.title}</div>
-      {spec.sub ? <div className="tp-sub">{spec.sub}</div> : null}
+      <div className="tp-title">{spec.verbatimTitle ? spec.title : <I18nText game>{spec.title}</I18nText>}</div>
+      {spec.sub ? <div className="tp-sub"><I18nText>{spec.sub}</I18nText></div> : null}
             {spec.rows?.map((row, index) => (
         <div key={index} className="tp-row">
-          <span className="tp-label">{row.label}</span>
+          <span className="tp-label"><I18nText>{row.label}</I18nText></span>
           <span className="tp-value" data-tone={row.tone && row.tone !== "plain" ? row.tone : undefined}>
-            {row.value}
+            <I18nText game>{row.value}</I18nText>
           </span>
         </div>
       ))}
@@ -80,7 +83,7 @@ export const TipPanel = forwardRef<HTMLDivElement, TipPanelProps>(function TipPa
             {actions.map((action, index) => (
               <span key={index} className="tp-action">
                 <MouseIcon input={action.input} />
-                {action.label}
+                <I18nText>{action.label}</I18nText>
               </span>
             ))}
           </div>

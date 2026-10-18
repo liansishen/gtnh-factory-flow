@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { createContext, useContext } from "react";
 import { GripVertical } from "lucide-react";
@@ -40,6 +42,7 @@ export function moveWorksheetEntry(
 }
 
 export function OrderHandle({ kind, id, label }: { kind: ListKind; id: string; label: string }) {
+  const _i18nT = useT();
   const { readOnly, ids, move } = useContext(WorksheetOrderContext);
   const { begin } = useWorksheetPointerDrag();
   if (readOnly) return null;
@@ -48,7 +51,7 @@ export function OrderHandle({ kind, id, label }: { kind: ListKind; id: string; l
       type="button"
       draggable={false}
       className="pool-order-handle"
-      aria-label={`Reorder ${label}`}
+      aria-label={_i18nT(`Reorder ${label}`)}
 
       onPointerDown={(event) => begin(event, { kind, id, label })}
       onDragStart={(event) => event.preventDefault()}

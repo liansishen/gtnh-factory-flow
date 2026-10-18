@@ -1,4 +1,8 @@
 "use client";
+import { matchesGameNameFilter } from "@/lib/i18n/game-search";
+
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useDropdownDismiss } from "@/lib/hooks/use-dropdown-dismiss";
 import { wheelChangesValues } from "@/lib/device-settings";
@@ -163,6 +167,7 @@ export function SettingTile({
   /** A small mark before the caption (the crop pips). */
   captionMark?: ReactNode;
 }) {
+  const _i18nT = useT();
   const wellRef = useRef<HTMLSpanElement>(null);
   const pressTimer = useRef<number | undefined>(undefined);
   const openList = () => {
@@ -205,7 +210,7 @@ export function SettingTile({
             event.stopPropagation();
             onStep(-1);
           }}
-          aria-label={`Previous ${caption}`}
+          aria-label={_i18nT(`Previous ${caption}`)}
         >
           <Minus className="h-3 w-3" />
         </button>
@@ -242,7 +247,7 @@ export function SettingTile({
             event.stopPropagation();
             onStep(1);
           }}
-          aria-label={`Next ${caption}`}
+          aria-label={_i18nT(`Next ${caption}`)}
         >
           <Plus className="h-3 w-3" />
         </button>
@@ -274,12 +279,13 @@ export function SettingListMenu({
   /** A filter box at the top, for lists picked by name. */
   searchable?: boolean;
 }) {
+  const _i18nT = useT();
   const rootRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const viewport = useDropdownViewport();
   // Numbered hatch choices should match with or without thousands separators.
   const needle = query.trim().toLowerCase().replaceAll(",", "");
-  const shown = needle ? rows.filter((row) => row.label.toLowerCase().replaceAll(",", "").includes(needle)) : rows;
+  const shown = needle ? rows.filter((row) => matchesGameNameFilter(needle, row.label.replaceAll(",", ""))) : rows;
   useDropdownDismiss(true, { refs: [rootRef], onClose, fade: true });
   if (typeof document === "undefined") return null;
   // The anchor rect and the window are real px; this box is zoomed (ui-zoom),
@@ -316,15 +322,15 @@ export function SettingListMenu({
                 onPick(shown[0].key);
               }
             }}
-            placeholder="Filter..."
-            aria-label="Filter options"
+            placeholder={_i18nT("Filter...")}
+            aria-label={_i18nT("Filter options")}
             className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[var(--mc-ink-muted)]"
           />
         </label>
       ) : null}
       <div className="min-h-0 overflow-y-auto">
       {shown.length === 0 ? (
-        <div className="px-2 py-1.5 text-[12px] text-[var(--mc-ink-muted)]">No match.</div>
+        <div className="px-2 py-1.5 text-[12px] text-[var(--mc-ink-muted)]"><I18nText>No match.</I18nText></div>
       ) : null}
       {shown.map((row) => (
         <button
@@ -342,7 +348,7 @@ export function SettingListMenu({
           ].join(" ")}
         >
           {row.face ? <Face resource={row.face} /> : null}
-          <span className="min-w-0 flex-1 truncate">{row.label}</span>
+          <span className="min-w-0 flex-1 truncate"><I18nText>{row.label}</I18nText></span>
           {row.hint ? <span className="shrink-0 text-[10px] text-[var(--mc-ink-muted)]">{row.hint}</span> : null}
         </button>
       ))}
@@ -407,7 +413,7 @@ export function SettingSelectTile({
       >
         <span className="flex min-w-0 items-center gap-1">
           {current?.face ? <Face resource={current.face} /> : null}
-          <span className="min-w-0 truncate">{current?.label ?? currentKey}</span>
+          <span className="min-w-0 truncate"><I18nText>{current?.label ?? currentKey}</I18nText></span>
         </span>
         <ChevronDown className="h-3 w-3 shrink-0 text-[var(--mc-ink-muted)]" />
       </button>

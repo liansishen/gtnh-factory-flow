@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { getUiScale } from "@/lib/ui-scale";
@@ -62,6 +64,7 @@ export function Callout({
   onBack: () => void;
   onLeave: () => void;
 }) {
+  const _i18nT = useT();
   const boxRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const lines: Line[] = useMemo(() => parseLines(note.text), [note.text]);
@@ -160,20 +163,20 @@ export function Callout({
           ))}
         </div>
         <div className="tour-keys">
-          <div role="button" aria-label="Leave the tour" title="Leave the tour (Esc)" className="tour-key tour-key-x" onClick={onLeave} />
+          <div role="button" aria-label={_i18nT("Leave the tour")} title={_i18nT("Leave the tour (Esc)")} className="tour-key tour-key-x" onClick={onLeave} />
           <span className="tour-keys-gap" />
           <div
             role="button"
-            aria-label="Back"
-            title="Back (left arrow)"
+            aria-label={_i18nT("Back")}
+            title={_i18nT("Back (left arrow)")}
             className="tour-key tour-key-back"
             data-off={canBack ? undefined : ""}
             onClick={canBack ? onBack : undefined}
           />
           <div
             role="button"
-            aria-label={last ? "Finish" : "Next"}
-            title={last ? "Finish (Enter)" : "Next (right arrow, Space or Enter)"}
+            aria-label={_i18nT(last ? "Finish" : "Next")}
+            title={_i18nT(last ? "Finish (Enter)" : "Next (right arrow, Space or Enter)")}
             className="tour-key tour-key-next"
             data-done={done ? "" : undefined}
             data-last={last ? "" : undefined}

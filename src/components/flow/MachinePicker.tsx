@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -219,6 +221,7 @@ export function MachineMenu({
   /** The heading over the machine rows; a shared card says "every recipe on this card". */
   title?: string;
 }) {
+  const _i18nT = useT();
   const rootRef = useRef<HTMLDivElement>(null);
   // The menu PORTALS to the body, like the crop and hatch menus: inside the
   // card it would sit in the node layer, under the marching-dash canvas and
@@ -326,7 +329,7 @@ export function MachineMenu({
     <div
       ref={rootRef}
       role="listbox"
-      aria-label="Machine"
+      aria-label={_i18nT("Machine")}
       className="ui-zoom nodrag nowheel z-[300] overflow-y-auto overflow-x-hidden border-2 border-[var(--mc-15)] bg-[var(--mc-49)] py-1.5 shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25),2px_3px_6px_rgba(0,0,0,0.2)]"
       style={{ position: "fixed", left: anchorAt.left, top: anchorAt.top, bottom: anchorAt.bottom, width: anchorAt.width, maxHeight: anchorAt.maxHeight }}
       onClick={(event) => event.stopPropagation()}
@@ -373,7 +376,7 @@ export function MachineMenu({
                 />
               ) : null}
             </span>
-            <span title={handler.label} style={narrow ? { gridColumn: "2 / 4", whiteSpace: "normal", overflowWrap: "anywhere" } : undefined} className={getFusionMachine(handler.machineType) ? "min-w-0 whitespace-normal" : "min-w-0 truncate"}>{handler.label}</span>
+            <span title={handler.label} style={narrow ? { gridColumn: "2 / 4", whiteSpace: "normal", overflowWrap: "anywhere" } : undefined} className={getFusionMachine(handler.machineType) ? "min-w-0 whitespace-normal" : "min-w-0 truncate"}><I18nText game>{handler.label}</I18nText></span>
             {figures ? <DurationFigure seconds={stats.seconds} /> : <span />}
             {figures ? <Figure value={power.value} unit={power.unit} dim={power.unit === ""} /> : <span />}
           </button>
@@ -386,9 +389,9 @@ export function MachineMenu({
               so the figures line up; a muted map name after the machine when
               the two differ (Auto Workbench running a Shaped Crafting
               recipe). Everything here is a swap of the whole recipe. */}
-          <div className="mx-3 mt-1.5 border-t-2 border-[var(--mc-33)] pt-2 text-[13px] uppercase tracking-wide text-[var(--mc-ink-muted)]">
+          <div className="mx-3 mt-1.5 border-t-2 border-[var(--mc-33)] pt-2 text-[13px] uppercase tracking-wide text-[var(--mc-ink-muted)]"><I18nText>
             Other recipes that take and make the same items
-          </div>
+          </I18nText></div>
           {twinRows.map(({ twin, stats, power }) => {
               const icon = iconsById.get(twin.handler.id) ?? mapIcons?.get(twin.recipe.recipeMap);
               const showMap = twin.recipe.recipeMap !== twin.handler.label;
@@ -420,7 +423,7 @@ export function MachineMenu({
                     ) : null}
                   </span>
                   <span className="min-w-0 truncate" style={narrow ? { gridColumn: "2 / 4", whiteSpace: "normal", overflowWrap: "anywhere" } : undefined}>
-                    {twin.handler.label}
+                    <I18nText game>{twin.handler.label}</I18nText>
                     {showMap ? (
                       <span className="ml-2 text-[13px] text-[var(--mc-ink-muted)]">{twin.recipe.recipeMap}</span>
                     ) : null}
@@ -447,7 +450,7 @@ export function MachineMenu({
           className="mx-3 mt-1.5 flex w-[calc(100%-24px)] items-center gap-4 border-t-2 border-[var(--mc-33)] px-0 py-2 pt-3 text-left text-[17px] leading-[24px] text-[var(--mc-ink)] hover:bg-[var(--mc-61)] hover:text-white"
         >
           <span className="flex h-9 w-9 items-center justify-center text-[24px] font-black leading-none">+</span>
-          <span className="min-w-0 whitespace-normal">Add another recipe to this machine</span>
+          <span className="min-w-0 whitespace-normal"><I18nText>Add another recipe to this machine</I18nText></span>
         </button>
       ) : null}
     </div>

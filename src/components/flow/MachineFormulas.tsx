@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
@@ -56,6 +58,7 @@ function Term({ term }: { term: FormulaTerm }) {
  * its head; the choice is a browser preference shared by every machine card.
  */
 export function MachineFormulas({ lines }: { lines: FormulaLine[] }) {
+  const _i18nT = useT();
   const [open, setOpen] = useState(readOpen);
   if (lines.length === 0) return null;
   const head = (
@@ -70,13 +73,13 @@ export function MachineFormulas({ lines }: { lines: FormulaLine[] }) {
         });
       }}
       aria-expanded={open}
-      title={open ? "Hide the worked formulas" : "Show the worked formulas"}
+      title={_i18nT(open ? "Hide the worked formulas" : "Show the worked formulas")}
     >
       <ChevronDown
         aria-hidden
         className={["h-2.5 w-2.5 shrink-0 transition-transform duration-100", open ? "" : "-rotate-90"].join(" ")}
       />
-      <span className="text-[9px] leading-[11px]">Formulas</span>
+      <span className="text-[9px] leading-[11px]"><I18nText>Formulas</I18nText></span>
     </button>
   );
   const line = (entry: FormulaLine, index: number): ReactNode => (
@@ -84,14 +87,14 @@ export function MachineFormulas({ lines }: { lines: FormulaLine[] }) {
       key={`${index}:${entry.label}`}
       className="grid min-w-0 grid-cols-[50px_minmax(0,1fr)_auto] items-baseline gap-x-1 whitespace-nowrap"
     >
-      <span className="uppercase tracking-wide">{entry.label}</span>
+      <span className="uppercase tracking-wide"><I18nText>{entry.label}</I18nText></span>
       <span className="min-w-0 overflow-hidden text-ellipsis text-right tabular-nums">
         {entry.math.map((term, index) => (
           <Term key={index} term={term} />
         ))}
       </span>
       <span className="min-w-0 overflow-hidden text-ellipsis text-[10px] font-semibold tabular-nums text-[var(--mc-ink)]">
-        {" "}={" "}
+        <I18nText>{" "}</I18nText>=<I18nText>{" "}</I18nText>
         <span style={entry.tone ? { color: entry.tone === "good" ? "#7fd94a" : "#e06060" } : undefined}>
           {entry.result}
         </span>

@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useState } from "react";
 import { wheelChangesValues } from "@/lib/device-settings";
@@ -55,6 +57,7 @@ export function SpecialSheet({
   foot?: string;
   onClose: () => void;
 }) {
+  const _i18nT = useT();
   const [open, setOpen] = useState<{ id: string; anchor: MenuAnchor }>();
   const [draft, setDraft] = useState<{ id: string; text: string }>();
   const none = rows.length === 0;
@@ -86,8 +89,8 @@ export function SpecialSheet({
               className="cs-col"
               style={{ flex: wide ? "0 0 auto" : "1 1 auto", minWidth: wide ? 250 : 0 }}
             >
-              <div className="cs-title">Settings</div>
-              {none ? <div className="cs-none">No settings for this card.</div> : null}
+              <div className="cs-title"><I18nText>Settings</I18nText></div>
+              {none ? <div className="cs-none"><I18nText>No settings for this card.</I18nText></div> : null}
               {rows.map((row) => (
                 <div
                   key={row.id}
@@ -109,11 +112,9 @@ export function SpecialSheet({
                       className="cs-pin"
                       data-on={row.pinned ? "" : undefined}
                       aria-pressed={row.pinned === true}
-                      aria-label={
-                        row.pinned
+                      aria-label={_i18nT(row.pinned
                           ? `Unpin ${row.label} from the card`
-                          : `Pin ${row.label} to the card`
-                      }
+                          : `Pin ${row.label} to the card`)}
                       onClick={() => {
                         if (!locked) row.onPin?.();
                       }}
@@ -123,7 +124,7 @@ export function SpecialSheet({
                   ) : (
                     <span className="cs-pin" style={{ visibility: "hidden" }} />
                   )}
-                  <span className="cs-label">{row.label}</span>
+                  <span className="cs-label"><I18nText>{row.label}</I18nText></span>
                   <div
                     role="button"
                     tabIndex={0}
@@ -172,10 +173,10 @@ export function SpecialSheet({
             </div>
             {wide ? (
               <div className="cs-col" style={{ flex: "1 1 auto" }}>
-                <div className="cs-title">Working</div>
+                <div className="cs-title"><I18nText>Working</I18nText></div>
                 {readings.map((reading) => (
                   <div key={reading.label} className="cs-f">
-                    <span className="cs-f-label">{reading.label}</span>
+                    <span className="cs-f-label"><I18nText>{reading.label}</I18nText></span>
                     <span className="cs-f-math" />
                     <span className="cs-f-result">{reading.value}</span>
                   </div>

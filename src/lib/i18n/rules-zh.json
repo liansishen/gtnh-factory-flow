@@ -1,0 +1,637 @@
+[
+ {
+  "re": "^You must connect this (.+?)\\.$",
+  "flags": "",
+  "zh": "你必须连接这个 $1。"
+ },
+ {
+  "re": "^Drag to wire (.+)$",
+  "flags": "",
+  "zh": "拖拽连接到 $1"
+ },
+ {
+  "re": "^Copy diagnostics \\((\\d+) selected\\)$",
+  "flags": "",
+  "zh": "复制诊断信息（已选 $1 张）"
+ },
+ {
+  "re": "^Drawing (\\d+) frames?$",
+  "flags": "",
+  "zh": "正在绘制 $1 帧"
+ },
+ {
+  "re": "^Drawing frame (\\d+) of (\\d+)$",
+  "flags": "",
+  "zh": "正在绘制第 $1/$2 帧"
+ },
+ {
+  "re": "^Pages (\\d+) of (\\d+)$",
+  "flags": "i",
+  "zh": "第 $1 / $2 页"
+ },
+ {
+  "re": "^(\\d+) pages?$",
+  "flags": "i",
+  "zh": "$1 页"
+ },
+ {
+  "re": "^Page (\\d+)/(\\d+)$",
+  "flags": "",
+  "zh": "第 $1/$2 页"
+ },
+ {
+  "re": "^(\\d+) of (\\d+) completed$",
+  "flags": "",
+  "zh": "$1 / $2 已完成"
+ },
+ {
+  "re": "^Here: ([\\d,]+) EU/t.*$",
+  "flags": "",
+  "zh": "当前：$1 EU/t"
+ },
+ {
+  "re": "^(\\d[\\d,]*) of these at ([\\d,]+) EU/t each$",
+  "flags": "",
+  "zh": "其中 $1 个各 $2 EU/t"
+ },
+ {
+  "re": "^(.+?) is waiting on its supplier\\.?$",
+  "flags": "",
+  "zh": "$1 正在等待它的供给者。"
+ },
+ {
+  "re": "^(.+?) is not wired to anything else in it\\.?$",
+  "flags": "",
+  "zh": "$1 没有与其中的任何其他部分连线。"
+ },
+ {
+  "re": "^(.+?) limits (.+?) delivery\\.?$",
+  "flags": "",
+  "zh": "$1 限制了 $2 的交付。"
+ },
+ {
+  "re": "^hungry: (.+)$",
+  "flags": "",
+  "zh": "缺料：$1"
+ },
+ {
+  "re": "^(.+?) cannot be removed at full rate\\.?$",
+  "flags": "",
+  "zh": "$1 在满速时无法移除。"
+ },
+ {
+  "re": "^(.+?) slots? (?:is|are) unconnected\\.?$",
+  "flags": "",
+  "zh": "$1 个槽位未连接。"
+ },
+ {
+  "re": "^(.+?) takes ([\\d,.]+)% of this machine's time\\.?$",
+  "flags": "",
+  "zh": "$1 占用了这台机器 $2% 的时间。"
+ },
+ {
+  "re": "^Also limited by (.+?)\\.?$",
+  "flags": "",
+  "zh": "同时也受 $1 限制。"
+ },
+ {
+  "re": "^Input supply limits production\\.?$",
+  "flags": "",
+  "zh": "输入供给限制了生产。"
+ },
+ {
+  "re": "^Another output limits production\\.?$",
+  "flags": "",
+  "zh": "另一个产出限制了生产。"
+ },
+ {
+  "re": "^Another input limits production\\.?$",
+  "flags": "",
+  "zh": "另一个输入限制了生产。"
+ },
+ {
+  "re": "^(.+?) limits (.+?) output\\.?$",
+  "flags": "",
+  "zh": "$1 限制了 $2 的产出。"
+ },
+ {
+  "re": "^(.+?) supply limits production\\.?$",
+  "flags": "",
+  "zh": "$1 供给限制了生产。"
+ },
+ {
+  "re": "^(.+?) limits production\\.?$",
+  "flags": "",
+  "zh": "$1 限制了生产。"
+ },
+ {
+  "re": "^(.+?) limits production\\. Also limited by (.+?)\\.?$",
+  "flags": "",
+  "zh": "$1 限制了生产。同时也受 $2 限制。"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+recipes?$",
+  "flags": "i",
+  "zh": "$1 个配方"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+items?$",
+  "flags": "i",
+  "zh": "$1 个物品"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+fluids?$",
+  "flags": "i",
+  "zh": "$1 种流体"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+machines?$",
+  "flags": "i",
+  "zh": "$1 台机器"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+nodes?$",
+  "flags": "i",
+  "zh": "$1 个节点"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+cards?$",
+  "flags": "i",
+  "zh": "$1 张卡片"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+setups?$",
+  "flags": "i",
+  "zh": "$1 个方案"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+plans?$",
+  "flags": "i",
+  "zh": "$1 个方案"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+designs?$",
+  "flags": "i",
+  "zh": "$1 个设计"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+results?$",
+  "flags": "i",
+  "zh": "$1 条结果"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+matches?$",
+  "flags": "i",
+  "zh": "$1 个匹配"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+comments?$",
+  "flags": "i",
+  "zh": "$1 条评论"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+votes?$",
+  "flags": "i",
+  "zh": "$1 票"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+parallels?$",
+  "flags": "i",
+  "zh": "$1 并行"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+overclocks?$",
+  "flags": "i",
+  "zh": "$1 次超频"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+ticks?$",
+  "flags": "i",
+  "zh": "$1 tick"
+ },
+ {
+  "re": "^([\\d,.]+)\\s*seconds?$",
+  "flags": "i",
+  "zh": "$1 秒"
+ },
+ {
+  "re": "^([\\d,.]+)\\s*minutes?$",
+  "flags": "i",
+  "zh": "$1 分钟"
+ },
+ {
+  "re": "^([\\d,.]+)\\s*hours?$",
+  "flags": "i",
+  "zh": "$1 小时"
+ },
+ {
+  "re": "^([\\d,.]+)\\s*days?$",
+  "flags": "i",
+  "zh": "$1 天"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+of\\s+(\\d[\\d,]*)$",
+  "flags": "i",
+  "zh": "$1 / $2"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+selected$",
+  "flags": "i",
+  "zh": "已选 $1"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+pinned$",
+  "flags": "i",
+  "zh": "已钉选 $1 个"
+ },
+ {
+  "re": "^\\((\\d[\\d,]*)\\s+more\\)$",
+  "flags": "i",
+  "zh": "（还有 $1 个）"
+ },
+ {
+  "re": "^and\\s+(\\d[\\d,]*)\\s+more$",
+  "flags": "i",
+  "zh": "以及另外 $1 个"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+more\\s+like\\s+it$",
+  "flags": "i",
+  "zh": "还有 $1 个同类"
+ },
+ {
+  "re": "^Page\\s+(\\d[\\d,]*)$",
+  "flags": "i",
+  "zh": "第 $1 页"
+ },
+ {
+  "re": "^Page\\s+(\\d[\\d,]*)\\s+of\\s+(\\d[\\d,]*)$",
+  "flags": "i",
+  "zh": "第 $1 / $2 页"
+ },
+ {
+  "re": "^Step\\s+(\\d[\\d,]*)$",
+  "flags": "i",
+  "zh": "第 $1 步"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+left$",
+  "flags": "i",
+  "zh": "还剩 $1 个"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+available$",
+  "flags": "i",
+  "zh": "可用 $1 个"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+required$",
+  "flags": "i",
+  "zh": "需要 $1 个"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+installed$",
+  "flags": "i",
+  "zh": "已安装 $1 台"
+ },
+ {
+  "re": "^(.{1,30}?)\\s+per operation$",
+  "flags": "i",
+  "zh": "每次操作 $1"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+machines?\\s+required$",
+  "flags": "i",
+  "zh": "需要 $1 台机器"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+parallels?\\s+per\\s+voltage\\s+tier$",
+  "flags": "i",
+  "zh": "每电压等级 $1 并行"
+ },
+ {
+  "re": "^Tier\\s+(ULV|LV|MV|HV|EV|IV|LuV|ZPM|UV|UHV|UEV|UIV|UMV|UXV|OpV|MAX)$",
+  "flags": "",
+  "zh": "$1 级"
+ },
+ {
+  "re": "^(ULV|LV|MV|HV|EV|IV|LuV|ZPM|UV|UHV|UEV|UIV|UMV|UXV|OpV|MAX)\\s+(\\d[\\d,]*)\\s*A$",
+  "flags": "",
+  "zh": "$1 $2A"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+EU/?t$",
+  "flags": "i",
+  "zh": "$1 EU/t"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+EU/?t\\s+at\\s+(\\d+)%$",
+  "flags": "i",
+  "zh": "$1 EU/t（$2%）"
+ },
+ {
+  "re": "^(\\d[\\d.]*)\\s*%\\s+speed$",
+  "flags": "i",
+  "zh": "$1% 速度"
+ },
+ {
+  "re": "^(\\d[\\d.]*)\\s*%\\s+efficiency$",
+  "flags": "i",
+  "zh": "$1% 效率"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+amp(?:s|ere)?$",
+  "flags": "i",
+  "zh": "$1 安培"
+ },
+ {
+  "re": "^(.{1,30}?)\\s+machine count$",
+  "flags": "i",
+  "zh": "$1 机器数量"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+operations?$",
+  "flags": "i",
+  "zh": "$1 次操作"
+ },
+ {
+  "re": "^(\\d[\\d,]*)\\s+crops?$",
+  "flags": "i",
+  "zh": "$1 个作物"
+ },
+ {
+  "re": "^(best|worst|average|peak)\\s+output$",
+  "flags": "i",
+  "zh": "$1 产出"
+ },
+ {
+  "re": "^Uses ([\\d,]+) EU/t \\((.+)\\)$",
+  "flags": "",
+  "zh": "消耗 $1 EU/t（$2）"
+ },
+ {
+  "re": "^Uses ([\\d,]+) EU/t$",
+  "flags": "",
+  "zh": "消耗 $1 EU/t"
+ },
+ {
+  "re": "^Needs ([\\d,]+) EU/t\\. Supplied (.+?)\\.?$",
+  "flags": "",
+  "zh": "需要 $1 EU/t，已供给 $2。"
+ },
+ {
+  "re": "^Two of these at ([\\d,]+) EU/t each: same output, half the power\\.?$",
+  "flags": "",
+  "zh": "两个各 $1 EU/t：产出相同，功率减半。"
+ },
+ {
+  "re": "^Underpowered: the recipe draws ([\\d,]+) EU/t but$",
+  "flags": "",
+  "zh": "电力不足：配方需要 $1 EU/t，但"
+ },
+ {
+  "re": "^Won't run at (.+): this recipe needs at least$",
+  "flags": "",
+  "zh": "无法在 $1 运行：这条配方至少需要"
+ },
+ {
+  "re": "^([\\d,]+) EU/t\\. Add amperage or raise the tier\\.?$",
+  "flags": "",
+  "zh": "$1 EU/t。增加安培数或提高等级。"
+ },
+ {
+  "re": "^This recipe requires a Mk-(.+) fusion reactor or higher\\.?$",
+  "flags": "",
+  "zh": "这条配方需要 Mk-$1 或更高的聚变反应堆。"
+ },
+ {
+  "re": "^Recipe \"(.+)\" does not exist\\.?$",
+  "flags": "",
+  "zh": "配方“$1”不存在。"
+ },
+ {
+  "re": "^Node (.+) references missing recipe (.+?)\\.?$",
+  "flags": "",
+  "zh": "节点 $1 引用了缺失的配方 $2。"
+ },
+ {
+  "re": "^(.+) needs ([\\d,.]+)/s but can produce ([\\d,.]+)/s\\.?$",
+  "flags": "",
+  "zh": "$1 需要 $2/s，但只能产出 $3/s。"
+ },
+ {
+  "re": "^(.+) is short by ([\\d,.]+)/s\\.?$",
+  "flags": "",
+  "zh": "$1 短缺 $2/s。"
+ },
+ {
+  "re": "^(.+): no chain can make ([\\d,.]+)/s\\.?$",
+  "flags": "",
+  "zh": "$1：没有任何生产链能产出 $2/s。"
+ },
+ {
+  "re": "^Could not fetch (.+) \\((.+)\\)\\.?$",
+  "flags": "",
+  "zh": "无法获取 $1（$2）。"
+ },
+ {
+  "re": "^Request failed \\((\\d+)\\)$",
+  "flags": "",
+  "zh": "请求失败（$1）"
+ },
+ {
+  "re": "^clogged: (.+) full$",
+  "flags": "",
+  "zh": "堵塞：$1 已满"
+ },
+ {
+  "re": "^([\\d,]+) crossings to start$",
+  "flags": "",
+  "zh": "起始 $1 个交叉"
+ },
+ {
+  "re": "^Options for collection (.+)$",
+  "flags": "",
+  "zh": "收藏夹 $1 的选项"
+ },
+ {
+  "re": "^Options for (.+)$",
+  "flags": "",
+  "zh": "$1 的选项"
+ },
+ {
+  "re": "^Show setups by (.+)$",
+  "flags": "",
+  "zh": "方案排序：$1"
+ },
+ {
+  "re": "^Show setups up to (.+)$",
+  "flags": "",
+  "zh": "最多显示 $1 个方案"
+ },
+ {
+  "re": "^Delete board (.+)$",
+  "flags": "",
+  "zh": "删除画布 $1"
+ },
+ {
+  "re": "^Clone board (.+)$",
+  "flags": "",
+  "zh": "克隆画布 $1"
+ },
+ {
+  "re": "^Dump board (.+)$",
+  "flags": "",
+  "zh": "导出画布 $1"
+ },
+ {
+  "re": "^Save board (.+) to my shelf$",
+  "flags": "",
+  "zh": "把画布 $1 保存到我的货架"
+ },
+ {
+  "re": "^Save \"(.+)\" to my shelf \\(sign in required\\)$",
+  "flags": "",
+  "zh": "把“$1”保存到我的货架（需要登录）"
+ },
+ {
+  "re": "^Blueprint names run 1–(\\d+) characters\\.?$",
+  "flags": "",
+  "zh": "蓝图名称长度为 1–$1 个字符。"
+ },
+ {
+  "re": "^Design names run 1 to (\\d+) characters\\.?$",
+  "flags": "",
+  "zh": "设计名称长度为 1–$1 个字符。"
+ },
+ {
+  "re": "^Folder names run 1 to (\\d+) characters\\.?$",
+  "flags": "",
+  "zh": "文件夹名称长度为 1–$1 个字符。"
+ },
+ {
+  "re": "^([\\d,]+) machine has a slot with nothing on it$",
+  "flags": "",
+  "zh": "$1 台机器有空槽位"
+ },
+ {
+  "re": "^([\\d,]+) machines have slots with nothing on them$",
+  "flags": "",
+  "zh": "$1 台机器有空槽位"
+ },
+ {
+  "re": "^Loading ([\\d,]+) recipes$",
+  "flags": "",
+  "zh": "正在加载 $1 条配方"
+ },
+ {
+  "re": "^(.+) runs at ([\\d,.]+)%, could send more if asked$",
+  "flags": "",
+  "zh": "$1 以 $2% 运行，如需还能送出更多"
+ },
+ {
+  "re": "^The (.+) runs at only ([\\d,.]+)%: it is missing ingredients too\\.?$",
+  "flags": "",
+  "zh": "$1 只以 $2% 运行：它也缺少原料。"
+ },
+ {
+  "re": "^(.+) runs at ([\\d,.]+)%$",
+  "flags": "",
+  "zh": "$1 以 $2% 运行"
+ },
+ {
+  "re": "^(.+) is already at full speed\\.?$",
+  "flags": "",
+  "zh": "$1 已满速运行。"
+ },
+ {
+  "re": "^(.+) sends what it holds$",
+  "flags": "",
+  "zh": "$1 送出它持有的全部"
+ },
+ {
+  "re": "^(.+) takes whatever arrives:$",
+  "flags": "",
+  "zh": "$1 接收抵达的一切："
+ },
+ {
+  "re": "^(.+) vanishes: nothing is wired\\.?$",
+  "flags": "",
+  "zh": "$1 消失：没有接线。"
+ },
+ {
+  "re": "^Nothing is wired here\\. It needs (.+) to run\\.?$",
+  "flags": "",
+  "zh": "这里没有接线。它需要 $1 才能运行。"
+ },
+ {
+  "re": "^→ Add more (.+?)\\.?$",
+  "flags": "",
+  "zh": "→ 添加更多 $1。"
+ },
+ {
+  "re": "^→ Feed (.+) faster, or add another source\\.?$",
+  "flags": "",
+  "zh": "→ 更快地供给 $1，或添加另一个来源。"
+ },
+ {
+  "re": "^→ The fix is upstream of the (.+?)\\.?$",
+  "flags": "",
+  "zh": "→ 问题出在 $1 的上游。"
+ },
+ {
+  "re": "^(.+) card\\(s\\) out of ([\\d,]+) on the plan$",
+  "flags": "",
+  "zh": "方案共 $2 张卡片，选中 $1 张"
+ },
+ {
+  "re": "^(.+) of the (.+) it wants\\. This is what holds the machine at ([\\d,.]+)%\\.?$",
+  "flags": "",
+  "zh": "它想要的 $2 中只得到 $1，机器因此被限制在 $3%。"
+ },
+ {
+  "re": "^(.+) makes (.+), plugs take (.+)\\. The spare (.+?)\\.?$",
+  "flags": "",
+  "zh": "$1 产出 $2，被取用 $3，余量 $4。"
+ },
+ {
+  "re": "^([\\d,]+) of ([\\d,]+) selected$",
+  "flags": "",
+  "zh": "已选 $1 / $2"
+ },
+ {
+  "re": "^(.{1,40}?)\\s+recipes?$",
+  "flags": "",
+  "zh": "$1 配方"
+ },
+ {
+  "re": "^(.{1,40}?)\\s+at full speed$",
+  "flags": "i",
+  "zh": "$1 满速运行"
+ },
+ {
+  "re": "^(.{1,40}?)\\s+\\(LV\\)$",
+  "flags": "",
+  "zh": "$1（LV）"
+ },
+ {
+  "re": "^(.{1,40}?)\\s+\\(MV\\)$",
+  "flags": "",
+  "zh": "$1（MV）"
+ },
+ {
+  "re": "^(.{1,40}?)\\s+\\(HV\\)$",
+  "flags": "",
+  "zh": "$1（HV）"
+ },
+ {
+  "re": "^(.{1,40}?)\\s+\\(EV\\)$",
+  "flags": "",
+  "zh": "$1（EV）"
+ },
+ {
+  "re": "^(.{1,40}?)\\s+\\(IV\\)$",
+  "flags": "",
+  "zh": "$1（IV）"
+ }
+]

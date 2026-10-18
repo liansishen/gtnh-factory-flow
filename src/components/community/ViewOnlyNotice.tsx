@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import { Copy, LockKeyhole } from "lucide-react";
 import { useState } from "react";
@@ -7,6 +8,7 @@ import { writeWorkspaceView } from "@/lib/workspace-view";
 import { useItemsOnRight } from "../use-plan-layout";
 
 export function ViewOnlyNotice() {
+  const _i18nT = useT();
   const itemsOnRight = useItemsOnRight();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -14,10 +16,25 @@ export function ViewOnlyNotice() {
   return (
     <div className="absolute inset-x-2 top-2 border border-line bg-surface p-3 text-sm shadow-lg">
       <div className="flex items-center justify-between gap-2">
-        <strong className="inline-flex items-center gap-1.5"><LockKeyhole className="h-3.5 w-3.5" aria-hidden />View only</strong>
-        <button type="button" aria-label="Hide the items column" onClick={() => writeWorkspaceView({ leftPanelOpen: false })} className="px-2">{itemsOnRight ? "›" : "‹"}</button>
+        <strong className="inline-flex items-center gap-1.5">
+          <LockKeyhole className="h-3.5 w-3.5" aria-hidden />
+          <I18nText>View only</I18nText>
+        </strong>
+        <button
+          type="button"
+          aria-label={_i18nT("Hide the items column")}
+          onClick={() => writeWorkspaceView({ leftPanelOpen: false })}
+          className="px-2"
+        >
+          {itemsOnRight ? "›" : "‹"}
+        </button>
       </div>
-      <p className="mt-1 text-xs leading-5 text-fg-muted">This shared plan is view only. Make a copy to add machines, connect items, or change settings.</p>
+      <p className="mt-1 text-xs leading-5 text-fg-muted">
+        <I18nText>
+          This shared plan is view only. Make a copy to add machines, connect items, or change
+          settings.
+        </I18nText>
+      </p>
       <button
         type="button"
         disabled={busy}
@@ -35,9 +52,13 @@ export function ViewOnlyNotice() {
         className="mt-2 inline-flex h-7 items-center gap-1.5 rounded border border-line bg-surface-raised px-2 text-xs text-fg hover:border-line-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-500 disabled:opacity-50"
       >
         <Copy className="h-3.5 w-3.5" aria-hidden />
-        {busy ? "Opening…" : "Make a copy"}
+        {busy ? _i18nT("Opening…") : _i18nT("Make a copy")}
       </button>
-      {error && <p role="alert" className="mt-1 text-xs text-red-400">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-1 text-xs text-red-400">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,0 +1,7 @@
+[
+  {
+    "re": "^Full history \\((\\d+) earlier releases?\\)$",
+    "flags": "",
+    "zh": "完整历史（更早的 $1 个版本）"
+  }
+]

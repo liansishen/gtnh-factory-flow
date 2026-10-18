@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useDropdownDismiss } from "@/lib/hooks/use-dropdown-dismiss";
 
@@ -46,6 +48,7 @@ interface OpenMenu {
 }
 
 export function DesignTabs() {
+  const _i18nT = useT();
   const publicView = useDesignStore((state) => state.publicView);
   const publicViews = useDesignStore((state) => state.publicViews);
   // Plan boards word their tabs' tips as the mod does and close a tab on a middle click.
@@ -512,7 +515,7 @@ export function DesignTabs() {
         <button
           type="button"
           onClick={() => openLibrary()}
-          aria-label="Open Plans"
+          aria-label={_i18nT("Open Plans")}
           aria-pressed={shelf.active}
           data-help-anchor="library"
           className={[
@@ -522,9 +525,9 @@ export function DesignTabs() {
               : "border-transparent text-fg-muted hover:bg-surface-sunken hover:text-fg",
           ].join(" ")}
         >
-          <Library className="h-3 w-3" aria-hidden />
+          <Library className="h-3 w-3" aria-hidden /><I18nText>
           Plans
-        </button>
+        </I18nText></button>
         <span aria-hidden className="h-3.5 w-px shrink-0 bg-line" />
 
 
@@ -545,13 +548,13 @@ export function DesignTabs() {
               }}
               className="flex items-center gap-1 text-xs font-medium"
             >
-              <Compass className="h-3 w-3" aria-hidden />
+              <Compass className="h-3 w-3" aria-hidden /><I18nText>
               Welcome
-            </button>
+            </I18nText></button>
             <button
               type="button"
               onClick={closeWelcomeTab}
-              aria-label="Close the Welcome tab"
+              aria-label={_i18nT("Close the Welcome tab")}
               className="ml-1 rounded px-1 text-xs text-fg-muted opacity-0 hover:bg-surface hover:text-fg focus:opacity-100 group-hover:opacity-100"
             >
               ✕
@@ -574,19 +577,19 @@ export function DesignTabs() {
           <nav
             ref={trackRef}
             style={closingLayout ? { width: closingLayout.trackWidth, maxWidth: "none" } : undefined}
-            aria-label="Designs"
+            aria-label={_i18nT("Designs")}
             className="design-tabs-track flex w-max max-w-full select-none items-center gap-1"
           >
             {publicViews.map((view) => {
               const selected = publicView?.id === view.id && !coveringPage;
               return <div key={view.id} data-public-tab={view.id}
                 className={`design-tab group flex h-5 items-center rounded-t border-b-2 pl-2 pr-1 ${selected ? "border-amber-500 text-amber-300 bg-surface-raised" : "border-transparent text-fg-muted hover:bg-surface-sunken hover:text-fg"}`}>
-                <button type="button" aria-label={`View only: ${view.name}`} aria-pressed={selected}
+                <button type="button" aria-label={_i18nT(`View only: ${view.name}`)} aria-pressed={selected}
                   onClick={() => void useDesignStore.getState().switchToPublicView(view.id)}
                   className="design-tab-label flex h-full min-w-0 flex-1 items-center text-xs font-medium">
                   <FadingTabName name={view.name} />
                 </button>
-                {selected ? <button type="button" aria-label="Close public setup view" onClick={() => void useDesignStore.getState().closePublicView(view.id)}
+                {selected ? <button type="button" aria-label={_i18nT("Close public setup view")} onClick={() => void useDesignStore.getState().closePublicView(view.id)}
                   className="ml-1 shrink-0 rounded px-1 text-xs text-fg-muted hover:bg-surface hover:text-fg">×</button> : null}
               </div>;
             })}
@@ -708,7 +711,7 @@ export function DesignTabs() {
             leaveWelcomeTab();
             void addDesign();
           }}
-          aria-label="New design"
+          aria-label={_i18nT("New design")}
           {...(planBoard ? tipAttrs(newTabTip("tab|new")) : {})}
           className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded text-fg-muted hover:bg-surface-sunken hover:text-fg"
         >
@@ -721,8 +724,8 @@ export function DesignTabs() {
               leaveWelcomeTab();
               void addTaskBoard();
             }}
-            aria-label="New task board"
-            title="New task board"
+            aria-label={_i18nT("New task board")}
+            title={_i18nT("New task board")}
             className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded text-fg-muted hover:bg-surface-sunken hover:text-fg"
           >
             <SquareKanban className="h-3.5 w-3.5" aria-hidden />
@@ -820,6 +823,7 @@ function DesignMenu({
   onCloseTab: () => void;
   onCloseMany: (ids: string[]) => void;
 }) {
+  const _i18nT = useT();
   const menuRef = useRef<HTMLDivElement>(null);
 
   // The one dropdown rule (use-dropdown-dismiss.ts): press outside, Escape,
@@ -846,9 +850,9 @@ function DesignMenu({
       <MenuItem label="Duplicate" onClick={onDuplicate} />
       {folders.length > 0 ? (
         <>
-          <div className="mt-1 border-t border-line px-2 pb-0.5 pt-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-fg-muted">
+          <div className="mt-1 border-t border-line px-2 pb-0.5 pt-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-fg-muted"><I18nText>
             Add to collection
-          </div>
+          </I18nText></div>
           {folders.map((folder) => (
             <MenuItem
               key={folder.id}
@@ -869,10 +873,10 @@ function DesignMenu({
       ) : null}
 
       <div className="border-t border-line p-2">
-        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-fg-muted">Close</div>
+        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-fg-muted"><I18nText>Close</I18nText></div>
         <div className="grid grid-cols-5 gap-1 text-xs">
-          <button type="button" role="menuitem" aria-label="Close this tab"
-            onClick={onCloseTab} className="rounded border border-line px-1 py-1 hover:bg-surface-sunken">This</button>
+          <button type="button" role="menuitem" aria-label={_i18nT("Close this tab")}
+            onClick={onCloseTab} className="rounded border border-line px-1 py-1 hover:bg-surface-sunken"><I18nText>This</I18nText></button>
           {([
             ["left", "Left", neighbours.left],
             ["right", "Right", neighbours.right],
@@ -880,7 +884,7 @@ function DesignMenu({
             ["all", "All", [...neighbours.others, menu.id]],
           ] as const).map(([action, label, ids]) => (
             <button key={action} type="button" role="menuitem"
-              aria-label={`${armed === action ? "Confirm close" : "Close"} ${action === "left" || action === "right" ? "tabs to the " + action : action + " tabs"}`}
+              aria-label={_i18nT(`${armed === action ? "Confirm close" : "Close"} ${action === "left" || action === "right" ? "tabs to the " + action : action + " tabs"}`)}
               disabled={ids.length === 0}
               onClick={() => armed === action ? onCloseMany([...ids]) : onArm(action)}
               className={`rounded border px-1 py-1 hover:bg-surface-sunken disabled:opacity-30 disabled:hover:bg-transparent ${armed === action ? "border-red-400/50 text-red-300" : "border-line"}`}>
@@ -936,7 +940,7 @@ function MenuItem({
         tone === "danger" ? "text-red-400" : "text-fg",
       ].join(" ")}
     >
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="min-w-0 flex-1 truncate"><I18nText>{label}</I18nText></span>
       {checked ? <span className="text-cyan-300">✓</span> : null}
     </button>
   );
@@ -951,6 +955,7 @@ function RenameInput({
   onCommit: (name: string) => void;
   onCancel: () => void;
 }) {
+  const _i18nT = useT();
   const [value, setValue] = useState(initialName);
 
   return (
@@ -969,7 +974,7 @@ function RenameInput({
           onCancel();
         }
       }}
-      aria-label="Design name"
+      aria-label={_i18nT("Design name")}
       className="w-[140px] rounded border border-cyan-500 bg-surface px-1 text-xs text-fg outline-none"
     />
   );
@@ -1033,13 +1038,14 @@ function TabFace({ icon }: { icon: EntryIcon }) {
  * subscribe to the solve flag.
  */
 function TabSolvingSpinner() {
+  const _i18nT = useT();
   const solving = useSolvingBooks();
   if (!solving) {
     return null;
   }
   return (
     <span
-      aria-label="Still working out this plan's numbers"
+      aria-label={_i18nT("Still working out this plan's numbers")}
       className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-neutral-600 border-t-cyan-400"
     />
   );

@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { memo, useState, type CSSProperties } from "react";
@@ -76,6 +78,7 @@ const INERT_HANDLE =
   "nodrag !pointer-events-none !h-0 !w-0 !min-h-0 !min-w-0 !border-0 !bg-transparent !opacity-0";
 
 function PocketNodeComponent({ data, selected }: NodeProps<PocketFlowNode>) {
+  const _i18nT = useT();
   const { pocket, summary } = data;
   // A folded board is the SAME board: it wears the paper the window wore,
   // so you can tell which one it is at a glance instead of meeting an
@@ -234,8 +237,8 @@ function PocketNodeComponent({ data, selected }: NodeProps<PocketFlowNode>) {
                   }}
                   className="nodrag flex h-6 w-6 items-center justify-center border-2 hover:bg-red-700"
                   style={buttonStyle(chrome)}
-                  title="Delete board"
-                  aria-label={`Delete board ${pocket.name}`}
+                  title={_i18nT("Delete board")}
+                  aria-label={_i18nT(`Delete board ${pocket.name}`)}
                 >
                   {/* Drawn rather than a "-" glyph: at this size Monocraft's
                       metrics baseline-align the hyphen low instead of centring. */}
@@ -249,8 +252,8 @@ function PocketNodeComponent({ data, selected }: NodeProps<PocketFlowNode>) {
                   }}
                   className="nodrag flex h-6 w-6 items-center justify-center border-2 hover:brightness-125"
                   style={buttonStyle(chrome)}
-                  title="Clone board"
-                  aria-label={`Clone board ${pocket.name}`}
+                  title={_i18nT("Clone board")}
+                  aria-label={_i18nT(`Clone board ${pocket.name}`)}
                 >
                   <Copy aria-hidden className="h-3.5 w-3.5" />
                 </button>
@@ -260,11 +263,9 @@ function PocketNodeComponent({ data, selected }: NodeProps<PocketFlowNode>) {
               <div
                 className="minecraft-title flex h-6 min-w-0 items-center border-2 px-2 text-[13px] leading-[18px]"
                 style={buttonStyle(chrome)}
-                title={
-                  calmMode
+                title={_i18nT(calmMode
                     ? `${pocket.name} (double-click the card to open the window)`
-                    : `${pocket.name} (double-click the name to rename, double-click the card to open the window)`
-                }
+                    : `${pocket.name} (double-click the name to rename, double-click the card to open the window)`)}
                 onDoubleClick={
                   // Renaming is editing, so calm mode lets the double-click
                   // fall through to the card and just open the window.
@@ -311,8 +312,8 @@ function PocketNodeComponent({ data, selected }: NodeProps<PocketFlowNode>) {
                   }}
                   className="nodrag flex h-6 w-6 items-center justify-center border-2 hover:brightness-125"
                   style={buttonStyle(chrome)}
-                  title="Remove board, keep its cards"
-                  aria-label={`Remove board ${pocket.name}, keep its cards`}
+                  title={_i18nT("Remove board, keep its cards")}
+                  aria-label={_i18nT(`Remove board ${pocket.name}, keep its cards`)}
                 >
                   <PackageOpen aria-hidden className="h-3.5 w-3.5" />
                 </button>
@@ -324,8 +325,8 @@ function PocketNodeComponent({ data, selected }: NodeProps<PocketFlowNode>) {
                   }}
                   className="nodrag flex h-6 w-6 items-center justify-center border-2 hover:brightness-125"
                   style={buttonStyle(chrome)}
-                  title="Open board"
-                  aria-label={`Open board ${pocket.name}`}
+                  title={_i18nT("Open board")}
+                  aria-label={_i18nT(`Open board ${pocket.name}`)}
                 >
                   <Maximize2 aria-hidden className="h-3.5 w-3.5" />
                 </button>
@@ -345,11 +346,11 @@ function PocketNodeComponent({ data, selected }: NodeProps<PocketFlowNode>) {
             <div
               className="flex h-[80px] items-center justify-center text-center text-[11px] leading-4"
               style={{ color: chrome.inkMuted }}
-            >
+            ><I18nText>
               Nothing goes in or out.
-              <br />
+              </I18nText><br /><I18nText>
               Open the window to work on it.
-            </div>
+            </I18nText></div>
           ) : (
             <>
               <CardSection
@@ -488,7 +489,7 @@ function SectionColumn({
           className={`px-1.5 text-[10px] font-bold leading-[14px] tracking-wide ${chip ?? ""}`}
           style={chip ? undefined : { backgroundColor: chrome.nameBg, color: chrome.ink }}
         >
-          {label}
+          <I18nText>{label}</I18nText>
         </span>
       </div>
       {lines.map((line) => (
@@ -520,6 +521,7 @@ function CrossingRow({
   tone?: string;
   chrome: BoardChrome;
 }) {
+  const _i18nT = useT();
   const rate = formatSlotRateOrNull(crossing.ratePerSecond, crossing.kind);
   const icon = (
     <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden">
@@ -547,21 +549,21 @@ function CrossingRow({
         className="truncate text-[11px] font-bold leading-[14px]"
         style={{ color: chrome.ink }}
       >
-        {crossing.displayName ?? crossing.resourceId}
+        <I18nText game>{crossing.displayName ?? crossing.resourceId}</I18nText>
       </span>
       <span
         className={`truncate text-[10px] leading-[12px] tabular-nums ${tone ?? ""}`}
         style={tone ? undefined : { color: chrome.inkMuted }}
       >
         {rate ?? "0/s"}
-        {crossing.wireCount > 1 ? ` · ${crossing.wireCount} wires` : ""}
+        <I18nText>{crossing.wireCount > 1 ? ` · ${crossing.wireCount} wires` : ""}</I18nText>
       </span>
     </span>
   );
   return (
     <span
       className="flex h-[40px] min-w-0 items-center gap-1"
-      title={`${crossing.displayName ?? crossing.resourceId}: ${rate ?? "nothing moving"}`}
+      title={_i18nT(`${crossing.displayName ?? crossing.resourceId}: ${rate ?? "nothing moving"}`)}
     >
       {side === "in" ? (
         <>
@@ -656,9 +658,9 @@ function PocketGlanceReveal({
             </span>
           </span>
         ) : (
-          <span className="text-center text-[13px]" style={{ color: chrome.inkMuted }}>
+          <span className="text-center text-[13px]" style={{ color: chrome.inkMuted }}><I18nText>
             Nothing goes in or out.
-          </span>
+          </I18nText></span>
         )}
       </span>
     </div>
@@ -705,7 +707,7 @@ function PocketGlanceIoRow({
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-[14px] font-bold leading-[17px]">
-          {crossing.displayName ?? crossing.resourceId}
+          <I18nText game>{crossing.displayName ?? crossing.resourceId}</I18nText>
         </span>
         {rate ? (
           <span className={`truncate text-[13px] leading-4 tabular-nums ${tone}`}>{rate}</span>

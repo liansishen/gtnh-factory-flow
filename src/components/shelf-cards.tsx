@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import type { ReactNode } from "react";
 import type { PlanResourceStat } from "@/lib/community/types";
@@ -80,9 +82,9 @@ function IoSection({
   }
   return (
     <div className="min-w-0 flex-1">
-      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</div>
+      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400"><I18nText>{label}</I18nText></div>
       {stats.length === 0 ? (
-        <div className="py-0.5 text-[11px] text-slate-500">Nothing</div>
+        <div className="py-0.5 text-[11px] text-slate-500"><I18nText>Nothing</I18nText></div>
       ) : null}
       {stats.slice(0, limit).map((stat) => (
         <div key={`${stat.kind}:${stat.resourceId}`} className="flex items-center gap-1.5 py-0.5">
@@ -100,7 +102,7 @@ function IoSection({
             />
           </span>
           <span className="min-w-0 flex-1 truncate text-[12px] text-slate-200">
-            {stat.displayName ?? stat.resourceId}
+            <I18nText game>{stat.displayName ?? stat.resourceId}</I18nText>
           </span>
           <span className="shrink-0 tabular-nums text-[12px] text-slate-400">
             {formatSlotRate(stat.ratePerSecond, stat.kind)}
@@ -108,7 +110,7 @@ function IoSection({
         </div>
       ))}
       {stats.length > limit ? (
-        <div className="text-[10px] text-slate-500">+{stats.length - limit} more</div>
+        <div className="text-[10px] text-slate-500">+{stats.length - limit}<I18nText> more</I18nText></div>
       ) : null}
     </div>
   );

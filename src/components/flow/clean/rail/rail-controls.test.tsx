@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { setLocale } from "@/lib/i18n/locale";
 import { RateBox, RuleKey, wheelHandlerFor } from "./rail-controls";
 
 const sfx = vi.hoisted(() => ({ sfxClick: vi.fn(), playEditSfx: vi.fn() }));
@@ -111,4 +112,24 @@ it("the rule key clicks for itself", () => {
   fireEvent.click(key);
   expect(sfx.sfxClick).toHaveBeenCalledTimes(1);
   expect(onClick).toHaveBeenCalledTimes(1);
+});
+
+it("an unset rate box shows its prompt through the dictionary", () => {
+  render(
+    <RateBox
+      text=""
+      gold={false}
+      editing={false}
+      initial=""
+      onStartEdit={vi.fn()}
+      onCommit={vi.fn()}
+      onCancel={vi.fn()}
+      tip={tip}
+      label="Rate"
+    />,
+  );
+  expect(screen.getByText("Set")).toBeTruthy();
+  act(() => setLocale("zh-CN"));
+  expect(screen.getByText("设置")).toBeTruthy();
+  act(() => setLocale("en"));
 });

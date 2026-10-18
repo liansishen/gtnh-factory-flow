@@ -1,4 +1,5 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
 
 import {
   useCallback,
@@ -379,7 +380,7 @@ export function MinecraftTooltip({
               >
                 {lines.map((line, index) => (
                   <div key={`${line}-${index}`} className="mc-tip-line" data-tone={index === 0 ? "name" : undefined}>
-                    {line}
+                    <I18nText game={index === 0}>{line}</I18nText>
                   </div>
                 ))}
               </div>

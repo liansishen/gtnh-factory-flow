@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useRef, useState } from "react";
 import { useDropdownDismiss } from "@/lib/hooks/use-dropdown-dismiss";
@@ -36,15 +38,16 @@ export const BUG_REPORT_URL = `${GITHUB_URL}/issues/new?template=bug_report.yml&
 
 /** The header's "Help" dropdown: the auxiliary set of MenuLinks. */
 export function HeaderLinks() {
+  const _i18nT = useT();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   useDropdownDismiss(open, { refs: [root], onClose: () => setOpen(false) });
   return (
     <div ref={root} className="relative shrink-0">
-      <button type="button" aria-expanded={open} aria-label="Help and links"
+      <button type="button" aria-expanded={open} aria-label={_i18nT("Help and links")}
         onClick={() => setOpen(!open)}
-        className="inline-flex h-6 items-center gap-1 rounded px-1.5 text-fg-muted hover:bg-surface-raised hover:text-fg">
-        Help <ChevronDown className="h-3 w-3" />
+        className="inline-flex h-6 items-center gap-1 rounded px-1.5 text-fg-muted hover:bg-surface-raised hover:text-fg"><I18nText>
+        Help </I18nText><ChevronDown className="h-3 w-3" />
       </button>
       {open ? <div className="absolute right-0 top-full z-[100] mt-1 w-52 rounded border border-line-strong bg-surface p-1 text-sm shadow-xl">
         <MenuLinks auxiliary onAction={() => setOpen(false)} />
@@ -55,19 +58,20 @@ export function HeaderLinks() {
 
 /** The donation link: a heart in its own colour, labelled for screen readers. */
 export function SupportButton() {
+  const _i18nT = useT();
   return (
     <a
       href={KOFI_URL}
       target="_blank"
       rel="noreferrer noopener"
-      title="Support on Ko-fi"
-      aria-label="Support GTNH Planner on Ko-fi"
+      title={_i18nT("Support on Ko-fi")}
+      aria-label={_i18nT("Support GTNH Planner on Ko-fi")}
       data-umami-event="support-kofi"
       data-umami-event-source="header"
       className="inline-flex h-5 shrink-0 items-center gap-1.5 rounded border border-pink-800 bg-pink-950 px-2 text-xs font-semibold text-pink-300 hover:border-pink-600 hover:bg-pink-900 hover:text-pink-200 snug:w-5 snug:justify-center snug:px-0"
     >
       <Heart className="h-3.5 w-3.5 fill-current" aria-hidden />
-      <span className="sr-only">Support</span>
+      <span className="sr-only"><I18nText>Support</I18nText></span>
     </a>
   );
 }
@@ -94,7 +98,7 @@ export function MenuLinks({ onAction, auxiliary = false }: { onAction?: () => vo
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           <Compass className="h-3.5 w-3.5" aria-hidden />
         </span>
-        <span className="truncate">Welcome</span>
+        <span className="truncate"><I18nText>Welcome</I18nText></span>
       </button>
       {!auxiliary ? <button
         type="button"
@@ -107,7 +111,7 @@ export function MenuLinks({ onAction, auxiliary = false }: { onAction?: () => vo
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           <Library className="h-3.5 w-3.5" aria-hidden />
         </span>
-        <span className="truncate">Community</span>
+        <span className="truncate"><I18nText>Community</I18nText></span>
       </button> : null}
       {compact ? null : <button
         type="button"
@@ -120,7 +124,7 @@ export function MenuLinks({ onAction, auxiliary = false }: { onAction?: () => vo
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           <Route className="h-3.5 w-3.5" aria-hidden />
         </span>
-        <span className="truncate">Take the tour</span>
+        <span className="truncate"><I18nText>Take the tour</I18nText></span>
       </button>}
       <MenuLink href={GITHUB_URL} label="Source on GitHub">
         <GithubMark />
@@ -147,7 +151,7 @@ export function MenuLinks({ onAction, auxiliary = false }: { onAction?: () => vo
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           <Bug className="h-3.5 w-3.5" aria-hidden />
         </span>
-        <span className="truncate">Send feedback</span>
+        <span className="truncate"><I18nText>Send feedback</I18nText></span>
       </button>
       <MenuLink href={BUG_REPORT_URL} label="Report a bug">
         <Bug className="h-3.5 w-3.5" aria-hidden />
@@ -183,7 +187,7 @@ function MenuLink({
       ].join(" ")}
     >
       <span className="flex h-4 w-4 shrink-0 items-center justify-center">{children}</span>
-      <span className="truncate">{label}</span>
+      <span className="truncate"><I18nText>{label}</I18nText></span>
     </a>
   );
 }

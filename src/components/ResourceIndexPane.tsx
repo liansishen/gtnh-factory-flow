@@ -1,4 +1,7 @@
 "use client";
+import { bilingualSearch } from "@/lib/i18n/game-search";
+import { useT, I18nText, useGameName } from "@/lib/i18n/react";
+
 
 import { Zap } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
@@ -320,7 +323,7 @@ export function ResourceIndexPane({
             <span className="nei-pager-count nei-text"> </span>
           </div>
           <div className="nei-empty">
-            {isDatasetLoading ? "Loading recipe index..." : "Recipe index is not loaded yet."}
+            <I18nText>{isDatasetLoading ? "Loading recipe index..." : "Recipe index is not loaded yet."}</I18nText>
           </div>
           <div className="min-h-0 flex-1" />
         </>
@@ -354,11 +357,11 @@ export function ResourceIndexPane({
           one at a time because no item has all of them. */}
       {displayedOutcome.phase !== "exact" ? (
         <p className="nei-note">
-          {displayedOutcome.phase === "corrected"
+          <I18nText>{displayedOutcome.phase === "corrected"
             ? `Showing results for ${displayedOutcome.corrections
                 .map((correction) => correction.to)
                 .join(", ")}`
-            : "No item has all those words. Showing the closest."}
+            : "No item has all those words. Showing the closest."}</I18nText>
         </p>
       ) : null}
 
@@ -608,9 +611,79 @@ function useBoardResources(enabled: boolean): IndexedResource[] {
 }
 
 /**
- * The same search run over the board's own resources, using the server's
- * matcher so the Board filter behaves exactly like the dataset list.
+ * The board's resource subset uses the server's English matcher and phases.
+ * Chinese aliases are planned before matching this smaller resource set.
  */
+export function queryBoardResourceResults(
+  resources: IndexedResource[],
+  request: { query: string; mod: string; sort: ResourceSortMode; offset: number; limit: number },
+) {
+  const bilingual = bilingualSearch(request.query);
+  if (bilingual?.unresolved) return { resources: [], total: 0, mods: [], outcome: EXACT_SEARCH };
+  const fields = resources.map((resource) => ({
+    nameText: (resource.displayName ?? resource.id).toLowerCase(),
+    name: splitSearchTokens(resource.displayName ?? ""),
+    id: splitSearchTokens(resource.id),
+  }));
+  const vocabulary = buildSearchVocabulary(
+    resources.map((resource) => resource.displayName ?? ""),
+  );
+  const modCounts = new Map<string, number>();
+
+  const resolved = resolveSearchPhases(
+    parseSearchQuery(bilingual?.text ?? request.query),
+    vocabulary,
+    (query, options) => {
+      modCounts.clear();
+      const matches: Array<{ resource: IndexedResource; score: number }> = [];
+      resources.forEach((resource, index) => {
+        const score = matchSearchEntry(query, fields[index], options);
+        if (score === undefined) {
+          return;
+        }
+        const modId = getResourceModLabel(resource);
+        modCounts.set(modId, (modCounts.get(modId) ?? 0) + 1);
+        if (request.mod && modId !== request.mod) {
+          return;
+        }
+        matches.push({ resource, score });
+      });
+      return matches;
+    },
+  );
+
+  const nameOf = (match: { resource: IndexedResource }) =>
+    (match.resource.displayName ?? match.resource.id).toLowerCase();
+  const sorted = [...resolved.results].sort((left, right) => {
+    if (request.sort === "name") {
+      return nameOf(left).localeCompare(nameOf(right));
+    }
+    if (request.sort === "mod") {
+      return (
+        getResourceModLabel(left.resource).localeCompare(getResourceModLabel(right.resource)) ||
+        nameOf(left).localeCompare(nameOf(right))
+      );
+    }
+    // "Most recipes" has nothing to sort by here (a board resource carries no
+    // recipe count), so it falls back to the same order as best match.
+    return right.score - left.score || nameOf(left).localeCompare(nameOf(right));
+  });
+
+  return {
+    resources: sorted
+      .slice(request.offset, request.offset + request.limit)
+      .map((match) => match.resource),
+    total: sorted.length,
+    mods: [...modCounts.entries()]
+      .map(([id, count]) => ({ id, count }))
+      .sort((left, right) => right.count - left.count || left.id.localeCompare(right.id)),
+    outcome:
+      resolved.phase === "exact"
+        ? EXACT_SEARCH
+        : { phase: resolved.phase, corrections: resolved.query.corrections },
+  };
+}
+
 function useBoardResourceResults(
   enabled: boolean,
   request: {
@@ -628,68 +701,7 @@ function useBoardResourceResults(
       return { resources: [], total: 0, mods: [], outcome: EXACT_SEARCH };
     }
 
-    const fields = resources.map((resource) => ({
-      nameText: (resource.displayName ?? resource.id).toLowerCase(),
-      name: splitSearchTokens(resource.displayName ?? ""),
-      id: splitSearchTokens(resource.id),
-    }));
-    const vocabulary = buildSearchVocabulary(
-      resources.map((resource) => resource.displayName ?? ""),
-    );
-    const modCounts = new Map<string, number>();
-
-    const resolved = resolveSearchPhases(
-      parseSearchQuery(request.query),
-      vocabulary,
-      (query, options) => {
-        modCounts.clear();
-        const matches: Array<{ resource: IndexedResource; score: number }> = [];
-        resources.forEach((resource, index) => {
-          const score = matchSearchEntry(query, fields[index], options);
-          if (score === undefined) {
-            return;
-          }
-          const modId = getResourceModLabel(resource);
-          modCounts.set(modId, (modCounts.get(modId) ?? 0) + 1);
-          if (request.mod && modId !== request.mod) {
-            return;
-          }
-          matches.push({ resource, score });
-        });
-        return matches;
-      },
-    );
-
-    const nameOf = (match: { resource: IndexedResource }) =>
-      (match.resource.displayName ?? match.resource.id).toLowerCase();
-    const sorted = [...resolved.results].sort((left, right) => {
-      if (request.sort === "name") {
-        return nameOf(left).localeCompare(nameOf(right));
-      }
-      if (request.sort === "mod") {
-        return (
-          getResourceModLabel(left.resource).localeCompare(getResourceModLabel(right.resource)) ||
-          nameOf(left).localeCompare(nameOf(right))
-        );
-      }
-      // "Most recipes" has nothing to sort by here (a board resource carries no
-      // recipe count), so it falls back to the same order as best match.
-      return right.score - left.score || nameOf(left).localeCompare(nameOf(right));
-    });
-
-    return {
-      resources: sorted
-        .slice(request.offset, request.offset + request.limit)
-        .map((match) => match.resource),
-      total: sorted.length,
-      mods: [...modCounts.entries()]
-        .map(([id, count]) => ({ id, count }))
-        .sort((left, right) => right.count - left.count || left.id.localeCompare(right.id)),
-      outcome:
-        resolved.phase === "exact"
-          ? EXACT_SEARCH
-          : { phase: resolved.phase, corrections: resolved.query.corrections },
-    };
+    return queryBoardResourceResults(resources, request);
   }, [
     enabled,
     request.limit,
@@ -722,6 +734,7 @@ function RecentResourceStrip({
 }: {
   onBrowse: (resource: IndexedResource, mode: "recipes" | "uses") => void;
 }) {
+  const _i18nT = useT();
   const history = useFactoryStore((state) => state.recipeResourceHistory);
   const activeResource = useFactoryStore((state) => state.recipeBrowserResource);
   const recent = useMemo(
@@ -734,7 +747,7 @@ function RecentResourceStrip({
   }
 
   return (
-    <div className="nei-recent" aria-label="Recently viewed" role="listbox">
+    <div className="nei-recent" aria-label={_i18nT("Recently viewed")} role="listbox">
       <NeiSlots
         resources={recent}
         activeResource={activeResource}
@@ -773,6 +786,7 @@ function VirtualResourceResultList({
   leading?: ReactNode;
   trailing?: ReactNode;
 }) {
+  const _i18nT = useT();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { pageSize, gridColumns } = useResourcePageSize(containerRef, onPageSizeChange);
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
@@ -793,7 +807,7 @@ function VirtualResourceResultList({
           className="nei-btn"
           onClick={handlePreviousPage}
           disabled={pageCount <= 1}
-          aria-label="Previous resource page"
+          aria-label={_i18nT("Previous resource page")}
         >
           <NeiArrow direction="left" />
         </button>
@@ -806,7 +820,7 @@ function VirtualResourceResultList({
           className="nei-btn"
           onClick={handleNextPage}
           disabled={pageCount <= 1}
-          aria-label="Next resource page"
+          aria-label={_i18nT("Next resource page")}
         >
           <NeiArrow direction="right" />
         </button>
@@ -858,12 +872,13 @@ function ResourceResultSkeleton({
   pageSize: number;
   gridColumns: number;
 }) {
+  const _i18nT = useT();
   const count = Math.max(3, Math.min(pageSize, 200));
   return (
     <div
       className="nei-grid"
       style={{ gridTemplateColumns: `repeat(${gridColumns}, var(--nei-cell, ${NEI_SLOT}px))` }}
-      aria-label="Loading resources"
+      aria-label={_i18nT("Loading resources")}
     >
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className="nei-skel" />
@@ -889,6 +904,7 @@ function NeiSearchField({
   flashing: boolean;
   none: boolean;
 }) {
+  const _i18nT = useT();
   const [focused, setFocused] = useState(false);
   return (
     <label
@@ -915,8 +931,8 @@ function NeiSearchField({
             event.currentTarget.blur();
           }
         }}
-        placeholder="Search..."
-        aria-label="Search items and fluids"
+        placeholder={_i18nT("Search...")}
+        aria-label={_i18nT("Search items and fluids")}
         spellCheck={false}
         autoComplete="off"
         className="compact:!text-base"
@@ -937,6 +953,7 @@ function NeiListMenu({
   onFilter: (filter: ResourceFilterMode) => void;
   onSort: (sort: ResourceSortMode) => void;
 }) {
+  const _i18nT = useT();
   const [anchor, setAnchor] = useState<ChromeAnchor>();
   const close = useCallback(() => setAnchor(undefined), []);
   const changed = filter !== "all" || sort !== "popular";
@@ -947,10 +964,10 @@ function NeiListMenu({
       <button
         type="button"
         className="nei-btn"
-        aria-label="Show and sort"
+        aria-label={_i18nT("Show and sort")}
         aria-haspopup="menu"
         aria-expanded={anchor !== undefined}
-        title={`Showing ${filterLabel.toLowerCase()}, ${sortLabel.toLowerCase()}`}
+        title={_i18nT(`Showing ${filterLabel.toLowerCase()}, ${sortLabel.toLowerCase()}`)}
         data-on={changed ? "" : undefined}
         {...{ [MENU_ANCHOR_ATTR]: "" }}
         onClick={(event) => {
@@ -1066,6 +1083,7 @@ function ResourceResultPage({
   isRefreshing: boolean;
   onBrowseResource: (resource: IndexedResource, mode: "recipes" | "uses") => void;
 }) {
+  const _i18nT = useT();
   const [, startBrowseTransition] = useTransition();
 
   const browse = useCallback(
@@ -1082,7 +1100,7 @@ function ResourceResultPage({
         gridTemplateColumns: `repeat(${gridColumns}, var(--nei-cell, ${NEI_SLOT}px))`,
         opacity: isRefreshing ? 0.6 : undefined,
       }}
-      aria-label="Resource results"
+      aria-label={_i18nT("Resource results")}
       role="listbox"
     >
       <NeiSlots resources={resources} activeResource={activeResource} onBrowse={browse} />
@@ -1108,6 +1126,7 @@ function NeiSlots({
   /** A dim line under the tooltip's name (the recent row says what it is). */
   hint?: string;
 }) {
+  const _i18nName = useGameName();
   const rowBrowse = useResourceBrowseMenu(onBrowse);
   // The hovered slot by its place and item: a page that changes under a still
   // pointer (typing, paging with the wheel) leaves no tooltip, and no R or U,
@@ -1187,7 +1206,7 @@ function NeiSlots({
             onDragEnd={() => {
               dragging.current = false;
             }}
-            aria-label={resource.id === POWER_EU_CLAUSE_ID ? "Power (EU/t)" : resourceLabel(resource)}
+            aria-label={_i18nName((resource.id === POWER_EU_CLAUSE_ID ? "Power (EU/t)" : resourceLabel(resource)) ?? "")}
             role="option"
             aria-selected={active}
           >

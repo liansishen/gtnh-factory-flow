@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { useEffect, useRef, useState } from "react";
 import { registerPanelPull } from "./flow/panel-pull";
@@ -42,6 +44,7 @@ export function PanelDrawer({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const _i18nT = useT();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const scrimRef = useRef<HTMLDivElement | null>(null);
   const stripRef = useRef<HTMLDivElement | null>(null);
@@ -263,8 +266,8 @@ export function PanelDrawer({
               }
               onOpen();
             }}
-            title={`Show ${label}`}
-            aria-label={`Show ${label}`}
+            title={_i18nT(`Show ${label}`)}
+            aria-label={_i18nT(`Show ${label}`)}
             className={[
               "absolute top-1/2 flex h-16 w-6 -translate-y-1/2 items-center justify-center border-2 border-[var(--mc-15)] bg-[var(--mc-49)] text-white shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25)]",
               side === "left" ? "left-0" : "right-0",

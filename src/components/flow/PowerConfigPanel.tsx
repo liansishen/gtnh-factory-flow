@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import { useState } from "react";
 import { getPowerSource } from "@/lib/power/registry";
@@ -214,8 +216,8 @@ function PowerNumberTile({
     return (
       <div className="nodrag nowheel min-w-0 border border-[var(--mc-47)] bg-[var(--mc-71)] px-1 pb-0.5 shadow-[inset_1px_1px_0_var(--mc-93),inset_-1px_-1px_0_var(--mc-47)]">
         <div className="truncate text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]">
-          {setting.label}
-          {setting.unit ? ` (${setting.unit})` : ""}
+          <I18nText>{setting.label}</I18nText>
+          <I18nText>{setting.unit ? ` (${setting.unit})` : ""}</I18nText>
         </div>
         <input
           autoFocus

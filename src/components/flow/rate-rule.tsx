@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { wheelChangesValues } from "@/lib/device-settings";
 import { ChevronDown } from "lucide-react";
@@ -314,6 +316,7 @@ function clippingBox(element: HTMLElement): { top: number; bottom: number } {
 
 /** The rule button and, while open, its list of four. */
 export function RuleButton({ rule, variant = "drawer" }: { rule: RuleControl; variant?: RateRuleVariant }) {
+  const _i18nT = useT();
   const rootRef = useRef<HTMLSpanElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [button, setButton] = useState<HTMLButtonElement | null>(null);
@@ -359,7 +362,7 @@ export function RuleButton({ rule, variant = "drawer" }: { rule: RuleControl; va
         disabled={locked}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`${rule.name ? `Rule for ${rule.name}` : "Rule"}: ${RULE_NAME[shownMode]}. Click to choose.`}
+        aria-label={_i18nT(`${rule.name ? `Rule for ${rule.name}` : "Rule"}: ${RULE_NAME[shownMode]}. Click to choose.`)}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => {
           event.stopPropagation();
@@ -386,7 +389,7 @@ export function RuleButton({ rule, variant = "drawer" }: { rule: RuleControl; va
         <div
           ref={listRef}
           role="listbox"
-          aria-label="Rule"
+          aria-label={_i18nT("Rule")}
           data-tooltip-stop
           className={`storage-rule-list nodrag nowheel ${table ? "storage-rule-list--table" : ""} ${up ? "storage-rule-list--up" : ""}`}
           onPointerDown={(event) => event.stopPropagation()}
@@ -416,6 +419,7 @@ export function RuleButton({ rule, variant = "drawer" }: { rule: RuleControl; va
 /** Your rate in its sunken box: click to type, scroll to step, middle click
  * to clear. */
 export function RateBox({ rule }: { rule: RateRule }) {
+  const _i18nT = useT();
   const [box, setBox] = useState<HTMLButtonElement | null>(null);
   const { storage, result, kind, any, target, input, signed, ask, locked, editing } = rule;
   // Native and non-passive, so Ctrl-scroll steps the rate instead of
@@ -450,8 +454,8 @@ export function RateBox({ rule }: { rule: RateRule }) {
         onMouseDown={middleDownKeepsFocus}
         onAuxClick={rule.clear}
         inputMode={signed ? "text" : "decimal"}
-        placeholder={rule.flowing > 0 ? `${signed && input ? "-" : ""}${draftFor(rule.flowing, kind)}` : "rate"}
-        aria-label="Your rate"
+        placeholder={_i18nT(rule.flowing > 0 ? `${signed && input ? "-" : ""}${draftFor(rule.flowing, kind)}` : "rate")}
+        aria-label={_i18nT("Your rate")}
         className="storage-rate-field storage-rate-field--editing nodrag"
       />
     );
@@ -475,7 +479,7 @@ export function RateBox({ rule }: { rule: RateRule }) {
         }}
         onMouseDown={middleDownKeepsFocus}
         onAuxClick={rule.clear}
-        aria-label={any ? "Your rate: none. Click to type one." : `Your rate: ${shown} ${unit}. Click to change it.`}
+        aria-label={_i18nT(any ? "Your rate: none. Click to type one." : `Your rate: ${shown} ${unit}. Click to change it.`)}
       >
         <span className="storage-rate-field-number">{any ? "rate?" : shown}</span>
         {any ? null : <span className="storage-rate-field-unit">{unit}</span>}

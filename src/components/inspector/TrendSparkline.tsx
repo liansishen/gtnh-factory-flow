@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import { useId, useRef, useState } from "react";
 import { formatCompact } from "@/lib/model";
@@ -74,9 +76,9 @@ export function TrendSparkline({
       <div
         style={{ height }}
         className="flex items-center justify-center text-[10px] text-fg-muted"
-      >
+      ><I18nText>
         Edit the board to start the chart
-      </div>
+      </I18nText></div>
     );
   }
 
@@ -180,8 +182,8 @@ export function TrendSparkline({
       */}
       {hoverIndex === undefined ? (
         <span className="pointer-events-none absolute left-0 top-0 text-[10px] tabular-nums text-fg-muted">
-          {series.length} edits
-        </span>
+          {series.length}<I18nText> edits
+        </I18nText></span>
       ) : (
         <span
           className="pointer-events-none absolute top-0 -translate-x-1/2 whitespace-nowrap rounded bg-surface-sunken/90 px-1 text-[10px] font-bold tabular-nums"
@@ -192,7 +194,7 @@ export function TrendSparkline({
             color: stroke,
           }}
         >
-          {readValue > 0 ? "+" : readValue < 0 ? "−" : ""}
+          <I18nText>{readValue > 0 ? "+" : readValue < 0 ? "−" : ""}</I18nText>
           {formatCompact(Math.abs(readValue) * multiplier)}
           <span className="opacity-70">{unit}</span>
         </span>

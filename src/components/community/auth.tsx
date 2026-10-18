@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -26,6 +27,7 @@ export function useCommunityUser() {
  * Deliberately minimal: no email, no reset — pick a name, pick a password.
  */
 export function AuthForm({ onSignedIn }: { onSignedIn: (user: CommunityUser) => void }) {
+  const _i18nT = useT();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -64,7 +66,7 @@ export function AuthForm({ onSignedIn }: { onSignedIn: (user: CommunityUser) => 
             checked={mode === "login"}
             onChange={() => setMode("login")}
           />
-          Sign in
+          <I18nText>Sign in</I18nText>
         </label>
         <label className="flex items-center gap-1.5">
           <input
@@ -73,13 +75,13 @@ export function AuthForm({ onSignedIn }: { onSignedIn: (user: CommunityUser) => 
             checked={mode === "register"}
             onChange={() => setMode("register")}
           />
-          Create account
+          <I18nText>Create account</I18nText>
         </label>
       </div>
       <input
         value={username}
         onChange={(event) => setUsername(event.target.value)}
-        placeholder="Username"
+        placeholder={_i18nT("Username")}
         autoComplete="username"
         maxLength={24}
         className="w-full rounded border border-line-strong bg-surface-sunken px-2 py-1.5 text-sm"
@@ -88,7 +90,7 @@ export function AuthForm({ onSignedIn }: { onSignedIn: (user: CommunityUser) => 
         type="password"
         value={password}
         onChange={(event) => setPassword(event.target.value)}
-        placeholder="Password"
+        placeholder={_i18nT("Password")}
         autoComplete={mode === "login" ? "current-password" : "new-password"}
         maxLength={128}
         className="w-full rounded border border-line-strong bg-surface-sunken px-2 py-1.5 text-sm"
@@ -100,7 +102,7 @@ export function AuthForm({ onSignedIn }: { onSignedIn: (user: CommunityUser) => 
         className="inline-flex items-center gap-2 rounded border border-cyan-700 bg-cyan-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
-        {mode === "login" ? "Sign in" : "Create account"}
+        {mode === "login" ? _i18nT("Sign in") : _i18nT("Create account")}
       </button>
     </form>
   );

@@ -11,6 +11,7 @@ import { BarKey } from "./bar-parts";
 import { ChromeMenu, chromeAnchorOf, type ChromeAnchor } from "./ChromeMenu";
 import { PixelIcon } from "./pixel-icons";
 import { SignInPanel } from "./SignInPanel";
+import { useT } from "@/lib/i18n/react";
 
 /**
  * The account key, after Share: "Sign in" while signed out (it opens the sign-in form), the account's face (initials in
@@ -18,6 +19,7 @@ import { SignInPanel } from "./SignInPanel";
  * person picture like the other icon keys (`pictures`).
  */
 export function AccountKey({ pictures = false }: { pictures?: boolean }) {
+  const _i18nT = useT();
   const { user, isLoading, signOut } = useCommunityUser();
   const me = useLiveSession((state) => state.me);
   const [open, setOpen] = useState<{ kind: "form" | "menu"; anchor: ChromeAnchor }>();
@@ -33,7 +35,7 @@ export function AccountKey({ pictures = false }: { pictures?: boolean }) {
       <>
         <BarKey
           id="account"
-          label={pictures ? undefined : "Sign in"}
+          label={pictures ? undefined : _i18nT("Sign in")}
           icon={pictures}
           ariaLabel="Sign in"
           tip="Sign in: your plans are kept in your account, and shared from it"
@@ -43,7 +45,9 @@ export function AccountKey({ pictures = false }: { pictures?: boolean }) {
         >
           {pictures ? <PixelIcon name="account" /> : undefined}
         </BarKey>
-        {open?.kind === "form" ? <SignInPanel anchor={open.anchor} onClose={() => setOpen(undefined)} /> : null}
+        {open?.kind === "form" ? (
+          <SignInPanel anchor={open.anchor} onClose={() => setOpen(undefined)} />
+        ) : null}
       </>
     );
   }
@@ -54,8 +58,8 @@ export function AccountKey({ pictures = false }: { pictures?: boolean }) {
       <BarKey
         id="account"
         icon
-        ariaLabel={`Account: ${user.username}`}
-        tip={`Signed in as ${user.username}`}
+        ariaLabel={`${_i18nT("Account")}: ${user.username}`}
+        tip={`${_i18nT("Signed in as")} ${user.username}`}
         tipSub="Sign out"
         open={open?.kind === "menu"}
         onClick={(event) => toggle("menu", event.currentTarget)}
@@ -72,7 +76,7 @@ export function AccountKey({ pictures = false }: { pictures?: boolean }) {
           minWidth={110}
           align="right"
           entries={[
-            { label: user.username, disabled: true, onSelect: () => undefined },
+            { label: user.username, disabled: true, raw: true, onSelect: () => undefined },
             { label: "Sign out", ruleAbove: true, onSelect: () => void signOut() },
           ]}
           onClose={() => setOpen(undefined)}

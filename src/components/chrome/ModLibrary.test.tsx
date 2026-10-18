@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DesignSummary } from "@/lib/designs/design-library";
 import { stampOpened, resetLastOpenForTests } from "@/lib/library/last-open";
 import { openLibrary, readLibraryTabState } from "@/lib/library/library-tab";
 import { useDesignStore } from "@/store/design-store";
+import { setLocale } from "@/lib/i18n/locale";
 
 vi.mock("@/lib/compact-view", () => ({ isCompactViewport: () => false }));
 const auth = vi.hoisted(() => ({ user: undefined as undefined | { username: string } }));
@@ -44,6 +45,7 @@ const actions = {
 };
 
 beforeEach(() => {
+  setLocale("en");
   window.localStorage.clear();
   window.sessionStorage.clear();
   resetLastOpenForTests();
@@ -63,7 +65,7 @@ beforeEach(() => {
   stampOpened("c", Date.parse("2026-10-14T09:00:00.000Z"));
   openLibrary({ kind: "all" });
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); setLocale("en"); });
 
 const tileNames = () => [...document.querySelectorAll(".ml-tile:not(.ml-new) .ml-name")].map((element) => element.textContent);
 
@@ -145,5 +147,19 @@ describe("the library", () => {
     render(<ModLibrary />);
     expect(document.querySelector("[data-signed-in-as]")?.textContent).toBe("Signed in as arodoid");
     expect(document.querySelector(".ml-account")).toBeNull();
+  });
+
+  it("localizes plan status, size and relative dates while keeping authored names", () => {
+    render(<ModLibrary />);
+    act(() => setLocale("zh-CN"));
+    const tiles = [...document.querySelectorAll(".ml-tile:not(.ml-new)")];
+    expect(tiles[0].querySelector(".ml-size")?.textContent).toBe("4 张卡片 · 6 个资源仓");
+    expect(tiles[0].querySelector(".ml-chip")?.textContent).toBe("当前显示");
+    expect(tiles[1].querySelector(".ml-chip")?.textContent).toBe("已打开");
+    expect(tiles[0].querySelector(".ml-when")?.textContent).toMatch(/天前$/);
+    expect(tileNames()).toEqual(["ref-chain", "Benzene", "Parked"]);
+    act(() => setLocale("en"));
+    expect(tiles[0].querySelector(".ml-size")?.textContent).toBe("4 cards · 6 drawers");
+    expect(tiles[0].querySelector(".ml-chip")?.textContent).toBe("SHOWING");
   });
 });

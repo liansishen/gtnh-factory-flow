@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { listSelectableDatasetVersions } from "@/lib/datasets/remote";
 import { useFactoryStore } from "@/store/factory-store";
@@ -12,6 +14,7 @@ interface AppIdentityProps {
  * the two version numbers read as a pair.
  */
 export function AppIdentity({ onLoadDatasetVersion }: AppIdentityProps) {
+  const _i18nT = useT();
   const manifest = useFactoryStore((state) => state.datasetManifest);
   const selectedDatasetVersionId = useFactoryStore((state) => state.selectedDatasetVersionId);
   const isDatasetLoading = useFactoryStore((state) => state.isDatasetLoading);
@@ -20,11 +23,11 @@ export function AppIdentity({ onLoadDatasetVersion }: AppIdentityProps) {
   return (
     <label
       className="flex min-w-0 items-center gap-1.5"
-      title="Pack version"
+      title={_i18nT("Pack version")}
     >
-      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-fg-muted">
+      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-fg-muted"><I18nText>
         Game
-      </span>
+      </I18nText></span>
       <select
         value={selectedDatasetVersionId ?? ""}
         disabled={isDatasetLoading || !versions.length}
@@ -42,7 +45,7 @@ export function AppIdentity({ onLoadDatasetVersion }: AppIdentityProps) {
             </option>
           ))
         ) : (
-          <option value="">No versions</option>
+          <option value=""><I18nText>No versions</I18nText></option>
         )}
       </select>
     </label>

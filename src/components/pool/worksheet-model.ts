@@ -1,3 +1,4 @@
+import { matchesGameNameFilter } from "@/lib/i18n/game-search";
 import { stripBeeFrameSlotInputs } from "@/lib/model/bee-display";
 import { isBeeProductionRecipe } from "@/lib/model/passive-production";
 import { productionGroupDescendants } from "@/lib/model/production-groups";
@@ -63,8 +64,7 @@ export type WorksheetGroup = ReturnType<typeof buildWorksheetGroups>[number];
 export type WorksheetSection = WorksheetGroup["sections"][number];
 
 export function filterWorksheetGroups(groups: WorksheetGroup[], query: string) {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return groups;
+  if (!query.trim()) return groups;
   // Keep a shared machine together: filtering must never make one recipe's
   // fraction appear to be its machine's entire requirement.
   return groups.filter((group) =>
@@ -76,7 +76,7 @@ export function filterWorksheetGroups(groups: WorksheetGroup[], query: string) {
         ...[...section.ports.inputs, ...section.ports.outputs].map((port) => port.displayName),
         ...section.nonConsumed.map((input) => input.displayName ?? input.id),
       ]),
-    ].some((text) => text?.toLowerCase().includes(needle)),
+    ].some((text) => typeof text === "string" && matchesGameNameFilter(query, text)),
   );
 }
 

@@ -1,3 +1,5 @@
+
+import { I18nText } from "@/lib/i18n/react";
 import "./fold.css";
 
 /** Which way the panel goes: "left" draws «, "right" draws ». */
@@ -7,7 +9,7 @@ export type FoldDirection = "left" | "right";
 export function FoldGlyph({ direction }: { direction: FoldDirection }) {
   return (
     <span className="fold-glyph" aria-hidden>
-      {direction === "left" ? "«" : "»"}
+      <I18nText>{direction === "left" ? "«" : "»"}</I18nText>
     </span>
   );
 }

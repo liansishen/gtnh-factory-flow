@@ -6,6 +6,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { createPortal } from "react-dom";
 import { useDropdownDismiss } from "@/lib/hooks/use-dropdown-dismiss";
 import { activateOnKey } from "@/lib/hooks/button-keys";
+import { I18nText, useT } from "@/lib/i18n/react";
 import { getUiScale } from "@/lib/ui-scale";
 
 /**
@@ -49,6 +50,8 @@ export interface MenuEntry {
   icon?: ReactNode;
   /** A font-family for the label alone (the font picker shows each font in itself). */
   labelFont?: string;
+  /** True when the label is the player's own words (a username): shown as typed, never translated. */
+  raw?: boolean;
   onSelect: () => void;
 }
 
@@ -96,7 +99,10 @@ export function ChromeMenu({
     return () => {
       const active = document.activeElement;
       // Only take focus back when it was in the menu (a row picked that opened something else keeps its own).
-      if (previous?.isConnected && (!active || active === document.body || menu?.contains(active))) {
+      if (
+        previous?.isConnected &&
+        (!active || active === document.body || menu?.contains(active))
+      ) {
         previous.focus({ preventScroll: true });
       }
     };
@@ -122,7 +128,9 @@ export function ChromeMenu({
     if (box.left < margin) {
       setSlide(shell(margin - box.left));
     } else if (box.right > window.innerWidth - margin) {
-      setSlide(-Math.min(shell(box.right - (window.innerWidth - margin)), shell(box.left - margin)));
+      setSlide(
+        -Math.min(shell(box.right - (window.innerWidth - margin)), shell(box.left - margin)),
+      );
     }
     // Measured once as it opens: a menu closes on a scroll or a camera move, so its anchor does not move under it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -146,12 +154,18 @@ export function ChromeMenu({
       onContextMenu={(event) => event.preventDefault()}
       tabIndex={-1}
       onKeyDown={(event) => {
-        const rows = [...(ref.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([aria-disabled])') ?? [])];
+        const rows = [
+          ...(ref.current?.querySelectorAll<HTMLElement>(
+            '[role="menuitem"]:not([aria-disabled])',
+          ) ?? []),
+        ];
         const at = rows.indexOf(document.activeElement as HTMLElement);
         const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
         if (step) {
           event.preventDefault();
-          rows[at < 0 ? (step > 0 ? 0 : rows.length - 1) : (at + step + rows.length) % rows.length]?.focus();
+          rows[
+            at < 0 ? (step > 0 ? 0 : rows.length - 1) : (at + step + rows.length) % rows.length
+          ]?.focus();
         } else if (event.key === "Home" || event.key === "End") {
           event.preventDefault();
           rows[event.key === "Home" ? 0 : rows.length - 1]?.focus();
@@ -161,7 +175,11 @@ export function ChromeMenu({
         }
       }}
     >
-      {title ? <div className="mm-title">{title}</div> : null}
+      {title ? (
+        <div className="mm-title">
+          <I18nText>{title}</I18nText>
+        </div>
+      ) : null}
       <div className="mm-scroll">
         {entries.map((entry, index) => (
           <MenuRow key={`${entry.label}:${index}`} entry={entry} onClose={onClose} />
@@ -173,6 +191,7 @@ export function ChromeMenu({
 }
 
 function MenuRow({ entry, onClose }: { entry: MenuEntry; onClose: () => void }): ReactNode {
+  const _i18nT = useT();
   return (
     <>
       {entry.ruleAbove ? <div className="mm-rule" /> : null}
@@ -185,7 +204,7 @@ function MenuRow({ entry, onClose }: { entry: MenuEntry; onClose: () => void }):
         data-current={entry.current ? "" : undefined}
         data-off={entry.disabled ? "" : undefined}
         aria-disabled={entry.disabled || undefined}
-        {...(entry.tip ? tipAttrs({ id: `menu|${entry.label}`, title: entry.tip }) : {})}
+        {...(entry.tip ? tipAttrs({ id: `menu|${entry.label}`, title: _i18nT(entry.tip) }) : {})}
         onClick={() => {
           if (entry.disabled) return;
           playBoardSound("tick");
@@ -193,13 +212,22 @@ function MenuRow({ entry, onClose }: { entry: MenuEntry; onClose: () => void }):
           entry.onSelect();
         }}
       >
-        {entry.dot ? <span className="mm-dot" style={{ background: entry.dot }} aria-hidden /> : null}
+        {entry.dot ? (
+          <span className="mm-dot" style={{ background: entry.dot }} aria-hidden />
+        ) : null}
         {entry.plus ? <PixelIcon name="plus" className="mm-plus" /> : null}
         {entry.icon ?? null}
-        <span className="mm-label" style={entry.labelFont ? { fontFamily: entry.labelFont } : undefined}>
-          {entry.label}
+        <span
+          className="mm-label"
+          style={entry.labelFont ? { fontFamily: entry.labelFont } : undefined}
+        >
+          {entry.raw ? entry.label : <I18nText>{entry.label}</I18nText>}
         </span>
-        {entry.detail ? <span className="mm-detail">{entry.detail}</span> : null}
+        {entry.detail ? (
+          <span className="mm-detail">
+            {entry.raw ? entry.detail : <I18nText>{entry.detail}</I18nText>}
+          </span>
+        ) : null}
       </div>
     </>
   );

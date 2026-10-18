@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import { listRecipeDatasetCrops } from "@/lib/datasets/browser-loader";
 import type { RecipeSummary } from "@/lib/datasets/types";
@@ -28,7 +30,7 @@ function CropHover({ crop }: { crop: RecipeSummary }) {
     <div className="min-w-[170px]" style={{ fontFamily: "var(--app-font)" }}>
       <p className="text-[14px] font-bold leading-4 text-white">
         {cropDisplayName(crop.name)}
-        {tier ? <span className="text-[11px] font-normal text-slate-400"> · Tier {tier}</span> : null}
+        {tier ? <span className="text-[11px] font-normal text-slate-400"><I18nText> · Tier </I18nText>{tier}</span> : null}
       </p>
       <div className="mt-1.5 space-y-1">
         {crop.outputs.map((output) => (
@@ -44,7 +46,7 @@ function CropHover({ crop }: { crop: RecipeSummary }) {
               />
             </span>
             <span className="min-w-0 flex-1 truncate text-[13px] leading-4 text-slate-100">
-              {output.displayName ?? output.id}
+              <I18nText game>{output.displayName ?? output.id}</I18nText>
             </span>
             {output.chance !== undefined && output.chance < 1 ? (
               <span className="shrink-0 text-[12px] tabular-nums text-slate-400">
@@ -55,7 +57,7 @@ function CropHover({ crop }: { crop: RecipeSummary }) {
         ))}
       </div>
       {cropMachineOnly(crop) ? (
-        <p className="mt-1.5 text-[12px] leading-4 text-slate-400">Only works in an Industrial Farm.</p>
+        <p className="mt-1.5 text-[12px] leading-4 text-slate-400"><I18nText>Only works in an Industrial Farm.</I18nText></p>
       ) : null}
     </div>
   );

@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { createEmptyProject } from "@/examples";
 import type { FactoryStorage } from "@/lib/model/types";
 import type { StorageRole } from "@/lib/model/storage-role";
 import { useFactoryStore } from "@/store/factory-store";
 import { CleanDrawer } from "./CleanDrawer";
+import { setLocale } from "@/lib/i18n/locale";
 
 vi.mock("@/lib/compact-view", () => ({ isCompactViewport: () => false }));
 
@@ -17,7 +18,7 @@ beforeAll(() => {
     disconnect() {}
   } as unknown as typeof ResizeObserver;
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); setLocale("en"); });
 
 /** The most elements one drawer may cost (the classic drawer is 42 to 55). */
 const BUDGET = 18;
@@ -113,6 +114,19 @@ describe("the clean drawer", () => {
     const calm = renderDrawer(stored(), "source").container.querySelector(".cd-box")!;
     expect(calm.getAttribute("data-text")).toBe("Set");
     expect(calm.hasAttribute("data-prompt")).toBe(false);
+  });
+
+  it("localizes the CSS-painted empty prompt without writing translated text into storage", () => {
+    load(storage(), { unanchored: ["s1"] });
+    const before = JSON.stringify(useFactoryStore.getState().project);
+    const { container } = renderDrawer(stored(), "source");
+    const box = container.querySelector(".cd-box")!;
+    expect(box.getAttribute("data-text")).toBe("Set");
+    act(() => setLocale("zh-CN"));
+    expect(box.getAttribute("data-text")).toBe("设置");
+    expect(JSON.stringify(useFactoryStore.getState().project)).toBe(before);
+    act(() => setLocale("en"));
+    expect(box.getAttribute("data-text")).toBe("Set");
   });
 
   it("marks a target the plan cannot reach in red", () => {

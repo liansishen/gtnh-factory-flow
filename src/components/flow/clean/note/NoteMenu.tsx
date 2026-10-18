@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import type { FactoryNodeColorTag } from "@/lib/model/types";
 import { BoardMenu, MenuLine, MenuRow } from "../menus/BoardMenu";
@@ -32,6 +34,7 @@ export function NoteMenu({
   onFont: (steps: number) => void;
   onDelete: () => void;
 }) {
+  const _i18nT = useT();
   const run = (action: () => void) => () => {
     action();
     onClose();
@@ -39,7 +42,7 @@ export function NoteMenu({
   if (state.view === "colour") {
     const current = colorTag ?? NOTE.defaultColor;
     return (
-      <BoardMenu x={state.x} y={state.y} label="Note colour" title="Colour" onClose={onClose}>
+      <BoardMenu x={state.x} y={state.y} label="Note colour" title={_i18nT("Colour")} onClose={onClose}>
         {NOTE_COLOR_MENU.map(([tag, name]) => (
           <MenuRow
             key={tag}

@@ -39,11 +39,11 @@ Scratch harnesses are `*.local.test.ts` (excluded from the suite); run one with
 
 ## Working rules
 
-- `main` is the only working branch; never start another. Commit and push finished work
-  unless told otherwise. Never reset or revert changes you did not make. Unmerged
-  experiments survive as `archive/*` tags.
-- Push only to `origin` (`jackwrichards/gtnh-factory-flow`). `upstream` (Samiracle64, the
-  original fork, long diverged) and `kewaii` are not push targets.
+- `main` is the working branch. Preserve unrelated changes and commit verified work locally.
+  Push or deploy only when explicitly authorized.
+- `origin` is `liansishen/gtnh-factory-flow`. `upstream` is
+  `jackwrichards/gtnh-factory-flow` and is read-only. The original Samiracle64 repository
+  is a separate, long-diverged source, not this fork's synchronization target.
 - CI runs typecheck, the full suite and a Chromium/Firefox icon-sizing check on every PR
   and push to main. No tolerated failures. A test that pins player-facing copy changes in
   the same commit as the copy.
@@ -76,6 +76,8 @@ Scratch harnesses are `*.local.test.ts` (excluded from the suite); run one with
   and the published gzip, not just local output.
 
 ## Production
+
+These production notes describe the upstream service. This fork has no authorized shared-server deployment.
 
 - One DigitalOcean droplet: Caddy -> Next.js :3000, systemd unit `gtnh-flow`, releases in
   `/opt/releases`, datasets in `/opt/shared/gtnh-datasets`, behind Cloudflare. Diagnose with
@@ -111,3 +113,15 @@ Scratch harnesses are `*.local.test.ts` (excluded from the suite); run one with
   `node_modules`). Diff exported plans rather than trusting "same board" by eye.
 - Measure performance on `next start` with `GTNH_PREWARM_ON_STARTUP=1`, after prewarm,
   not on the dev server.
+
+## Native internationalization
+
+- `src/lib/i18n/` owns device locale, UI messages, canonical-name display and bilingual query planning.
+  Keep locale out of plan state, IDs, machine rules, solving and live edits.
+- Use `useT` / `I18nText` for application copy and `useGameName` / `I18nText game`
+  for canonical game labels. User-authored names, notes, task text and comments stay verbatim.
+- Run `npm run i18n:report`, locale/plan-invariant tests and the real browser test
+  `node tools/browser-tests/i18n.mjs` when changing localization. Coverage reports measure
+  static message lookup separately from approximate name generation.
+- Server and local-data modes share the application; `npm run datasets:download` installs
+  a supported dataset under the gitignored `public/datasets/gtnh/` tree.

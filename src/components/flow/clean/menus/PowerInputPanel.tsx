@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import "./menus.css";
 
@@ -35,7 +37,7 @@ function Box({ label, unit, before, after }: { label: string; unit: string; befo
   return (
     <div className="pw-box">
       <span>
-        {label} <small>{unit}</small>
+        <I18nText>{label}</I18nText> <small>{unit}</small>
       </span>
       <b>
         {before} <span style={{ display: "inline", color: "#a3a3a3" }}>→</span> {after}
@@ -54,15 +56,15 @@ function Scale({ facts }: { facts: PowerFacts }) {
   const slide = (p: number): CSSProperties => ({ left: `${p * 100}%`, transform: `translateX(-${p * 100}%)` });
   return (
     <div className="pw-scale">
-      <span className="pw-mark pw-subtle" style={{ left: 0, top: 0 }}>
+      <span className="pw-mark pw-subtle" style={{ left: 0, top: 0 }}><I18nText>
         0A
-      </span>
+      </I18nText></span>
       <span className="pw-mark" style={{ right: 0, top: 0 }}>
-        {amps(next)} next
-      </span>
+        {amps(next)}<I18nText> next
+      </I18nText></span>
       <span className="pw-mark" style={{ ...slide(ps), top: 15 }}>
-        {amps(supplied)} supplied
-      </span>
+        {amps(supplied)}<I18nText> supplied
+      </I18nText></span>
       <div className="pw-bar">
         <div className="pw-fill" style={{ width: `calc((100% - 2px) * ${ps})` }} />
         <i className="pw-tick" style={{ left: `calc(1px + (100% - 2px) * ${ps})`, top: -4, height: 17 }} />
@@ -70,8 +72,8 @@ function Scale({ facts }: { facts: PowerFacts }) {
         <i className="pw-tick" style={{ left: "calc(100% - 2px)", top: -4, height: 17 }} />
       </div>
       <span className="pw-mark" style={{ ...slide(pd), top: 44 }}>
-        {amps(draw)} draw
-      </span>
+        {amps(draw)}<I18nText> draw
+      </I18nText></span>
     </div>
   );
 }
@@ -90,23 +92,23 @@ export function PowerFactsPanel({ facts }: { facts: PowerFacts }) {
   ];
   return (
     <div className="pw" data-power-panel="">
-      <div className="pw-title">Power input</div>
+      <div className="pw-title"><I18nText>Power input</I18nText></div>
       <div className="pw-line">
         <span>
-          {compact(facts.amps)}A ×<Tag tier={facts.tier} />= {compact(facts.volt * facts.amps)} EU/t
-        </span>
+          {compact(facts.amps)}<I18nText>A ×</I18nText><Tag tier={facts.tier} />= {compact(facts.volt * facts.amps)}<I18nText> EU/t
+        </I18nText></span>
         <span>
           {compact(hatches)}
           <Tag tier={facts.tier} />
-          {facts.amps <= hatchAmps ? "hatch" : "hatches"}
-          <span className="pw-subtle">({hatchAmps}A each)</span>
+          <I18nText>{facts.amps <= hatchAmps ? "hatch" : "hatches"}</I18nText>
+          <span className="pw-subtle">({hatchAmps}<I18nText>A each)</I18nText></span>
         </span>
       </div>
       <div className="pw-rule" />
       <div className="pw-stats">
         {stats.map(([label, value]) => (
           <div key={label} className="pw-stat">
-            <span>{label}</span>
+            <span><I18nText>{label}</I18nText></span>
             <span>{value}</span>
           </div>
         ))}
@@ -115,7 +117,7 @@ export function PowerFactsPanel({ facts }: { facts: PowerFacts }) {
       {next && facts.nextAmps !== undefined ? (
         <>
           <div className="pw-line">
-            <span>Next improvement</span>
+            <span><I18nText>Next improvement</I18nText></span>
             <span>
               +{amps(facts.nextAmps - facts.amps)}
               <Tag tier={facts.tier} />
@@ -130,16 +132,16 @@ export function PowerFactsPanel({ facts }: { facts: PowerFacts }) {
         </>
       ) : (
         <div className="pw-line">
-          <span>Next improvement</span>
-          <span className="pw-subtle">none: more amps buy nothing</span>
+          <span><I18nText>Next improvement</I18nText></span>
+          <span className="pw-subtle"><I18nText>none: more amps buy nothing</I18nText></span>
         </div>
       )}
       <div className="pw-rule" />
       <div className="pw-line">
-        <span className="pw-subtle">Demand for this card</span>
-        <span>{compact(facts.demand)} EU/t</span>
+        <span className="pw-subtle"><I18nText>Demand for this card</I18nText></span>
+        <span>{compact(facts.demand)}<I18nText> EU/t</I18nText></span>
       </div>
-      <div className="pw-subtle">{facts.shared ? "All recipes, across the required machines." : "Across the required machines."}</div>
+      <div className="pw-subtle"><I18nText>{facts.shared ? "All recipes, across the required machines." : "Across the required machines."}</I18nText></div>
     </div>
   );
 }

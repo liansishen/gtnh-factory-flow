@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import {
   ArrowBigUp,
@@ -46,6 +48,7 @@ const BAR_BUTTON =
   "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border border-line-strong bg-surface text-fg-subtle hover:bg-surface-raised disabled:cursor-not-allowed disabled:border-line disabled:bg-surface-sunken disabled:text-fg-muted";
 
 export function PlanIdentityDrawer() {
+  const _i18nT = useT();
   const project = useFactoryStore((state) => state.project);
   const lastResult = useFactoryStore((state) => state.lastResult);
   const setProjectIdentity = useFactoryStore((state) => state.setProjectIdentity);
@@ -129,12 +132,12 @@ export function PlanIdentityDrawer() {
           className="!h-6 !w-6 shrink-0 border border-line-strong bg-surface-sunken"
         />
         <button type="button" onClick={toggleOpen} aria-expanded={isOpen}
-          aria-label="Edit plan details" className="plan-summary-name group flex h-6 min-w-0 max-w-[35%] shrink items-center gap-1.5 rounded px-1 text-left font-semibold text-fg hover:bg-surface-raised">
+          aria-label={_i18nT("Edit plan details")} className="plan-summary-name group flex h-6 min-w-0 max-w-[35%] shrink items-center gap-1.5 rounded px-1 text-left font-semibold text-fg hover:bg-surface-raised">
           <span className="truncate">{nameDraft ?? project.name}</span>
           <Pencil aria-hidden className="h-3 w-3 shrink-0 text-fg-muted opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100" />
         </button>
         <button type="button" onClick={toggleOpen} aria-expanded={isOpen}
-          aria-label={isOpen ? "Fold the plan description away" : "Open the plan description"}
+          aria-label={_i18nT(isOpen ? "Fold the plan description away" : "Open the plan description")}
           className="plan-summary-description flex h-6 min-w-0 flex-1 items-center rounded px-2 text-left text-xs text-fg-muted hover:bg-surface-raised hover:text-fg">
           <span className="block w-full overflow-hidden whitespace-nowrap text-xs" style={{ maskImage: "linear-gradient(to right, black calc(100% - 12px), transparent)" }}>
             {(descriptionDraft ?? project.description)?.trim() || "Add description…"}
@@ -149,12 +152,12 @@ export function PlanIdentityDrawer() {
               data-plan-share
               onClick={() => setInviting(true)}
               disabled={!signedIn}
-              title={signedIn ? "Share this plan with people to edit it together" : "Sign in to share"}
-              aria-label="Share this plan"
+              title={_i18nT(signedIn ? "Share this plan with people to edit it together" : "Sign in to share")}
+              aria-label={_i18nT("Share this plan")}
               className="plan-summary-action inline-flex h-6 shrink-0 items-center justify-center gap-1.5 rounded border border-line-strong px-2 text-fg hover:bg-surface-raised disabled:opacity-40"
             >
               <Users className="h-3 w-3" />
-              <span>Share</span>
+              <span><I18nText>Share</I18nText></span>
             </button>
           </>
         ) : null}
@@ -172,11 +175,11 @@ export function PlanIdentityDrawer() {
                   ? "Post a copy to Community"
                   : "Share"
             }
-            aria-label={live ? "Post a copy to Community" : "Share this setup"}
+            aria-label={_i18nT(live ? "Post a copy to Community" : "Share this setup")}
             className="plan-summary-action inline-flex h-6 shrink-0 items-center justify-center gap-1.5 rounded border border-line-strong px-2 text-fg hover:bg-surface-raised disabled:opacity-40"
           >
             <Share2 className="h-3 w-3" />
-            <span>{live ? "Publish" : "Share"}</span>
+            <span><I18nText>{live ? "Publish" : "Share"}</I18nText></span>
           </button>
         )}
         <ScreenshotButton />
@@ -187,8 +190,8 @@ export function PlanIdentityDrawer() {
 
       {isOpen ? (
         <div className="plan-summary-details grid gap-2 border-t border-line p-3">
-          <label className="grid gap-1 text-xs text-fg-muted">Name
-        <input
+          <label className="grid gap-1 text-xs text-fg-muted"><I18nText>Name
+        </I18nText><input
           value={nameDraft ?? project.name}
           onChange={(event) => setNameDraft(event.target.value)}
           onBlur={commitName}
@@ -198,14 +201,14 @@ export function PlanIdentityDrawer() {
             }
           }}
           maxLength={80}
-          aria-label="Plan name"
-          title="Plan name"
+          aria-label={_i18nT("Plan name")}
+          title={_i18nT("Plan name")}
 
           className="h-8 w-full min-w-0 rounded border border-line bg-surface-sunken px-1.5 text-sm font-medium text-fg outline-none hover:border-line focus:border-line-strong focus:bg-surface-sunken"
         />
           </label>
-          <label className="grid gap-1 text-xs text-fg-muted">Description
-          <textarea
+          <label className="grid gap-1 text-xs text-fg-muted"><I18nText>Description
+          </I18nText><textarea
             value={descriptionDraft ?? project.description ?? ""}
             onChange={(event) => {
               const value = event.target.value;
@@ -216,8 +219,8 @@ export function PlanIdentityDrawer() {
             onBlur={(event) => commitDescription(event.target.value)}
             maxLength={2000}
             rows={2}
-            placeholder="What does it make? Any setup notes? Sharing posts this with the plan."
-            aria-label="Plan description"
+            placeholder={_i18nT("What does it make? Any setup notes? Sharing posts this with the plan.")}
+            aria-label={_i18nT("Plan description")}
             className="w-full resize-y rounded border border-line-strong bg-surface-sunken px-2 py-1.5 text-xs"
           />
           </label>
@@ -226,7 +229,7 @@ export function PlanIdentityDrawer() {
 
       {isPickingIcon ? (
         <IconPicker
-          title="Pick this plan's icon"
+          title={_i18nT("Pick this plan's icon")}
           suggestions={iconSuggestionsFromStats(stats.needs, stats.outputs)}
           onPick={(picked) => {
             setProjectIdentity({ icon: picked });
@@ -253,6 +256,7 @@ export function PlanIdentityDrawer() {
  * fingerprint math track the link alone.
  */
 function LinkedPostStrip({ planId }: { planId: string }) {
+  const _i18nT = useT();
   const project = useFactoryStore((state) => state.project);
   const setProjectIdentity = useFactoryStore((state) => state.setProjectIdentity);
   const clearProjectCommunityLink = useFactoryStore((state) => state.clearProjectCommunityLink);
@@ -371,14 +375,14 @@ function LinkedPostStrip({ planId }: { planId: string }) {
   if (loadState === "gone") {
     return (
       <>
-        <span className="shrink-0 text-[11px] text-fg-muted compact:hidden">
+        <span className="shrink-0 text-[11px] text-fg-muted compact:hidden"><I18nText>
           The post this came from is gone
-        </span>
+        </I18nText></span>
         <button
           type="button"
           onClick={clearProjectCommunityLink}
-          title="Detach from the post"
-          aria-label="Detach this plan from its deleted post"
+          title={_i18nT("Detach from the post")}
+          aria-label={_i18nT("Detach this plan from its deleted post")}
           className={BAR_BUTTON}
         >
           <Unlink className="h-3.5 w-3.5" />
@@ -418,7 +422,7 @@ function LinkedPostStrip({ planId }: { planId: string }) {
         type="button"
         onClick={() => void vote()}
         disabled={busy === "vote"}
-        title={post.myVote === 1 ? "You voted this setup up" : "Vote this setup up"}
+        title={_i18nT(post.myVote === 1 ? "You voted this setup up" : "Vote this setup up")}
         className={[
           "inline-flex h-6 shrink-0 items-center gap-0.5 rounded border px-1.5 text-xs tabular-nums",
           post.myVote === 1
@@ -431,8 +435,8 @@ function LinkedPostStrip({ planId }: { planId: string }) {
       <button
         type="button"
         onClick={() => void copyLink()}
-        title="Copy link"
-        aria-label="Copy the link to this post"
+        title={_i18nT("Copy link")}
+        aria-label={_i18nT("Copy the link to this post")}
         className={BAR_BUTTON}
       >
         {isLinkCopied ? (
@@ -447,8 +451,8 @@ function LinkedPostStrip({ planId }: { planId: string }) {
       <button
         type="button"
         onClick={() => setSharingAsOwn(true)}
-        title={isLiveConfigured() ? "Published: the post and its link" : "Share"}
-        aria-label={isLiveConfigured() ? "Post a copy to Community" : "Share this setup"}
+        title={_i18nT(isLiveConfigured() ? "Published: the post and its link" : "Share")}
+        aria-label={_i18nT(isLiveConfigured() ? "Post a copy to Community" : "Share this setup")}
         className={BAR_BUTTON}
       >
         <Share2 className="h-3.5 w-3.5" />

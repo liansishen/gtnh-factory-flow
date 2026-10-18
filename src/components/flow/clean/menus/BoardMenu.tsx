@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import "./menus.css";
 
@@ -95,7 +97,7 @@ export function MenuRow({
       }}
     >
       {swatch ? <span aria-hidden className="cm-swatch" style={{ background: swatch }} /> : null}
-      <span className="cm-name">{label}</span>
+      <span className="cm-name"><I18nText>{label}</I18nText></span>
       {detail ? <span className="cm-note">{detail}</span> : null}
       {checked ? <span aria-hidden className="cm-tick" /> : null}
     </div>

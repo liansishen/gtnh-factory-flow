@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
@@ -146,7 +148,7 @@ export function SparePopupHost() {
             putDrawerHere(here);
           }}
         >
-          <span>or put a drawer here</span>
+          <span><I18nText>or put a drawer here</I18nText></span>
         </div>
       ) : null}
     </div>,

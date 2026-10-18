@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -298,7 +300,7 @@ function BrowseMenu({
         className="ui-zoom fixed z-[80] border-2 border-[var(--mc-15)] bg-[var(--mc-49)] p-1 font-mono shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25),4px_4px_0_rgba(0,0,0,0.45)]"
       >
         <p className="truncate px-1 pb-1 text-[11px] font-bold text-[var(--mc-ink-muted)]">
-          {name}
+          <I18nText game>{name}</I18nText>
         </p>
         <div className="flex flex-col gap-1">
         <button
@@ -306,17 +308,17 @@ function BrowseMenu({
           data-browse-mode="recipes"
           onClick={() => pick("recipes")}
           className={itemClass("recipes")}
-        >
+        ><I18nText>
           What makes it
-        </button>
+        </I18nText></button>
         <button
           type="button"
           data-browse-mode="uses"
           onClick={() => pick("uses")}
           className={itemClass("uses")}
-        >
+        ><I18nText>
           What uses it
-        </button>
+        </I18nText></button>
         </div>
       </div>
     </>

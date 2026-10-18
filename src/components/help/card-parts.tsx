@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import { Fragment, useId } from "react";
 import type { LucideIcon } from "lucide-react";
@@ -196,6 +197,7 @@ function GlanceRowLine({
   accent: string;
   dense: boolean;
 }) {
+  const t = useT();
   const Icon = row.icon;
   const chipColor = row.tone ? GLANCE_TONES[row.tone] : accent;
 
@@ -215,7 +217,7 @@ function GlanceRowLine({
             className="whitespace-nowrap border px-1 py-px text-[10px] font-black leading-[13px]"
             style={{ borderColor: chipColor, color: chipColor, backgroundColor: `${chipColor}1f` }}
           >
-            {row.chip}
+            <I18nText>{row.chip}</I18nText>
           </span>
         ) : (
           <span className="text-[11px] leading-none" style={{ color: "#4a5a6b" }}>
@@ -229,7 +231,7 @@ function GlanceRowLine({
           dense ? "text-[11px] leading-[1.35]" : "text-[13px] leading-[1.45]",
         ].join(" ")}
       >
-        {splitEmphasis(row.text).map((piece, index) =>
+        {splitEmphasis(t(row.text)).map((piece, index) =>
           index % 2 === 1 ? (
             <strong key={index} className="font-bold" style={{ color: "#e8f6fb" }}>
               {piece}

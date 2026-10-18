@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import "../clean.css";
 import "./group.css";
@@ -44,6 +46,7 @@ function Cell({ flow, side }: { flow: GroupFlow; side: "in" | "out" }) {
  * handles), so the router and the edge building are unchanged.
  */
 function CleanGroupSummaryComponent({ data, selected }: NodeProps<PocketFlowNode>) {
+  const _i18nT = useT();
   useRateDisplayUnits();
   const { pocket } = data;
   const summary = data.groupSummary as GroupSummary | undefined;
@@ -87,6 +90,7 @@ function CleanGroupSummaryComponent({ data, selected }: NodeProps<PocketFlowNode
         {...tipAttrs({
           id: `${pocket.id}|strip`,
           title: pocket.name,
+          verbatimTitle: true,
           ...(count ? { sub: count } : {}),
           actions: [
             { input: "drag", label: "Move the group" },
@@ -98,7 +102,7 @@ function CleanGroupSummaryComponent({ data, selected }: NodeProps<PocketFlowNode
         <GroupName pocketId={pocket.id} name={pocket.name} wasClick={slop.wasClick} />
         <div
           role="button"
-          aria-label="Expand"
+          aria-label={_i18nT("Expand")}
           className="cg-key"
           data-plus=""
           data-group-key="expand"
@@ -112,7 +116,7 @@ function CleanGroupSummaryComponent({ data, selected }: NodeProps<PocketFlowNode
       </div>
       <div className="cg-line">{line}</div>
       <div className="cg-rows">
-        {rows === 0 ? <div className="cg-cell cg-empty">Nothing goes in or out.</div> : null}
+        {rows === 0 ? <div className="cg-cell cg-empty"><I18nText>Nothing goes in or out.</I18nText></div> : null}
         {Array.from({ length: rows }, (_, index) => (
           <div key={index} style={{ display: "contents" }}>
             {inputs[index] ? <Cell flow={inputs[index]!} side="in" /> : <div className="cg-cell cg-in" />}

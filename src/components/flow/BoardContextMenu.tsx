@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -62,6 +64,7 @@ export function BoardContextMenu({
   target: BoardMenuTarget;
   onClose: () => void;
 }) {
+  const _i18nT = useT();
   const [picking, setPicking] = useState(false);
   const [background, setBackground] = useState(false);
   const boardView = useBoardView();
@@ -156,7 +159,7 @@ export function BoardContextMenu({
 
   if (background) {
     return (
-      <BoardMenu x={target.x} y={target.y} label="Background menu" title="BACKGROUND" onClose={onClose}>
+      <BoardMenu x={target.x} y={target.y} label="Background menu" title={_i18nT("BACKGROUND")} onClose={onClose}>
         {CANVAS_THEMES.map((theme) => (
           <MenuRow
             key={theme.id}

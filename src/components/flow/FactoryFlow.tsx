@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { ChecklistKeys, useChecklistBoard, checklistCursorStyle } from "./ChecklistMode";
 
@@ -6683,14 +6685,14 @@ export function FactoryFlow() {
           data-timelapse-chip
           className="absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded border border-line-strong bg-surface/90 px-2.5 py-1.5 text-xs text-fg-muted shadow-lg"
         >
-          <span>Build timelapse</span>
+          <span><I18nText>Build timelapse</I18nText></span>
           <button
             type="button"
             onClick={() => stopBoardTimelapse()}
             className="rounded border border-line px-1.5 py-0.5 hover:border-line-strong hover:text-fg"
-          >
+          ><I18nText>
             Stop
-          </button>
+          </I18nText></button>
         </div>
       ) : null}
       {overwritePicking ? (
@@ -6703,12 +6705,12 @@ export function FactoryFlow() {
           ].join(" ")}
         >
           {overwritePicking.create ? (
-            <>Pick a pocket on the board. It lands on your shelf. Esc cancels.</>
+            <><I18nText>Pick a pocket on the board. It lands on your shelf. Esc cancels.</I18nText></>
           ) : (
-            <>
-              Pick a pocket on the board. It becomes &ldquo;{overwritePicking.name}&rdquo;. Esc
+            <><I18nText>
+              Pick a pocket on the board. It becomes &ldquo;</I18nText>{overwritePicking.name}<I18nText>&rdquo;. Esc
               cancels.
-            </>
+            </I18nText></>
           )}
         </div>
       ) : null}
@@ -6781,20 +6783,20 @@ const UnwiredNotice = memo(function UnwiredNotice({
 
   return (
     <div className="unwired-notice nodrag pointer-events-auto flex max-w-[min(calc(92*var(--ui-vw)),560px)] flex-wrap items-center justify-center gap-x-2 gap-y-1.5 border-2 border-[#c8d2e0] bg-[#2b3038] px-2 py-1.5 font-mono text-[12px] text-[#e8ecf2] shadow-[inset_2px_2px_0_#5d6877,inset_-2px_-2px_0_#171a1f,4px_4px_0_rgba(0,0,0,0.35)]">
-      <span className="shrink-0 font-bold tracking-[0.5px] text-[#eef2f8]">NOT WIRED UP</span>
+      <span className="shrink-0 font-bold tracking-[0.5px] text-[#eef2f8]"><I18nText>NOT WIRED UP</I18nText></span>
       {/* One line, always: the cards explain themselves. */}
       <span className="text-[#c2cad6]">
-        {unwired.length === 1
+        <I18nText>{unwired.length === 1
           ? "1 machine has a slot with nothing on it"
-          : `${unwired.length} machines have slots with nothing on them`}
+          : `${unwired.length} machines have slots with nothing on them`}</I18nText>
       </span>
       <button
         type="button"
         onClick={() => onShow(unwired)}
         className="shrink-0 border border-[#c8d2e0] bg-[#454f5e] px-2 py-0.5 font-bold text-[#ffffff] hover:bg-[#566275]"
-      >
+      ><I18nText>
         Show me
-      </button>
+      </I18nText></button>
     </div>
   );
 });
@@ -6811,6 +6813,7 @@ const DeathSpiralNotice = memo(function DeathSpiralNotice({
 }: {
   onShow: (nodeIds: string[]) => void;
 }) {
+  const _i18nT = useT();
   const project = useFactoryStore((state) => state.project);
   const lastResult = useFactoryStore((state) => state.lastResult);
   const [dismissedId, setDismissedId] = useState<string | undefined>(undefined);
@@ -6827,25 +6830,25 @@ const DeathSpiralNotice = memo(function DeathSpiralNotice({
 
   return (
     <div className="nodrag pointer-events-auto flex max-w-[min(calc(92*var(--ui-vw)),560px)] flex-wrap items-center justify-center gap-x-2 gap-y-1.5 border-2 border-[#c34c4c] bg-[#2b1c1c] px-2 py-1.5 font-mono text-[12px] text-[#f2e4e4] shadow-[inset_2px_2px_0_#7a3636,inset_-2px_-2px_0_#1a1010,4px_4px_0_rgba(0,0,0,0.35)]">
-      <span className="shrink-0 font-bold tracking-[0.5px] text-[#ff9c9c]">DEAD LOOP</span>
+      <span className="shrink-0 font-bold tracking-[0.5px] text-[#ff9c9c]"><I18nText>DEAD LOOP</I18nText></span>
       <span className="text-[#e6d2d2]">{story.short}</span>
       {spirals.length > 1 ? (
         <span className="shrink-0 text-[#b89a9a]">
-          +{spirals.length - 1} more
-        </span>
+          +{spirals.length - 1}<I18nText> more
+        </I18nText></span>
       ) : null}
       <button
         type="button"
         onClick={() => onShow(spiral.machineIds)}
         className="shrink-0 border border-[#c34c4c] bg-[#4a2424] px-2 py-0.5 font-bold text-[#ffd0d0] hover:bg-[#63302f]"
-      >
+      ><I18nText>
         Show me
-      </button>
+      </I18nText></button>
       <button
         type="button"
         onClick={() => setDismissedId(spiral.id)}
-        title="Dismiss"
-        aria-label="Dismiss this notice"
+        title={_i18nT("Dismiss")}
+        aria-label={_i18nT("Dismiss this notice")}
         className="flex h-5 w-5 shrink-0 items-center justify-center border border-[#7a3636] text-[#e0b3b3] hover:bg-[#4a2424]"
       >
         ×
@@ -6864,6 +6867,7 @@ const ClogLockNotice = memo(function ClogLockNotice({
 }: {
   onShow: (nodeIds: string[]) => void;
 }) {
+  const _i18nT = useT();
   const project = useFactoryStore((state) => state.project);
   const lastResult = useFactoryStore((state) => state.lastResult);
   const [dismissedId, setDismissedId] = useState<string | undefined>(undefined);
@@ -6886,12 +6890,12 @@ const ClogLockNotice = memo(function ClogLockNotice({
 
   return (
     <div className="nodrag pointer-events-auto flex max-w-[min(calc(92*var(--ui-vw)),560px)] flex-wrap items-center justify-center gap-x-2 gap-y-1.5 border-2 border-[#4c7ec3] bg-[#1a222b] px-2 py-1.5 font-mono text-[12px] text-[#e4ecf2] shadow-[inset_2px_2px_0_#365d7a,inset_-2px_-2px_0_#10161a,4px_4px_0_rgba(0,0,0,0.35)]">
-      <span className="shrink-0 font-bold tracking-[0.5px] text-[#9cc9ff]">CLOG LOCK</span>
+      <span className="shrink-0 font-bold tracking-[0.5px] text-[#9cc9ff]"><I18nText>CLOG LOCK</I18nText></span>
       <span className="text-[#d2e0e6]">{story.short}</span>
       {locks.length > 1 ? (
         <span className="shrink-0 text-[#9aaab8]">
-          +{locks.length - 1} more
-        </span>
+          +{locks.length - 1}<I18nText> more
+        </I18nText></span>
       ) : null}
       <button
         type="button"
@@ -6901,13 +6905,13 @@ const ClogLockNotice = memo(function ClogLockNotice({
         }}
         className="shrink-0 border border-[#4c7ec3] bg-[#24384a] px-2 py-0.5 font-bold text-[#d0e6ff] hover:bg-[#2f4a63]"
       >
-        {showTargets.length > 1 ? `Show me (${showAt + 1}/${showTargets.length})` : "Show me"}
+        <I18nText>{showTargets.length > 1 ? `Show me (${showAt + 1}/${showTargets.length})` : "Show me"}</I18nText>
       </button>
       <button
         type="button"
         onClick={() => setDismissedId(lock.id)}
-        title="Dismiss"
-        aria-label="Dismiss this notice"
+        title={_i18nT("Dismiss")}
+        aria-label={_i18nT("Dismiss this notice")}
         className="flex h-5 w-5 shrink-0 items-center justify-center border border-[#365d7a] text-[#b3cbe0] hover:bg-[#24384a]"
       >
         ×
@@ -7047,6 +7051,7 @@ const SelectionActionsBar = memo(function SelectionActionsBar({
   canCombine: boolean;
   onCombine: () => boolean;
 }) {
+  const _i18nT = useT();
   const isCompact = useIsCompactViewport();
   const planBoard = useFactoryStore((state) => state.project.planMode === true);
   if (selectionCount < 2 || (!canWrap && !canCombine)) {
@@ -7073,20 +7078,20 @@ const SelectionActionsBar = memo(function SelectionActionsBar({
           {...tipAttrs(COMBINE_TIP)}
           className="flex h-9 items-center gap-1.5 whitespace-nowrap border-2 border-[var(--selection)] bg-[#0b5563] px-3 font-mono text-[12px] font-bold text-white shadow-[inset_2px_2px_0_var(--selection-soft),inset_-2px_-2px_0_#063640] hover:brightness-110"
         >
-          <Combine className="h-4 w-4" />
-          Combine {selectionCount} into one machine
-        </button>
+          <Combine className="h-4 w-4" /><I18nText>
+          Combine </I18nText>{selectionCount}<I18nText> into one machine
+        </I18nText></button>
       ) : null}
       {canWrap ? (
       <button
         type="button"
         onClick={onWrap}
-        title={planBoard ? "Group these (Ctrl+G)" : "Wrap in a board (Ctrl+G)"}
+        title={_i18nT(planBoard ? "Group these (Ctrl+G)" : "Wrap in a board (Ctrl+G)")}
         // Plain chrome, like every other button: boards have no house colour.
         className="flex h-9 items-center gap-1.5 whitespace-nowrap border-2 border-[var(--mc-15)] bg-[var(--mc-49)] px-3 font-mono text-[12px] font-bold text-white shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25)] hover:brightness-110"
       >
         <Box className="h-4 w-4" />
-        {planBoard ? "Group" : `Wrap ${selectionCount} in a board`}
+        <I18nText>{planBoard ? "Group" : `Wrap ${selectionCount} in a board`}</I18nText>
       </button>
       ) : null}
     </div>
@@ -7180,6 +7185,7 @@ function ToolGroup({
   side,
   children,
 }: ToolGroupProps) {
+  const _i18nT = useT();
   if (!folded) {
     return <>{children}</>;
   }
@@ -7217,7 +7223,7 @@ function ToolGroup({
         // still in the DOM but invisible, so the ring goes on this button.
         data-help-anchor={id}
         aria-expanded={isOpen}
-        aria-label={isOpen ? `Hide ${label}` : `Show ${label}`}
+        aria-label={_i18nT(isOpen ? `Hide ${label}` : `Show ${label}`)}
         title={isOpen ? `Hide ${label}` : label}
         className={[
           "pointer-events-auto relative z-10 flex h-8 w-8 shrink-0 items-center justify-center border-2 border-[var(--mc-15)]",
@@ -7257,6 +7263,7 @@ const SmartViewToolbar = memo(function SmartViewToolbar({
   /** Zoom out until the whole plan is on screen, and centre it. */
   onFitView: () => void;
 }) {
+  const _i18nT = useT();
   const buttonClass = (active: boolean) =>
     [
       "pointer-events-auto flex h-9 w-9 items-center justify-center border-2 border-[var(--mc-15)]",
@@ -7275,8 +7282,8 @@ const SmartViewToolbar = memo(function SmartViewToolbar({
           type="button"
           onClick={onFitView}
           className={buttonClass(false)}
-          title="Fit on screen"
-          aria-label="Fit the plan on the screen"
+          title={_i18nT("Fit on screen")}
+          aria-label={_i18nT("Fit the plan on the screen")}
         >
           <Focus className="h-4 w-4" />
         </button>
@@ -7288,8 +7295,8 @@ const SmartViewToolbar = memo(function SmartViewToolbar({
           type="button"
           onClick={() => onModeChange("identity")}
           className={buttonClass(glanceMode === "identity")}
-          title="Big icons"
-          aria-label="Big icons"
+          title={_i18nT("Big icons")}
+          aria-label={_i18nT("Big icons")}
           aria-pressed={glanceMode === "identity"}
         >
           <Box className="h-4 w-4" />
@@ -7298,8 +7305,8 @@ const SmartViewToolbar = memo(function SmartViewToolbar({
           type="button"
           onClick={() => onModeChange("status")}
           className={buttonClass(glanceMode === "status")}
-          title="Speed"
-          aria-label="Speed"
+          title={_i18nT("Speed")}
+          aria-label={_i18nT("Speed")}
           aria-pressed={glanceMode === "status"}
         >
           <Gauge className="h-4 w-4" />
@@ -7308,8 +7315,8 @@ const SmartViewToolbar = memo(function SmartViewToolbar({
           type="button"
           onClick={() => onModeChange("usage")}
           className={buttonClass(glanceMode === "usage")}
-          title="Usage"
-          aria-label="Usage"
+          title={_i18nT("Usage")}
+          aria-label={_i18nT("Usage")}
           aria-pressed={glanceMode === "usage"}
         >
           <TriangleAlert className="h-4 w-4" />
@@ -7318,8 +7325,8 @@ const SmartViewToolbar = memo(function SmartViewToolbar({
           type="button"
           onClick={() => onModeChange("power")}
           className={buttonClass(glanceMode === "power")}
-          title="Power"
-          aria-label="Power"
+          title={_i18nT("Power")}
+          aria-label={_i18nT("Power")}
           aria-pressed={glanceMode === "power"}
         >
           <Zap className="h-4 w-4" />
@@ -7367,6 +7374,7 @@ const SourceToolbar = memo(function SourceToolbar({
   /** A banner has the top line: step down one. */
   shiftedDown: boolean;
 }) {
+  const _i18nT = useT();
   const rateUnit = useFactoryStore((state) => state.rateUnit);
   const setRateUnit = useFactoryStore((state) => state.setRateUnit);
   const rateChoice =
@@ -7424,8 +7432,8 @@ const SourceToolbar = memo(function SourceToolbar({
           onClick={undo}
           disabled={!canUndo}
           className={historyButtonClass(canUndo)}
-          title={canUndo ? "Undo (Ctrl+Z)" : "Nothing to undo"}
-          aria-label="Undo"
+          title={_i18nT(canUndo ? "Undo (Ctrl+Z)" : "Nothing to undo")}
+          aria-label={_i18nT("Undo")}
         >
           <Undo2 className="h-4 w-4" />
         </button>
@@ -7434,8 +7442,8 @@ const SourceToolbar = memo(function SourceToolbar({
           onClick={redo}
           disabled={!canRedo}
           className={historyButtonClass(canRedo)}
-          title={canRedo ? "Redo (Ctrl+Shift+Z)" : "Nothing to redo"}
-          aria-label="Redo"
+          title={_i18nT(canRedo ? "Redo (Ctrl+Shift+Z)" : "Nothing to redo")}
+          aria-label={_i18nT("Redo")}
         >
           <Redo2 className="h-4 w-4" />
         </button>
@@ -7474,13 +7482,13 @@ const SourceToolbar = memo(function SourceToolbar({
               }
             }}
             aria-expanded={isRateMenuOpen}
-            aria-label={`Rate unit: ${rateChoice.title.toLowerCase()}`}
+            aria-label={_i18nT(`Rate unit: ${rateChoice.title.toLowerCase()}`)}
             className={[
               "pointer-events-auto relative z-10 flex h-8 w-8 items-center justify-center border-2 border-[var(--mc-15)] font-mono text-[12px] font-black",
               isRateMenuOpen ? TOOL_FACE_ON : rateUnit === "eu" ? TOOL_FACE_ENERGY : TOOL_FACE_OFF,
             ].join(" ")}
           >
-            {rateChoice.label}
+            <I18nText>{rateChoice.label}</I18nText>
           </button>
           {isRateMenuOpen ? (
             <div className="absolute left-0 top-[calc(100%+10px)] z-30 flex w-max flex-col gap-1 border-2 border-[var(--mc-15)] bg-[var(--mc-78)] p-1 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
@@ -7506,16 +7514,16 @@ const SourceToolbar = memo(function SourceToolbar({
                   ].join(" ")}
                 >
                   <span className="flex h-6 w-7 shrink-0 items-center justify-center font-mono text-[12px] font-black">
-                    {choice.label}
+                    <I18nText>{choice.label}</I18nText>
                   </span>
                   <span className="whitespace-nowrap font-mono text-[11px] font-semibold">
                     {choice.title}
                   </span>
                 </button>
               ))}
-              <div className="pt-0.5 text-center font-mono text-[9px] font-semibold uppercase tracking-[0.5px] text-[var(--mc-ink-muted)]">
+              <div className="pt-0.5 text-center font-mono text-[9px] font-semibold uppercase tracking-[0.5px] text-[var(--mc-ink-muted)]"><I18nText>
                 Display only
-              </div>
+              </I18nText></div>
             </div>
           ) : null}
         </div>
@@ -7546,11 +7554,9 @@ const SourceToolbar = memo(function SourceToolbar({
               }
             }}
             aria-expanded={isPowerUnitMenuOpen}
-            aria-label={
-              powerDisplayUnit === "eu"
+            aria-label={_i18nT(powerDisplayUnit === "eu"
                 ? "Power unit: EU per tick"
-                : `Power unit: amps of ${powerDisplayUnit}`
-            }
+                : `Power unit: amps of ${powerDisplayUnit}`)}
             className={[
               // Fixed width: the tier names run two to three letters and a
               // wheel-scroll through them must not pump the toolbar.
@@ -7579,8 +7585,8 @@ const SourceToolbar = memo(function SourceToolbar({
             {powerDisplayUnit === "eu" ? (
               "EU/t"
             ) : (
-              <span className="whitespace-nowrap">
-                A{" "}
+              <span className="whitespace-nowrap"><I18nText>
+                A</I18nText><I18nText>{" "}</I18nText>
                 <span
                   style={{
                     textDecoration: GT_TIER_COLORS[powerDisplayUnit as keyof typeof GT_TIER_COLORS].underline
@@ -7605,7 +7611,7 @@ const SourceToolbar = memo(function SourceToolbar({
                   setPowerUnitMenuOpen(false);
                 }}
                 aria-pressed={powerDisplayUnit === "eu"}
-                aria-label="EU per tick"
+                aria-label={_i18nT("EU per tick")}
                 className={[
                   // The EU/t cell wears the same bevel as the tier chips,
                   // on the toolbar's dark face with the amber bolt.
@@ -7615,9 +7621,9 @@ const SourceToolbar = memo(function SourceToolbar({
                     : "border-[var(--mc-15)] bg-[var(--mc-49)] text-amber-400 hover:bg-[var(--mc-61)]",
                 ].join(" ")}
               >
-                <Zap className="h-3 w-3 fill-current" />
+                <Zap className="h-3 w-3 fill-current" /><I18nText>
                 EU/t
-              </button>
+              </I18nText></button>
               {GT_VOLTAGE_TIERS.map(({ tier }, index) => (
                 <button
                   key={tier}
@@ -7629,7 +7635,7 @@ const SourceToolbar = memo(function SourceToolbar({
                     setPowerUnitMenuOpen(false);
                   }}
                   aria-pressed={powerDisplayUnit === tier}
-                  aria-label={`Amps of ${tier}`}
+                  aria-label={_i18nT(`Amps of ${tier}`)}
                   className={[
                     // The machine cards' own chip treatment: bevel, text
                     // shadow, bold - the menu is a tray of the real chips.
@@ -7647,9 +7653,9 @@ const SourceToolbar = memo(function SourceToolbar({
                   {tier}
                 </button>
               ))}
-              <div className="col-span-4 pt-0.5 text-center font-mono text-[9px] font-semibold uppercase tracking-[0.5px] text-[var(--mc-ink-muted)]">
+              <div className="col-span-4 pt-0.5 text-center font-mono text-[9px] font-semibold uppercase tracking-[0.5px] text-[var(--mc-ink-muted)]"><I18nText>
                 Display only
-              </div>
+              </I18nText></div>
             </div>
           ) : null}
         </div>
@@ -7914,7 +7920,7 @@ const HopMapLegend = memo(function HopMapLegend() {
       // a picker is open. bottom-16 leaves the corner to the view buttons.
       className="nodrag pointer-events-none absolute bottom-16 right-3 z-40 flex flex-col gap-2 border-2 border-[var(--mc-15)] bg-[var(--mc-49)] px-3 py-2.5 font-mono font-bold text-white shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25),4px_4px_0_rgba(0,0,0,0.35)]"
     >
-      <span className="text-[13px] uppercase tracking-[1px]">Hops needed</span>
+      <span className="text-[13px] uppercase tracking-[1px]"><I18nText>Hops needed</I18nText></span>
       {chipped ? (
         <div className="flex items-center gap-1.5">
           {/* The hub (the card under the cursor) is step 0. */}
@@ -7961,7 +7967,7 @@ function FlowLoadingOverlay() {
     >
       <div className="flex items-center gap-3 border-2 border-[var(--mc-15)] bg-[var(--mc-78)] px-4 py-3 text-sm font-semibold text-[var(--mc-ink)] shadow-[inset_2px_2px_0_var(--mc-100),inset_-2px_-2px_0_var(--mc-33),4px_4px_0_rgba(0,0,0,0.18)]">
         <LoaderCircle className="h-5 w-5 animate-spin" />
-        <span>Loading flowchart...</span>
+        <span><I18nText>Loading flowchart...</I18nText></span>
       </div>
     </div>
   );
@@ -8075,6 +8081,7 @@ function AnnotationDraftPreview({
  * The button spins while the upload is out.
  */
 function AddImageButton({ onPlaceImage }: { onPlaceImage: (file: File) => Promise<void> }) {
+  const _i18nT = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   return (
@@ -8107,8 +8114,8 @@ function AddImageButton({ onPlaceImage }: { onPlaceImage: (file: File) => Promis
           "flex items-center gap-2 border-2 border-[var(--mc-15)] bg-[var(--mc-49)] p-1 pr-2 text-left text-white hover:bg-[var(--mc-61)]",
           busy ? "cursor-wait opacity-70" : "",
         ].join(" ")}
-        title="Add an image"
-        aria-label="Add an image"
+        title={_i18nT("Add an image")}
+        aria-label={_i18nT("Add an image")}
       >
         <span className="flex h-7 w-7 items-center justify-center">
           {busy ? (
@@ -8117,7 +8124,7 @@ function AddImageButton({ onPlaceImage }: { onPlaceImage: (file: File) => Promis
             <ImagePlus className="h-4 w-4" />
           )}
         </span>
-        <span className="whitespace-nowrap font-mono text-[11px] font-semibold">Add an image</span>
+        <span className="whitespace-nowrap font-mono text-[11px] font-semibold"><I18nText>Add an image</I18nText></span>
       </button>
     </>
   );
@@ -8177,6 +8184,7 @@ const BoardViewMenu = memo(function BoardViewMenu({
     onArrange: (options: { keepBoards: boolean }) => void;
   };
 }) {
+  const _i18nT = useT();
   const { canvasPattern } = view;
   // Motion is device taste, not plan state: read and written through its own
   // store (board-motion.tsx), never through the plan-view snapshot.
@@ -8230,8 +8238,8 @@ const BoardViewMenu = memo(function BoardViewMenu({
           "relative z-10 flex h-8 w-8 items-center justify-center border-2 border-[var(--mc-15)]",
           open ? TOOL_FACE_ON : TOOL_FACE_OFF,
         ].join(" ")}
-        title="View options"
-        aria-label="View options"
+        title={_i18nT("View options")}
+        aria-label={_i18nT("View options")}
       >
         <Eye className="h-4 w-4" />
       </button>
@@ -8250,7 +8258,7 @@ const BoardViewMenu = memo(function BoardViewMenu({
                     ? "border-white bg-[var(--mc-85)] ring-2 ring-cyan-300"
                     : "border-[var(--mc-15)] bg-[var(--mc-49)] hover:bg-[var(--mc-61)]",
                 ].join(" ")}
-                aria-label={`Background style: ${theme.name}`}
+                aria-label={_i18nT(`Background style: ${theme.name}`)}
                 aria-pressed={view.canvasTheme === theme.id}
               >
                 <ThemeSwatch theme={theme} />
@@ -8270,7 +8278,7 @@ const BoardViewMenu = memo(function BoardViewMenu({
                   type="button"
                   onClick={() => onChange({ canvasPattern: pattern })}
                   title={CANVAS_PATTERN_LABEL[pattern]}
-                  aria-label={`Background pattern: ${CANVAS_PATTERN_LABEL[pattern]}`}
+                  aria-label={_i18nT(`Background pattern: ${CANVAS_PATTERN_LABEL[pattern]}`)}
                   aria-pressed={canvasPattern === pattern}
                   className={[
                     "flex h-9 flex-1 items-center justify-center border-2 border-[var(--mc-15)]",
@@ -8300,14 +8308,14 @@ const BoardViewMenu = memo(function BoardViewMenu({
               <Icon className="mt-[1px] h-4 w-4 shrink-0" />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex items-baseline justify-between gap-2">
-                  <span className="font-mono text-[12px] font-black uppercase">{label}</span>
+                  <span className="font-mono text-[12px] font-black uppercase"><I18nText>{label}</I18nText></span>
                   <span
                     className={[
                       "font-mono text-[10px] font-black tracking-[1px]",
                       on ? "text-[var(--mc-good)]" : "text-[var(--mc-ink-muted)]",
                     ].join(" ")}
                   >
-                    {on ? "ON" : "OFF"}
+                    <I18nText>{on ? "ON" : "OFF"}</I18nText>
                   </span>
                 </span>
                 {line ? <span className="font-mono text-[11px] leading-snug opacity-80">{line}</span> : null}
@@ -8331,14 +8339,14 @@ const BoardViewMenu = memo(function BoardViewMenu({
               <Network className="mt-[1px] h-4 w-4 shrink-0" />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex items-baseline justify-between gap-2">
-                  <span className="font-mono text-[12px] font-black uppercase">Keep boards on rearrange</span>
+                  <span className="font-mono text-[12px] font-black uppercase"><I18nText>Keep boards on rearrange</I18nText></span>
                   <span
                     className={[
                       "font-mono text-[10px] font-black tracking-[1px]",
                       arrange.keepBoards ? "text-[var(--mc-good)]" : "text-[var(--mc-ink-muted)]",
                     ].join(" ")}
                   >
-                    {arrange.keepBoards ? "ON" : "OFF"}
+                    <I18nText>{arrange.keepBoards ? "ON" : "OFF"}</I18nText>
                   </span>
                 </span>
               </span>
@@ -8350,11 +8358,11 @@ const BoardViewMenu = memo(function BoardViewMenu({
                 arrange.onArrange({ keepBoards: arrange.keepBoards });
               }}
               className="mt-1 flex w-full items-center justify-center gap-2 border-2 border-[var(--mc-15)] bg-[var(--mc-49)] p-2 font-mono text-[12px] font-black uppercase text-white shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25)] hover:brightness-110"
-              aria-label="Arrange the board"
+              aria-label={_i18nT("Arrange the board")}
             >
-              <Network className="h-4 w-4" />
+              <Network className="h-4 w-4" /><I18nText>
               Arrange
-            </button>
+            </I18nText></button>
           </div>
         </div>
       ) : null}
@@ -8389,7 +8397,7 @@ function ArrangeLoader({
     >
       <div className="pointer-events-auto w-[26rem] max-w-[calc(100*var(--ui-vw)-32px)] border-2 border-[var(--mc-15)] bg-[var(--mc-49)] text-[var(--mc-ink)] shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25),4px_4px_0_rgba(0,0,0,0.45)]">
         <div className="flex items-center justify-between border-b-2 border-[var(--mc-15)] px-4 py-2.5">
-          <h2 className="text-sm font-bold">Arranging the board</h2>
+          <h2 className="text-sm font-bold"><I18nText>Arranging the board</I18nText></h2>
           <span className="font-mono text-sm tabular-nums text-[var(--mc-ink-muted)]">
             {Math.round(overall * 100)}%
           </span>
@@ -8437,7 +8445,7 @@ function ArrangeLoader({
                       ].join(" ")}
                     />
                   )}
-                  <span>{step.label}</span>
+                  <span><I18nText>{step.label}</I18nText></span>
                   {state === "now" && progress.stage !== step.label ? (
                     <span className="ml-auto truncate text-[11px] font-normal normal-case text-[var(--mc-ink-muted)]">
                       {progress.stage}
@@ -8449,14 +8457,14 @@ function ArrangeLoader({
           </ol>
         </div>
         <div className="flex items-center justify-between gap-3 border-t-2 border-[var(--mc-15)] px-4 py-2.5">
-          <span className="text-xs text-[var(--mc-ink-muted)]">Every move is checked against the real wires.</span>
+          <span className="text-xs text-[var(--mc-ink-muted)]"><I18nText>Every move is checked against the real wires.</I18nText></span>
           <button
             type="button"
             onClick={onCancel}
             className={`h-7 border-2 border-[var(--mc-15)] px-3 font-mono text-[12px] font-black uppercase ${TOOL_FACE_OFF}`}
-          >
+          ><I18nText>
             Cancel
-          </button>
+          </I18nText></button>
         </div>
       </div>
     </div>
@@ -8504,6 +8512,7 @@ const PaintToolbar = memo(function PaintToolbar({
   onToggleGroup: (group: ToolGroupId | undefined) => void;
   shiftedDown: boolean;
 }) {
+  const _i18nT = useT();
   const activeColor = GT_NODE_COLORS[activeColorTag];
   // A plan board's markup is the sticky note (right-click the board): no box, zone, arrow, text or image tools.
   const planMode = useFactoryStore((state) => state.project.planMode === true);
@@ -8551,8 +8560,8 @@ const PaintToolbar = memo(function PaintToolbar({
             "pointer-events-auto relative z-10 flex h-8 w-8 items-center justify-center border-2 border-[var(--mc-15)]",
             isDeleteMode ? TOOL_FACE_ON : TOOL_FACE_OFF,
           ].join(" ")}
-          title={isDeleteMode ? "Stop deleting" : "Delete tool"}
-          aria-label={isDeleteMode ? "Stop deleting" : "Delete tool"}
+          title={_i18nT(isDeleteMode ? "Stop deleting" : "Delete tool")}
+          aria-label={_i18nT(isDeleteMode ? "Stop deleting" : "Delete tool")}
         >
           {/* The pressed face says "on"; the red icon still says what is armed. */}
           <Trash2 className={isDeleteMode ? "h-4 w-4 text-red-500" : "h-4 w-4"} />
@@ -8598,7 +8607,7 @@ const PaintToolbar = memo(function PaintToolbar({
                     <Icon className="h-4 w-4" />
                   </span>
                   <span className="whitespace-nowrap font-mono text-[11px] font-semibold">
-                    {label}
+                    <I18nText>{label}</I18nText>
                   </span>
                 </button>
               ))}
@@ -8624,7 +8633,7 @@ const PaintToolbar = memo(function PaintToolbar({
                   {paintMode === null ? <X className="h-4 w-4" /> : <Paintbrush className="h-4 w-4" />}
                 </span>
                 <span className="whitespace-nowrap font-mono text-[11px] font-semibold">
-                  {paintMode === null ? "Erasing colours" : "Paint cards"}
+                  <I18nText>{paintMode === null ? "Erasing colours" : "Paint cards"}</I18nText>
                 </span>
                 <span
                   aria-hidden
@@ -8643,8 +8652,8 @@ const PaintToolbar = memo(function PaintToolbar({
                     "flex h-6 w-6 items-center justify-center border-2 bg-[var(--mc-49)] text-white shadow-[inset_1px_1px_0_var(--mc-85),inset_-1px_-1px_0_var(--mc-25)]",
                     paintMode === null ? "border-white ring-2 ring-cyan-300" : "border-[var(--mc-15)]",
                   ].join(" ")}
-                  title="Erase colours"
-                  aria-label="Erase colours"
+                  title={_i18nT("Erase colours")}
+                  aria-label={_i18nT("Erase colours")}
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -8664,8 +8673,8 @@ const PaintToolbar = memo(function PaintToolbar({
                         : "border-[var(--mc-15)]",
                     ].join(" ")}
                     style={{ backgroundColor: entry.color.swatch }}
-                    title={`Paint ${entry.tag}`}
-                    aria-label={`Paint ${entry.tag}`}
+                    title={_i18nT(`Paint ${entry.tag}`)}
+                    aria-label={_i18nT(`Paint ${entry.tag}`)}
                   />
                 ))}
               </div>
@@ -8698,8 +8707,8 @@ const PaintToolbar = memo(function PaintToolbar({
                 "pointer-events-auto relative z-10 flex h-8 w-8 items-center justify-center border-2 border-[var(--mc-15)]",
                 annotationTool !== undefined || paintMode !== undefined ? TOOL_FACE_ON : TOOL_FACE_OFF,
               ].join(" ")}
-              title={annotationTool !== undefined || paintMode !== undefined ? "Stop" : "Markup"}
-              aria-label={annotationTool !== undefined || paintMode !== undefined ? "Stop marking up" : "Markup tools"}
+              title={_i18nT(annotationTool !== undefined || paintMode !== undefined ? "Stop" : "Markup")}
+              aria-label={_i18nT(annotationTool !== undefined || paintMode !== undefined ? "Stop marking up" : "Markup tools")}
             >
               <Pencil className="h-4 w-4" />
             </button>
@@ -9380,7 +9389,7 @@ function ResourceEdgeComponent({
                 setDraftWaypoints(undefined);
               }}
             >
-              <title>Drag to steer this wire. Double-click to remove the stop</title>
+              <title><I18nText>Drag to steer this wire. Double-click to remove the stop</I18nText></title>
             </circle>
           ))
         : null}
@@ -13022,7 +13031,7 @@ function SolvingBooksOverlay() {
     <div className="pointer-events-none absolute bottom-16 left-1/2 z-30 -translate-x-1/2">
       <div className="flex items-center gap-3 whitespace-nowrap border-2 border-neutral-600 bg-neutral-950/90 px-4 py-2 font-mono text-neutral-200 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
         <div className="h-5 w-5 animate-spin rounded-full border-[3px] border-neutral-700 border-t-cyan-400" />
-        <div className="text-[13px]">Working out the numbers... you can keep editing.</div>
+        <div className="text-[13px]"><I18nText>Working out the numbers... you can keep editing.</I18nText></div>
       </div>
     </div>
   );

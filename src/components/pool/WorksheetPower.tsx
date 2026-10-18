@@ -1,3 +1,5 @@
+
+import { I18nText, useT } from "@/lib/i18n/react";
 import type { MachineListEntry } from "@/lib/model/machine-list";
 import { formatPoolPowerValue as formatPowerValue } from "./worksheet-format";
 import { powerDisplayFromEuT, powerDisplaySuffix, rateSuffixForKind } from "@/lib/model/rate-unit";
@@ -16,6 +18,7 @@ export function WorksheetPower({
   compact?: boolean;
   title?: string;
 }) {
+  const _i18nT = useT();
   const sum = (key: "euT" | "avgEuT" | "madeEuT" | "avgMadeEuT" | "steamLs" | "avgSteamLs") =>
     entries.reduce((total, entry) => total + (entry[key] ?? 0), 0);
   const rows = [
@@ -28,18 +31,18 @@ export function WorksheetPower({
   ];
   const format = (value: number) => formatPowerValue(powerDisplayFromEuT(Math.abs(value)));
   const table = (
-    <table className="pool-summary-table pool-power-table" aria-label="Pool power totals">
+    <table className="pool-summary-table pool-power-table" aria-label={_i18nT("Pool power totals")}>
       <thead>
         <tr>
           <th>{!compact ? <h3 className="pool-overview-title">{title}</h3> : null}</th>
-          <th>Average</th>
-          <th>Peak</th>
+          <th><I18nText>Average</I18nText></th>
+          <th><I18nText>Peak</I18nText></th>
         </tr>
       </thead>
       <tbody>
         {rows.map((row) => (
           <tr key={row.label}>
-            <th scope="row">{row.label}</th>
+            <th scope="row"><I18nText>{row.label}</I18nText></th>
             {[row.average, row.peak].map((value, index) => {
               const steam = "steam" in row && row.steam;
               const number = steam ? formatSlotRateBare(value, "fluid") : format(value);
@@ -65,7 +68,7 @@ export function WorksheetPower({
   );
   if (compact)
     return (
-      <section id={id} className="pool-compact-power" aria-label="Pool power summary">
+      <section id={id} className="pool-compact-power" aria-label={_i18nT("Pool power summary")}>
         <details
           onKeyDown={(event) => {
             if (event.key === "Escape") {
@@ -76,13 +79,13 @@ export function WorksheetPower({
         >
           <summary
             className="pool-power-headline"
-            title="Power breakdown"
-            aria-label={`Average power used ${format(rows[0].average)} ${powerDisplaySuffix()}, peak ${format(rows[0].peak)} ${powerDisplaySuffix()}; made ${format(rows[1].average)} ${powerDisplaySuffix()}`}
+            title={_i18nT("Power breakdown")}
+            aria-label={_i18nT(`Average power used ${format(rows[0].average)} ${powerDisplaySuffix()}, peak ${format(rows[0].peak)} ${powerDisplaySuffix()}; made ${format(rows[1].average)} ${powerDisplaySuffix()}`)}
           >
             <Zap size={12} aria-hidden />
             <strong>{format(rows[0].average)}</strong>
             <small>{powerDisplaySuffix()}</small>
-            {rows[0].peak !== rows[0].average ? <small>peak {format(rows[0].peak)}</small> : null}
+            {rows[0].peak !== rows[0].average ? <small><I18nText>peak </I18nText>{format(rows[0].peak)}</small> : null}
             {rows[1].average > 0 || rows[1].peak > 0 ? (
               <span className="pool-flow-output">
                 +{format(rows[1].average)}
@@ -92,7 +95,7 @@ export function WorksheetPower({
             {rows[3] ? (
               <span>
                 {formatSlotRateBare(rows[3].average, "fluid")}
-                <small>{rateSuffixForKind("fluid").trim()} steam</small>
+                <small>{rateSuffixForKind("fluid").trim()}<I18nText> steam</I18nText></small>
               </span>
             ) : null}
           </summary>
@@ -101,7 +104,7 @@ export function WorksheetPower({
       </section>
     );
   return (
-    <section id={id} className="pool-sheet-power" aria-label="Pool power summary">
+    <section id={id} className="pool-sheet-power" aria-label={_i18nT("Pool power summary")}>
       <div className="pool-resources-scroll">{table}</div>
     </section>
   );

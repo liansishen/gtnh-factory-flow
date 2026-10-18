@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { wheelChangesValues } from "@/lib/device-settings";
@@ -42,6 +44,7 @@ export const StorageRatioEditor = memo(function StorageRatioEditor() {
 });
 
 function RatioPanel({ request, onClose }: { request: RatioEditorRequest; onClose: () => void }) {
+  const _i18nT = useT();
   const project = useFactoryStore((s) => s.project);
   const readOnly = useFactoryStore((s) => s.isReadOnly || s.checklistMode);
   const equalize = useFactoryStore((s) => s.equalizeRatioBranches);
@@ -166,7 +169,7 @@ function RatioPanel({ request, onClose }: { request: RatioEditorRequest; onClose
   return (
     <dialog
       ref={rootRef}
-      aria-label="Drawer split"
+      aria-label={_i18nT("Drawer split")}
       data-ratio-editor
       data-tooltip-stop
       className="nodrag nopan nowheel fixed inset-0 z-[35] m-auto max-h-[calc(88*var(--ui-vh))] w-[calc(100*var(--ui-vw)-32px)] max-w-sm flex-col overflow-hidden border-2 border-[var(--mc-15)] bg-[var(--mc-49)] p-0 text-[var(--mc-ink)] shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25),4px_4px_0_rgba(0,0,0,0.45)] open:flex"
@@ -194,13 +197,13 @@ function RatioPanel({ request, onClose }: { request: RatioEditorRequest; onClose
               className="!h-7 !w-7 shrink-0"
             />
           )}
-          <span className="truncate">{storage?.displayName ?? storage?.resourceId}</span>
+          <span className="truncate"><I18nText game>{storage?.displayName ?? storage?.resourceId}</I18nText></span>
           <Split aria-hidden className="h-4 w-4 shrink-0 text-[var(--mc-ink-muted)]" />
         </h2>
         <button
           ref={doneRef}
           type="button"
-          aria-label="Close"
+          aria-label={_i18nT("Close")}
           onClick={close}
           className="flex h-7 w-7 shrink-0 items-center justify-center border-2 border-[var(--mc-15)] bg-[var(--mc-49)] shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25)] hover:bg-[var(--mc-61)]"
         >
@@ -217,18 +220,18 @@ function RatioPanel({ request, onClose }: { request: RatioEditorRequest; onClose
           <section key={side} className="border-b-2 border-[var(--mc-15)] last:border-b-0">
             <div className="flex items-center justify-between gap-2 border-b border-[var(--mc-36)] py-2">
               <h3 className="text-base font-bold text-[var(--mc-ink)]">
-                {side === "input" ? "Incoming" : "Outgoing"}
+                <I18nText>{side === "input" ? "Incoming" : "Outgoing"}</I18nText>
               </h3>
               <button
                 type="button"
-                aria-label={`Equal split ${side === "input" ? "incoming" : "outgoing"}`}
+                aria-label={_i18nT(`Equal split ${side === "input" ? "incoming" : "outgoing"}`)}
                 onClick={() => equalize(request.storageId, side)}
                 disabled={entries.filter((branch) => branch.edges.length).length < 2}
                 style={{ fontSize: 10, lineHeight: "14px" }}
                 className="ml-auto h-5 border border-[var(--mc-15)] bg-[var(--mc-49)] px-1.5 text-[9px] font-normal text-[var(--mc-ink)] shadow-[inset_1px_1px_0_var(--mc-85),inset_-1px_-1px_0_var(--mc-25)] hover:bg-[var(--mc-61)] disabled:opacity-40"
-              >
+              ><I18nText>
                 Equal split
-              </button>
+              </I18nText></button>
             </div>
             {entries.map((branch, index) => (
               <RatioBranchRow
@@ -281,6 +284,7 @@ function RatioBranchRow({
   drawerRole?: StorageRole;
   currentRate: string;
 }) {
+  const _i18nT = useT();
   const setPercentage = useFactoryStore((s) => s.setRatioBranchPercentage);
   const percentage = Number((branch.share * 100).toFixed(4));
   const [draft, setDraft] = useState(String(percentage));
@@ -359,12 +363,12 @@ function RatioBranchRow({
             className="!h-5 !w-5 shrink-0"
           />
         ) : null}
-        <span className="min-w-0 break-words">{name}</span>
+        <span className="min-w-0 break-words"><I18nText game>{name}</I18nText></span>
       </label>
       <span
         data-ratio-rate
-        aria-label={`${name} current ${side === "input" ? "incoming" : "outgoing"} rate`}
-        title="Current flow"
+        aria-label={_i18nT(`${name} current ${side === "input" ? "incoming" : "outgoing"} rate`)}
+        title={_i18nT("Current flow")}
         className="whitespace-nowrap text-right text-[10px] tabular-nums text-[var(--mc-ink-muted)] opacity-70"
       >
         {currentRate}
@@ -372,8 +376,8 @@ function RatioBranchRow({
       <div className="flex items-center gap-1">
         <button
           type="button"
-          aria-label={`Zero ${fieldLabel}`}
-          title="Set to zero"
+          aria-label={_i18nT(`Zero ${fieldLabel}`)}
+          title={_i18nT("Set to zero")}
           disabled={percentage === 0 && (!editing || Number(draft) === 0)}
           onPointerDown={(event) => event.preventDefault()}
           onClick={() => {
@@ -397,7 +401,7 @@ function RatioBranchRow({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={percentage}
-            title="Type or scroll the percentage"
+            title={_i18nT("Type or scroll the percentage")}
             className="min-h-0 min-w-0 w-full border-0 bg-transparent p-0 pl-1 text-right text-xs tabular-nums outline-none"
             value={editing ? draft : String(percentage)}
             onFocus={() => {
@@ -427,7 +431,7 @@ function RatioBranchRow({
               <button
                 key={direction}
                 type="button"
-                aria-label={`${direction === 1 ? "Increase" : "Decrease"} ${fieldLabel}`}
+                aria-label={_i18nT(`${direction === 1 ? "Increase" : "Decrease"} ${fieldLabel}`)}
                 className="flex min-h-0 items-center justify-center p-0 hover:bg-[var(--mc-61)] first:border-b first:border-[var(--mc-15)]"
                 onPointerDown={(event) => event.preventDefault()}
                 onClick={(event) => step(direction, event.shiftKey)}

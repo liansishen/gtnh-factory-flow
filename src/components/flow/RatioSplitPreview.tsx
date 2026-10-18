@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { useMemo } from "react";
 import { ArrowUpRight } from "lucide-react";
@@ -25,6 +27,7 @@ export function RatioSplitPreview({
   side: "input" | "output" | "export";
   locked: boolean;
 }) {
+  const _i18nT = useT();
   const project = useFactoryStore((s) => s.project);
   const view = useMemo(() => {
     const edge = project.edges.find((edge) => edge.id === edgeId);
@@ -94,7 +97,7 @@ export function RatioSplitPreview({
     <div
       data-ratio-preview
       role="tooltip"
-      aria-label="Ratio split"
+      aria-label={_i18nT("Ratio split")}
       className="w-[220px] max-w-[calc(100vw-40px)] text-[10px] font-normal leading-[14px] text-fg-subtle"
     >
       <div className="mb-1 flex items-center gap-1.5 text-[11px] font-bold text-fg">
@@ -106,7 +109,7 @@ export function RatioSplitPreview({
           iconPixelSize={24}
           className="!h-3.5 !w-3.5 shrink-0"
         />
-        <span className="truncate">{view.storage.displayName ?? view.storage.resourceId}</span>
+        <span className="truncate"><I18nText game>{view.storage.displayName ?? view.storage.resourceId}</I18nText></span>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {view.sections.map((section) => (
@@ -128,9 +131,9 @@ export function RatioSplitPreview({
                 className={`flex items-baseline justify-between gap-1 text-[var(--flow-output)] ${side === "export" ? "bg-[var(--flow-output)]/10 font-bold" : ""}`}
               >
                 <span className="flex items-center gap-0.5 text-[9px]">
-                  <ArrowUpRight aria-hidden className="h-2.5 w-2.5" />
+                  <ArrowUpRight aria-hidden className="h-2.5 w-2.5" /><I18nText>
                   Setup output
-                </span>
+                </I18nText></span>
                 <span className="shrink-0 tabular-nums">
                   {formatRatioShare(ratioExportShare(view.storage))}
                 </span>
@@ -141,11 +144,11 @@ export function RatioSplitPreview({
       </div>
       {!locked && (
         <div className="mt-1 flex items-center gap-1 border-t border-line pt-1 text-[9px] leading-3 text-fg-muted">
-          <span role="img" aria-label="Mouse wheel" className="[&_svg]:h-3.5 [&_svg]:w-3">
+          <span role="img" aria-label={_i18nT("Mouse wheel")} className="[&_svg]:h-3.5 [&_svg]:w-3">
             <MouseIcon gesture="wheel" />
           </span>
           <span>↑ +1% · ↓ −1%</span>
-          <span className="ml-auto">Shift: 10%</span>
+          <span className="ml-auto"><I18nText>Shift: 10%</I18nText></span>
         </div>
       )}
     </div>

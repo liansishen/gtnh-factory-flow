@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import "../clean.css";
 import "./group.css";
@@ -42,6 +44,7 @@ export function GroupName({
   name: string;
   wasClick: (event: React.MouseEvent) => boolean;
 }) {
+  const _i18nT = useT();
   const [draft, setDraft] = useState<string | undefined>(undefined);
   const renamePocket = useFactoryStore((state) => state.renamePocket);
   // The group menu's Rename opens the field here.
@@ -56,7 +59,7 @@ export function GroupName({
         autoFocus
         className="cg-rename nodrag nopan"
         value={draft}
-        aria-label="Group name"
+        aria-label={_i18nT("Group name")}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
         onFocus={(event) => event.target.select()}
@@ -86,6 +89,7 @@ export function GroupName({
 
 /** An OPEN group on a plan board (docs/groups.md): border, title strip with name, machines and the collapse key. */
 function CleanGroupFrameComponent({ data, width, height, selected }: NodeProps<BoardWindowFlowNode>) {
+  const _i18nT = useT();
   const { pocket } = data;
   const machines = typeof data.machines === "number" ? data.machines : 0;
   const minimizePocket = useFactoryStore((state) => state.minimizePocket);
@@ -111,6 +115,7 @@ function CleanGroupFrameComponent({ data, width, height, selected }: NodeProps<B
         {...tipAttrs({
           id: `${pocket.id}|strip`,
           title: pocket.name,
+          verbatimTitle: true,
           ...(count ? { sub: count } : {}),
           actions: [
             { input: "drag", label: "Move the group" },
@@ -123,7 +128,7 @@ function CleanGroupFrameComponent({ data, width, height, selected }: NodeProps<B
         {count ? <span className="cg-muted">{count}</span> : null}
         <div
           role="button"
-          aria-label="Collapse"
+          aria-label={_i18nT("Collapse")}
           className="cg-key"
           data-group-key="collapse"
           {...tipAttrs({ id: `${pocket.id}|collapse`, title: "Collapse", actions: [{ input: "left", label: "Collapse" }] })}

@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import "../clean.css";
 import "./drawer.css";
@@ -87,6 +89,7 @@ export function CleanDrawer({
   selected: boolean;
   role: StorageRole;
 }) {
+  const _i18nT = useT();
   const { storage, result } = data;
   const fontEpoch = useFontEpoch();
   useEffect(() => ensureInteractionHost(), []);
@@ -308,11 +311,11 @@ export function CleanDrawer({
                 : undefined,
           }
         : {
-            "data-text": view.boxText,
+            "data-text": _i18nT(view.boxText),
             "data-empty": "",
             "data-prompt": view.prompt ? "" : undefined,
           };
-  const boxTextProps = view.kind === "trash" ? { "data-text": view.boxText } : {};
+  const boxTextProps = view.kind === "trash" ? { "data-text": _i18nT(view.boxText) } : {};
 
   const commit = () => {
     const had = rule.draft.trim() !== "";
@@ -386,7 +389,7 @@ export function CleanDrawer({
           tabIndex={0}
           className="cd-del"
           {...tipAttrs(view.tips.del)}
-          aria-label="Delete drawer"
+          aria-label={_i18nT("Delete drawer")}
           onPointerDownCapture={pressed}
           onClick={(event) => {
             event.stopPropagation();
@@ -425,7 +428,7 @@ export function CleanDrawer({
             data-resource-handle="true"
             data-resource-node-id={storage.id}
             data-resource-handle-id={outputHandleId}
-            aria-label={`${label}${readOnly ? "" : ". Drag to connect, R for recipes, U for uses"}`}
+            aria-label={_i18nT(`${label}${readOnly ? "" : ". Drag to connect, R for recipes, U for uses"}`)}
             className="nodrag"
             style={WELL_HANDLE}
           />
@@ -448,7 +451,7 @@ export function CleanDrawer({
             data-small={view.nameSmall || undefined}
             data-clip={view.nameClipped || undefined}
           >
-            {view.label}
+            <I18nText game>{view.label}</I18nText>
           </span>
           {view.hasRule || view.kind === "trash" ? (
             <div
@@ -468,7 +471,7 @@ export function CleanDrawer({
               {...tipAttrs(view.tips.rule)}
               aria-haspopup="menu"
               aria-expanded={rule.open}
-              aria-label={`Rule: ${view.kind === "trash" ? "Trash" : RULE_NAME[view.rule]}`}
+              aria-label={_i18nT(`Rule: ${view.kind === "trash" ? "Trash" : RULE_NAME[view.rule]}`)}
               onPointerDown={(event) => event.stopPropagation()}
               onMouseDown={middleDown}
               onAuxClick={middle}
@@ -499,11 +502,9 @@ export function CleanDrawer({
               data-wheel-value=""
               data-editing={editing ? "" : undefined}
               {...(view.kind === "trash" ? tipAttrs(view.tips.body) : tipAttrs(view.tips.rate))}
-              aria-label={
-                view.target
+              aria-label={_i18nT(view.target
                   ? `Your rate: ${view.target.number} ${view.target.unit}`
-                  : "Your rate: none"
-              }
+                  : "Your rate: none")}
               {...(editing ? {} : boxProps)}
               {...(editing ? {} : boxTextProps)}
               onPointerDown={(event) => event.stopPropagation()}
@@ -569,13 +570,14 @@ export function CleanDrawer({
 
 /** The rate box while it is typed into: a number, `2.5k`, `1M` or `1/3` in the board's unit. */
 function RateField({ rule, onCommit }: { rule: RateRule; onCommit: () => void }) {
+  const _i18nT = useT();
   return (
     <input
       autoFocus
       value={rule.draft}
       inputMode="text"
-      aria-label="Your rate"
-      placeholder="rate"
+      aria-label={_i18nT("Your rate")}
+      placeholder={_i18nT("rate")}
       className="nodrag"
       onChange={(event) => rule.setDraft(event.target.value)}
       onBlur={onCommit}
@@ -611,6 +613,7 @@ export function CleanDrawerFace({
   role: StorageRole;
   net?: number;
 }) {
+  const t = useT();
   const category = useFactoryStore((state) =>
     getCategoryPresentation(state.project.recipes, storage.kind, storage.resourceId),
   );
@@ -638,13 +641,13 @@ export function CleanDrawerFace({
         <span className="cd-num" data-unit={view.unit} data-zero="">
           {view.number}
         </span>
-        <span className="cd-name">{view.label}</span>
+        <span className="cd-name"><I18nText game>{view.label}</I18nText></span>
         {view.hasRule || view.kind === "trash" ? (
           <>
             <div className="cd-key" data-mark={view.ruleMark} data-any="" />
             <div
               className="cd-box"
-              data-text={view.boxText}
+              data-text={t(view.boxText)}
               data-empty=""
               data-fixed={view.kind === "trash" ? "" : undefined}
             />

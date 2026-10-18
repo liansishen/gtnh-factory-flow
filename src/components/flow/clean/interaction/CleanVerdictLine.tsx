@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import { Position } from "@xyflow/react";
 import { carriedHome } from "./accept";
@@ -52,9 +54,9 @@ export function CleanVerdictLine({
         strokeDasharray={dotted ? "0.1 6" : undefined}
       />
       {verdict === "dead" ? (
-        <text x={pointer.x + 8} y={pointer.y + 6 + 12} fill={NO} fontSize={12} fontFamily="var(--app-font, sans-serif)">
+        <text x={pointer.x + 8} y={pointer.y + 6 + 12} fill={NO} fontSize={12} fontFamily="var(--app-font, sans-serif)"><I18nText>
           Drawer already exists
-        </text>
+        </I18nText></text>
       ) : null}
     </g>
   );

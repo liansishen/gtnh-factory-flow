@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import { Plus, Search, SlidersHorizontal, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -101,6 +102,7 @@ export function SetupsFilterBar({
   myPosts?: { checked: boolean; onChange: (checked: boolean) => void };
   itemFilter?: boolean;
 }) {
+  const _i18nT = useT();
   const {
     query,
     setQuery,
@@ -203,7 +205,7 @@ export function SetupsFilterBar({
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                aria-label="Clear search"
+                aria-label={_i18nT("Clear search")}
                 className="text-[var(--mc-ink-muted)] hover:text-[var(--mc-ink)]"
               >
                 <X className="h-3.5 w-3.5" />
@@ -241,7 +243,7 @@ export function SetupsFilterBar({
             ].join(" ")}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
-            Filters
+            <I18nText>Filters</I18nText>
             {inForce > 0 ? <span className="tabular-nums">{inForce}</span> : null}
           </button>
         ) : null}
@@ -261,7 +263,7 @@ export function SetupsFilterBar({
               }}
               className="h-3 w-3 accent-cyan-400"
             />
-            My posts
+            <I18nText>My posts</I18nText>
           </label>
         ) : null}
         {showFilters ? (
@@ -269,19 +271,23 @@ export function SetupsFilterBar({
             {/* Unfolded on a phone, the boxes take a row of their own. */}
             <div className="hidden basis-full compact:block" />
             <label
-              title="Leave out anything that draws more than this. Shorthand works: 512, 14.3k, 2M, 1.5G"
+              title={_i18nT(
+                "Leave out anything that draws more than this. Shorthand works: 512, 14.3k, 2M, 1.5G",
+              )}
               className={[
                 `flex h-7 w-[118px] shrink-0 items-center gap-1 px-2 text-xs compact:w-auto compact:min-w-0 compact:flex-1 ${INSET}`,
                 maxEuText && maxEuT === undefined ? "!text-red-300" : "",
               ].join(" ")}
             >
-              <span className="shrink-0 text-[var(--mc-ink-muted)]">EU/t ≤</span>
+              <span className="shrink-0 text-[var(--mc-ink-muted)]">
+                <I18nText>EU/t ≤</I18nText>
+              </span>
               <input
                 value={maxEuText}
                 onChange={(event) => setMaxEuText(event.target.value)}
                 onBlur={() => playBoardSound("shelfTick")}
-                placeholder="any"
-                aria-label="Highest EU/t to show"
+                placeholder={_i18nT("any")}
+                aria-label={_i18nT("Highest EU/t to show")}
                 className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[var(--mc-ink-muted)]"
               />
             </label>
@@ -291,13 +297,16 @@ export function SetupsFilterBar({
                 playBoardSound("shelfTick");
                 setMaxTier(event.target.value);
               }}
-              aria-label="Highest power tier"
+              aria-label={_i18nT("Highest power tier")}
               className={`h-7 shrink-0 px-1 text-xs outline-none compact:min-w-0 compact:flex-1 ${INSET}`}
             >
-              <option value="">Any tier</option>
+              <option value="">
+                <I18nText>Any tier</I18nText>
+              </option>
               {GT_VOLTAGE_TIERS.map((entry, index) => (
                 <option key={entry.tier} value={String(index)}>
-                  Up to {entry.tier}
+                  <I18nText>Up to </I18nText>
+                  {entry.tier}
                 </option>
               ))}
             </select>
@@ -307,7 +316,7 @@ export function SetupsFilterBar({
                 playBoardSound("shelfTick");
                 setSort(event.target.value);
               }}
-              aria-label="Sort"
+              aria-label={_i18nT("Sort")}
               className={`h-7 shrink-0 px-1 text-xs outline-none compact:min-w-0 compact:flex-1 ${INSET}`}
             >
               {sortOptions.map((option) => (
@@ -322,18 +331,20 @@ export function SetupsFilterBar({
       {itemFilter && showFilters ? (
         <div className="flex min-h-9 flex-wrap items-center gap-2 border-t border-[var(--mc-33)]/60 bg-[#0c0e11] px-4 py-1 compact:gap-1.5 compact:px-2">
           <span className="mr-1 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--mc-ink-muted)]">
-            Item filter
+            <I18nText>Item filter</I18nText>
           </span>
           {(["makes", "takes"] as const).map((side) => (
             <div key={side} className="relative flex shrink-0 items-center gap-1">
               <button
                 type="button"
                 onClick={() => setPicking(picking === side ? undefined : side)}
-                title={side === "makes" ? "Only what makes this" : "Only what takes this"}
+                title={
+                  side === "makes" ? _i18nT("Only what makes this") : _i18nT("Only what takes this")
+                }
                 className="flex h-7 items-center gap-1 border-2 border-[var(--mc-33)] bg-[var(--mc-61)] px-2 text-xs font-bold text-[var(--mc-ink)] shadow-[inset_1px_1px_0_var(--mc-85)] hover:bg-[var(--mc-85)]"
               >
                 <Plus className="h-3 w-3" aria-hidden />
-                {side === "makes" ? "Makes" : "Takes"}
+                {side === "makes" ? _i18nT("Makes") : _i18nT("Takes")}
               </button>
               {picking === side ? (
                 // The recipe search's own picker, opened downward from the key.
@@ -368,7 +379,7 @@ export function SetupsFilterBar({
                 >
                   <Face icon={resource} size={18} />
                   <span className="max-w-[120px] truncate">
-                    {resource.displayName ?? resource.resourceId}
+                    <I18nText game>{resource.displayName ?? resource.resourceId}</I18nText>
                   </span>
                   <button
                     type="button"
@@ -378,8 +389,8 @@ export function SetupsFilterBar({
                         list.filter((entry) => entry.resourceId !== resource.resourceId),
                       );
                     }}
-                    aria-label={`Stop filtering by ${resource.displayName ?? resource.resourceId}`}
-                    title="Remove"
+                    aria-label={`${_i18nT("Stop filtering by")} ${resource.displayName ?? resource.resourceId}`}
+                    title={_i18nT("Remove")}
                     className="text-[var(--mc-ink-muted)] hover:text-[var(--mc-ink)]"
                   >
                     <X className="h-3 w-3" aria-hidden />

@@ -1,4 +1,8 @@
 "use client";
+import { matchesGameNameFilter } from "@/lib/i18n/game-search";
+
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { stripBeeFrameSlotInputs } from "@/lib/model/bee-display";
 import { wheelChangesValues } from "@/lib/device-settings";
@@ -279,6 +283,7 @@ export interface RecipeNodeData extends Record<string, unknown> {
 export type RecipeFlowNode = Node<RecipeNodeData, "recipeNode">;
 
 function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEditor }: Pick<NodeProps<RecipeFlowNode>, "data" | "selected"> & { controlsOnly?: boolean; renderEditor?: (controls: ReactNode, picture: ReactNode, settings: ReactNode, tier: ReactNode) => ReactNode }) {
+  const _i18nT = useT();
   const { projectNode, recipe, result } = data;
   const editorLocked = useFactoryStore((state) => state.isReadOnly || state.checklistMode);
   const [isCompareOpen, setCompareOpenState] = useState(false);
@@ -1251,7 +1256,7 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
           color: tierColor.text,
           textShadow: `1px 1px 0 ${tierColor.shadow}`,
         }}
-        aria-label={`Tier ${tierControl.current}`}
+        aria-label={_i18nT(`Tier ${tierControl.current}`)}
       >
         {tierControl.current}
       </button>
@@ -1272,7 +1277,7 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
             {isCropFarmNode ? <div className="pool-crop-picker">
               <MinecraftTooltip content={cropTitle ? "Change crop: " + cropTitle : "Pick a crop"}>
                 <button type="button" className="pool-machine-icon-button pool-crop-button" data-crop-picker-toggle
-                  aria-label={cropTitle ? "Change crop: " + cropTitle : "Pick a crop"} aria-expanded={isCropMenuOpen}
+                  aria-label={_i18nT(cropTitle ? "Change crop: " + cropTitle : "Pick a crop")} aria-expanded={isCropMenuOpen}
                   onClick={() => setCropMenuOpen((open) => !open)}>
                   {cropSeedResource ? <ResourceIcon resource={cropSeedResource} size="sm" className="!h-6 !w-6" iconPixelSize={24} bare showAmount={false} showConsumedState={false} tooltip={false} /> : <Sprout className="h-5 w-5" />}
                   <RefreshCw className="pool-machine-swap" aria-hidden="true" />
@@ -1283,7 +1288,7 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
             {isEecNode ? <div className="pool-crop-picker">
               <MinecraftTooltip content={"Change mob: " + recipeChoiceName(recipe.name)}>
                 <button type="button" className="pool-machine-icon-button pool-crop-button" data-mob-picker-toggle
-                  aria-label={"Change mob: " + recipeChoiceName(recipe.name)} aria-expanded={isMobMenuOpen}
+                  aria-label={_i18nT("Change mob: " + recipeChoiceName(recipe.name))} aria-expanded={isMobMenuOpen}
                   onClick={() => setMobMenuOpen((open) => !open)}>
                   {mobSpawner ? <ResourceIcon resource={mobSpawner} size="sm" className="!h-6 !w-6" iconPixelSize={24} bare showAmount={false} showConsumedState={false} tooltip={false} /> : null}
                   <RefreshCw className="pool-machine-swap" aria-hidden="true" />
@@ -1320,7 +1325,7 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
     const picture = (
       <div className="pool-machine-chooser" data-machine-editor-anchor>
         <button type="button" data-machine-menu-toggle className="pool-machine-icon-button"
-          aria-label={`Change machine: ${machineDisplayName}`} aria-expanded={isCompareOpen} aria-haspopup="listbox"
+          aria-label={_i18nT(`Change machine: ${machineDisplayName}`)} aria-expanded={isCompareOpen} aria-haspopup="listbox"
           disabled={editorLocked || (!hasMachinePicker && !canShareMachine && !mayHaveTwins)}
           onClick={() => setCompareOpen((open) => !open)}>
           {hasPowerPicture ? <PowerStructureWindow art={powerArt} icon={powerMachineIcon ?? previewMachineIcon} inline bare /> : <Cpu size={22} />}
@@ -1555,7 +1560,7 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
                       : formatCompactStable(value);
                   }}
                 />
-                <span className="ml-1.5 text-[18px] font-semibold opacity-70">L/s</span>
+                <span className="ml-1.5 text-[18px] font-semibold opacity-70"><I18nText>L/s</I18nText></span>
               </>
             ) : (
               "—"
@@ -1668,8 +1673,8 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
                   deleteNode(projectNode.id);
                 }}
                 className="h-6 w-6 border-2 border-[var(--mc-15)] bg-[var(--mc-49)] text-base leading-[16px] text-white shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25)] hover:bg-red-700"
-                title="Delete node"
-                aria-label="Delete node"
+                title={_i18nT("Delete node")}
+                aria-label={_i18nT("Delete node")}
               >
                 -
               </button>
@@ -1680,8 +1685,8 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
                   duplicateNode(projectNode.id);
                 }}
                 className="flex h-6 w-6 items-center justify-center border-2 border-[var(--mc-15)] bg-[var(--mc-49)] text-white shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25)] hover:bg-[var(--mc-61)]"
-                title="Clone node"
-                aria-label="Clone node"
+                title={_i18nT("Clone node")}
+                aria-label={_i18nT("Clone node")}
               >
                 <Copy aria-hidden className="h-3.5 w-3.5" />
               </button>
@@ -1693,8 +1698,8 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
                     beginRecipeRefactor(projectNode.id);
                   }}
                   className="flex h-6 w-6 items-center justify-center border-2 border-[var(--mc-15)] bg-[var(--mc-49)] text-white shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25)] hover:bg-[var(--mc-61)]"
-                  title="Replace the recipe"
-                  aria-label="Refactor node"
+                  title={_i18nT("Replace the recipe")}
+                  aria-label={_i18nT("Refactor node")}
                 >
                   <RefreshCw aria-hidden className="h-3.5 w-3.5" />
                 </button>
@@ -1710,8 +1715,8 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
                     browseMachineRecipes(projectNode.id);
                   }}
                   className="flex h-6 w-6 items-center justify-center border-2 border-[var(--mc-15)] bg-[var(--mc-49)] text-white shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25)] hover:bg-[var(--mc-61)]"
-                  title="Add another recipe to this machine"
-                  aria-label="Add another recipe to this machine"
+                  title={_i18nT("Add another recipe to this machine")}
+                  aria-label={_i18nT("Add another recipe to this machine")}
                 >
                   <Plus aria-hidden className="h-3.5 w-3.5" />
                 </button>
@@ -1729,8 +1734,8 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
                       setCropMenuOpen((open) => !open);
                     }}
                     className="flex h-6 w-6 items-center justify-center border-2 border-[var(--mc-15)] bg-[var(--mc-49)] text-white shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25)] hover:bg-[var(--mc-61)]"
-                    title={cropTitle ? `${cropTitle}. Click to pick another crop.` : "Pick a crop"}
-                    aria-label="Pick a crop"
+                    title={_i18nT(cropTitle ? `${cropTitle}. Click to pick another crop.` : "Pick a crop")}
+                    aria-label={_i18nT("Pick a crop")}
                     aria-haspopup="dialog"
                     aria-expanded={isCropMenuOpen}
                   >
@@ -1920,8 +1925,8 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
               }}
               className="mx-auto my-0 flex h-[80px] w-[240px] items-center justify-center gap-2 border-2 border-dashed border-[var(--mc-33)] bg-[var(--mc-71)] text-[14px] font-bold text-[var(--mc-ink)] hover:bg-[var(--mc-85)]"
             >
-              <Sprout className="h-5 w-5" /> Pick a crop
-              {/* The picker hangs under this button while there is no crop
+              <Sprout className="h-5 w-5" /><I18nText> Pick a crop
+              </I18nText>{/* The picker hangs under this button while there is no crop
                   tile yet to hang it from. */}
               {isCropMenuOpen ? (
                 <CropPickerMenu nodeId={projectNode.id} onClose={() => setCropMenuOpen(false)} />
@@ -2077,14 +2082,14 @@ function RecipeNodeComponent({ data, selected, controlsOnly = false, renderEdito
                       {solveMode
                         ? formatSolvedMachines(result?.theoreticalMachinesRequired ?? 0)
                         : projectNode.machineCount}
-                      ×{" "}
-                      {isCropProductionNode
+                      ×<I18nText>{" "}</I18nText>
+                      <I18nText>{isCropProductionNode
                         ? projectNode.machineCount === 1 && !solveMode
                           ? "Seed"
                           : "Seeds"
                         : projectNode.machineCount === 1 && !solveMode
                           ? "Machine"
-                          : "Machines"}
+                          : "Machines"}</I18nText>
                     </span>
                     {programmedCircuit && !isSharedMachine ? <CircuitChip circuit={programmedCircuit} /> : null}
                   </div>
@@ -2277,13 +2282,14 @@ export function RecipeNodeEditor({ data, render }: { data: RecipeNodeData; rende
  * and "runs on whatever the circuit is set to" are different builds.
  */
 export function CircuitChip({ circuit, small = false, bare = false }: { circuit: RecipeProgrammedCircuit; small?: boolean; bare?: boolean }) {
+  const _i18nT = useT();
   const { setting, resource } = circuit;
   return (
     <MinecraftTooltip
       content={() => <RecipeTooltip view={{ title: "Programmed circuit", rows: setting ? [{ label: "Required setting", value: String(setting) }] : [], reason: setting ? "Not consumed." : "No circuit setting required." }} />}
     >
       <div
-        aria-label={setting ? `Programmed circuit ${setting}` : "No circuit setting"}
+        aria-label={_i18nT(setting ? `Programmed circuit ${setting}` : "No circuit setting")}
         // Square, and as tall as the stat tiles beside it — self-stretch takes
         // the row's height and w-9 answers it, so the slot stays a slot however
         // the footer's type is measured.
@@ -2383,7 +2389,7 @@ function GlanceIdentityLayer({
       <span className="glance-io absolute left-1/2 top-full z-30 w-[560px] origin-top flex-col gap-2 border-2 border-[var(--mc-15)] bg-[var(--mc-82)] p-3 shadow-[8px_8px_0_rgba(0,0,0,0.55)]">
         {/* The same name bar the card wears zoomed in, at popup scale. */}
         <span className="minecraft-title flex h-8 min-w-0 items-center border-2 border-[var(--mc-33)] bg-[var(--mc-61)] px-2 text-[16px] leading-[22px] shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-29)]">
-          <span className="mx-auto min-w-0 truncate">{label}</span>
+          <span className="mx-auto min-w-0 truncate"><I18nText>{label}</I18nText></span>
         </span>
         {inputs.length > 0 || outputs.length > 0 ? (
           /* Two fixed halves with the arrow between, exactly like the rails:
@@ -2534,7 +2540,7 @@ function GlanceIoRow({ port }: { port: RailPort }) {
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-[14px] font-bold leading-[17px] text-[var(--mc-ink)]">
-          {port.displayName}
+          <I18nText game>{port.displayName}</I18nText>
         </span>
         <span
           className={[
@@ -2748,9 +2754,9 @@ function UsageStat({
           sentence — how hard it runs, and why. Two boxes read as two facts. */}
       <div className="flow-usage-stat flex min-w-0 border border-[var(--mc-47)] bg-[var(--mc-71)] shadow-[inset_1px_1px_0_var(--mc-93),inset_-1px_-1px_0_var(--mc-47)]">
         <div className="min-w-0 px-1.5">
-          <div className="text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]">
+          <div className="text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]"><I18nText>
             Usage
-          </div>
+          </I18nText></div>
           <div className="text-[17px] font-bold leading-5 tabular-nums">
             {showPct ? (
               <>
@@ -2778,9 +2784,9 @@ function UsageStat({
         {/* verdict-reason-cell: on an unwired card the WHOLE cell breathes,
             label and all, not just the word inside it. */}
         <div className="verdict-reason-cell min-w-0 px-1.5">
-          <div className="text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]">
+          <div className="text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]"><I18nText>
             Reason
-          </div>
+          </I18nText></div>
           <div
             className={[
               // verdict-word: the pulse on an unwired card hangs off this
@@ -3016,13 +3022,13 @@ function FreePortRow({ nodeId, port }: { nodeId: string; port: RailPort }) {
       </span>
       <span className="flex min-w-0 flex-1 flex-col justify-center pr-0.5">
         <span className="flow-port-name text-[9px] font-bold leading-[9px] text-[var(--mc-ink-muted)]">
-          {port.displayName}
+          <I18nText game>{port.displayName}</I18nText>
         </span>
         {/* Same dress as a port's rate line, so the word sits where the
             number would and reads as its stand-in. */}
-        <span className="block truncate text-[9px] leading-[9px] tabular-nums text-[var(--mc-ink-muted)] opacity-80">
+        <span className="block truncate text-[9px] leading-[9px] tabular-nums text-[var(--mc-ink-muted)] opacity-80"><I18nText>
           free
-        </span>
+        </I18nText></span>
       </span>
     </div>
     </MinecraftTooltip>
@@ -3035,6 +3041,7 @@ function FreePortRow({ nodeId, port }: { nodeId: string; port: RailPort }) {
  * it opens the mob picker, the way a player swaps the spawner.
  */
 function ControllerSlotRow({ nodeId, port }: { nodeId: string; port: RailPort }) {
+  const _i18nT = useT();
   const [open, setOpen] = useState(false);
   const locked = useFactoryStore((state) => state.isReadOnly || state.checklistMode);
   return (
@@ -3052,7 +3059,7 @@ function ControllerSlotRow({ nodeId, port }: { nodeId: string; port: RailPort })
           data-free-input="true"
           data-mob-picker-toggle
           disabled={locked}
-          aria-label={`Change mob: ${port.displayName}`}
+          aria-label={_i18nT(`Change mob: ${port.displayName}`)}
           aria-haspopup="dialog"
           aria-expanded={open}
           onClick={(event) => {
@@ -3077,11 +3084,11 @@ function ControllerSlotRow({ nodeId, port }: { nodeId: string; port: RailPort })
           </span>
           <span className="flex min-w-0 flex-1 flex-col justify-center pr-0.5">
             <span className="flow-port-name text-[9px] font-bold leading-[9px] text-[var(--mc-ink-muted)]">
-              {port.displayName}
+              <I18nText game>{port.displayName}</I18nText>
             </span>
-            <span className="block truncate text-[9px] leading-[9px] tabular-nums text-[var(--mc-ink-muted)] opacity-80">
+            <span className="block truncate text-[9px] leading-[9px] tabular-nums text-[var(--mc-ink-muted)] opacity-80"><I18nText>
               in controller
-            </span>
+            </I18nText></span>
           </span>
           {locked ? null : (
             <RefreshCw aria-hidden className="h-3 w-3 shrink-0 text-[var(--mc-ink-muted)] group-hover:text-[var(--mc-ink)]" />
@@ -3268,7 +3275,7 @@ function NoFlowRow({ label, side }: { label: string; side: "input" | "output" })
         side === "input" ? PORT_CHIP_WIDTH_CLASS : "w-[144px]",
       ].join(" ")}
     >
-      {label}
+      <I18nText>{label}</I18nText>
     </div>
   );
 }
@@ -3365,6 +3372,7 @@ function PowerTierChip({
   sourceId: string;
   values: Record<string, string> | undefined;
 }) {
+  const _i18nT = useT();
   const setPowerSetting = useFactoryStore((state) => state.setPowerSetting);
   const source = getPowerSource(sourceId);
   if (!source) {
@@ -3400,7 +3408,7 @@ function PowerTierChip({
       <span
         className="flex h-6 w-[50px] items-center justify-center border-2 px-1 pb-[3px] font-bold leading-none shadow-[inset_2px_2px_0_rgba(255,255,255,0.55),inset_-2px_-2px_0_rgba(0,0,0,0.45)]"
         style={chipStyle}
-        title={`Unlocks at ${shownTier}`}
+        title={_i18nT(`Unlocks at ${shownTier}`)}
       >
         {shownTier}
       </span>
@@ -3435,8 +3443,8 @@ function PowerTierChip({
       }}
       className="nowheel flex h-6 w-[50px] items-center justify-center border-2 px-1 pb-[3px] text-[11px] font-bold leading-none shadow-[inset_2px_2px_0_rgba(255,255,255,0.55),inset_-2px_-2px_0_rgba(0,0,0,0.45)] hover:brightness-110"
       style={chipStyle}
-      title={`Tier ${shownTier}`}
-      aria-label={`Tier ${shownTier}`}
+      title={_i18nT(`Tier ${shownTier}`)}
+      aria-label={_i18nT(`Tier ${shownTier}`)}
     >
       {shownTier}
     </button>
@@ -3502,9 +3510,9 @@ export function OutputSocketRow({
           <span className="flow-socket-empty nodrag">
             <PlugDragHandle nodeId={nodeId} port={port} />
             {port.nameplatePerSecond > 0 && !port.boundaryFree && !solveMode ? (
-              <span className="text-[7px] font-black leading-3 tracking-[0.5px] text-[var(--verdict-unwired-ink)]">
+              <span className="text-[7px] font-black leading-3 tracking-[0.5px] text-[var(--verdict-unwired-ink)]"><I18nText>
                 NO TAKER
-              </span>
+              </I18nText></span>
             ) : (
               "—"
             )}
@@ -3522,6 +3530,7 @@ export function OutputSocketRow({
  * React Flow's handle bounds.
  */
 function PlugDragHandle({ nodeId, port }: { nodeId: string; port: RailPort }) {
+  const _i18nT = useT();
   return (
     <Handle
       id={port.handleId}
@@ -3530,7 +3539,7 @@ function PlugDragHandle({ nodeId, port }: { nodeId: string; port: RailPort }) {
       data-resource-handle="true"
       data-resource-node-id={nodeId}
       data-resource-handle-id={port.handleId}
-      title={`Drag to wire ${port.displayName}`}
+      title={_i18nT(`Drag to wire ${port.displayName}`)}
       className={[
         "resource-slot-handle nodrag !absolute !left-0 !right-auto !top-0 !z-10 !h-full !w-full !min-w-0 !translate-x-0 !translate-y-0",
         "!rounded-none !border-0 !bg-transparent !opacity-0 cursor-crosshair",
@@ -3623,6 +3632,7 @@ export function PortChip({
   /** Inside an OutputSocketRow: the row owns the edge anchor and hover scope. */
   plugRow?: boolean;
 }) {
+  const _i18nT = useT();
   const isInput = port.side === "input";
   const { calmMode: calmView } = useBoardView();
   // SOLVE and POOL: every fed port is at nameplate by construction, so the
@@ -3831,7 +3841,7 @@ export function PortChip({
             !calmMode && port.unsupplied ? "text-[8px] leading-[8px]" : "text-[9px] leading-[9px]"
           }`}
         >
-          {port.displayName}
+          <I18nText game>{port.displayName}</I18nText>
         </span>
         {calmMode && !port.supplyHatch ? (
           /* Presentation: no bar, no want marks — the room they used goes to
@@ -3861,9 +3871,9 @@ export function PortChip({
             {port.supplyHatch ? (
               <HatchSupplyButton nodeId={nodeId} port={port} />
             ) : port.unsupplied ? (
-              <span className="block text-[7px] font-black leading-[8px] tracking-[0.5px] text-[var(--verdict-blocked-ink)]">
+              <span className="block text-[7px] font-black leading-[8px] tracking-[0.5px] text-[var(--verdict-blocked-ink)]"><I18nText>
                 NO SUPPLY
-              </span>
+              </I18nText></span>
             ) : (
               <span className="mt-0.5 flex items-center gap-0.5">
                 <span
@@ -3903,7 +3913,7 @@ export function PortChip({
           data-resource-handle-id={port.handleId}
           // No native title: GlobalTitleTooltip would stamp the handle as a
           // tooltip STOP and the rich port panel would yield to it.
-          aria-label={`${isInput ? "Input" : "Output"}: ${port.displayName}${readOnly ? "" : ". Left click or R for recipes, right click or U for uses, drag to connect"}`}
+          aria-label={_i18nT(`${isInput ? "Input" : "Output"}: ${port.displayName}${readOnly ? "" : ". Left click or R for recipes, right click or U for uses, drag to connect"}`)}
           className={[
             "resource-slot-handle nodrag !absolute !left-0 !right-auto !top-0 !z-30 !h-full !w-full !min-w-0 !translate-x-0 !translate-y-0",
             "!rounded-none !border-0 !bg-transparent !opacity-0",
@@ -3917,12 +3927,13 @@ export function PortChip({
 }
 
 function HatchSupplyButton({ nodeId, port }: { nodeId: string; port: RailPort }) {
+  const _i18nT = useT();
   const locked = useFactoryStore((state) => state.checklistMode || state.isReadOnly);
   return (
     <button
       type="button"
       aria-pressed={port.hatchSupplied === true}
-      aria-label={`${port.supplyHatch} for ${port.displayName}`}
+      aria-label={_i18nT(`${port.supplyHatch} for ${port.displayName}`)}
       disabled={locked}
       data-viewer-disabled="true"
       style={{ fontSize: 7, lineHeight: "10px", fontWeight: 700 }}
@@ -3962,9 +3973,9 @@ function CustomRateUniversalPorts({ nodeId }: { nodeId: string }) {
         <UniversalPortChip nodeId={nodeId} side="input" label="Drain any" />
         <UniversalPortChip nodeId={nodeId} side="output" label="Supply any" />
       </div>
-      <p className="mx-auto flex max-w-[320px] flex-1 items-center text-center text-[11px] leading-tight text-[var(--mc-ink-muted)]">
+      <p className="mx-auto flex max-w-[320px] flex-1 items-center text-center text-[11px] leading-tight text-[var(--mc-ink-muted)]"><I18nText>
         Wire either socket to a machine and this card becomes that resource.
-      </p>
+      </I18nText></p>
     </div>
   );
 }
@@ -3978,6 +3989,7 @@ function UniversalPortChip({
   side: "input" | "output";
   label: string;
 }) {
+  const _i18nT = useT();
   const isInput = side === "input";
   const handleId = makeResourceHandleId(side, { kind: "item", id: CUSTOM_RATE_ANY_RESOURCE_ID });
   return (
@@ -3987,7 +3999,7 @@ function UniversalPortChip({
       data-resource-node-id={nodeId}
       data-resource-handle-id={handleId}
     >
-      {label}
+      <I18nText>{label}</I18nText>
       <Handle
         id={handleId}
         type={isInput ? "target" : "source"}
@@ -3995,11 +4007,9 @@ function UniversalPortChip({
         data-resource-handle="true"
         data-resource-node-id={nodeId}
         data-resource-handle-id={handleId}
-        title={
-          isInput
+        title={_i18nT(isInput
             ? "Request side: wire a machine output (or tank) here"
-            : "Supply side: wire a machine input (or tank) here"
-        }
+            : "Supply side: wire a machine input (or tank) here")}
         className={[
           "resource-slot-handle nodrag !absolute !left-0 !right-auto !top-0 !z-30 !h-full !w-full !min-w-0 !translate-x-0 !translate-y-0",
           "!rounded-none !border-0 !bg-transparent !opacity-0",
@@ -4023,6 +4033,7 @@ function CustomRatePanel({
   kind: ResourceAmount["kind"];
   perSecond: number;
 }) {
+  const _i18nT = useT();
   const setCustomRateConfig = useFactoryStore((state) => state.setCustomRateConfig);
   // Subscribe so the shown value re-derives when the board unit flips.
   useFactoryStore((state) => state.rateUnit);
@@ -4068,10 +4079,10 @@ function CustomRatePanel({
           }}
           onPointerDown={(event) => event.stopPropagation()}
           className={modeButtonClassName(mode === "supply")}
-          title="Supply"
-        >
+          title={_i18nT("Supply")}
+        ><I18nText>
           Supply
-        </button>
+        </I18nText></button>
         <button
           type="button"
           onClick={(event) => {
@@ -4080,10 +4091,10 @@ function CustomRatePanel({
           }}
           onPointerDown={(event) => event.stopPropagation()}
           className={modeButtonClassName(mode === "request")}
-          title="Request"
-        >
+          title={_i18nT("Request")}
+        ><I18nText>
           Request
-        </button>
+        </I18nText></button>
       </div>
       <input
         value={draft}
@@ -4101,8 +4112,8 @@ function CustomRatePanel({
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => event.stopPropagation()}
         inputMode="decimal"
-        aria-label="Rate"
-        title="Rate"
+        aria-label={_i18nT("Rate")}
+        title={_i18nT("Rate")}
         // Sized to the number, not the row (`flex-1` would claim every spare
         // pixel). In `ch` on a mono font this is exactly the typed digits.
         style={{ width: `${Math.min(Math.max(draft.length + 2, 5), 16)}ch` }}
@@ -4133,7 +4144,7 @@ function recipeContainsSearchResource(recipe: Recipe, query: string) {
   }
 
   return [...recipe.inputs, ...recipe.outputs].some((resource) =>
-    normalizeSearch(`${resourceLabel(resource)} ${resource.id}`).includes(normalizedQuery),
+    matchesGameNameFilter(normalizedQuery, normalizeSearch(`${resourceLabel(resource)} ${resource.id}`)),
   );
 }
 
@@ -4353,6 +4364,7 @@ function PassiveProductionConfigPanel({
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
 }) {
+  const _i18nT = useT();
   if (controls.length === 0) {
     return null;
   }
@@ -4388,14 +4400,14 @@ function PassiveProductionConfigPanel({
             // it. Folded, it is the whole panel and centres on its own.
             isFolded ? "" : "mb-1",
           ].join(" ")}
-          title={isFolded ? `Show ${title} settings` : `Hide ${title} settings`}
+          title={_i18nT(isFolded ? `Show ${title} settings` : `Hide ${title} settings`)}
           aria-expanded={!isFolded}
         >
           <ChevronDown
             aria-hidden
             className={["h-3 w-3 shrink-0", isFolded ? "-rotate-90" : ""].join(" ")}
           />
-          <span className="min-w-0 truncate">{title} Settings</span>
+          <span className="min-w-0 truncate">{title}<I18nText> Settings</I18nText></span>
         </button>
       ) : null}
       {isFolded ? null : (
@@ -4404,7 +4416,7 @@ function PassiveProductionConfigPanel({
             <MinecraftTooltip key={control.id} content={getControlHelp?.(control.id)}>
             <label className="min-w-0">
               <span className="mb-0.5 block truncate text-[10px] font-bold uppercase leading-4 text-[var(--mc-ink-muted)]">
-                {control.label}
+                <I18nText>{control.label}</I18nText>
               </span>
               <MinecraftSelect
                 value={control.current.key}
@@ -4500,6 +4512,7 @@ function CropStepperRow({
   onStep: (next: number) => void;
   help?: ReactNode;
 }) {
+  const _i18nT = useT();
   const step = (direction: -1 | 1) => {
     const next = Math.max(min, Math.min(max, value + direction));
     if (next !== value) {
@@ -4532,7 +4545,7 @@ function CropStepperRow({
     >
       <div className={CROP_TILE_CAPTION_CLASS}>
         <CropPipSwatch color={pipColor} />
-        <span className="min-w-0 truncate">{label}</span>
+        <span className="min-w-0 truncate"><I18nText>{label}</I18nText></span>
       </div>
       <div className="flex min-w-0 items-center gap-0.5">
         <button
@@ -4544,7 +4557,7 @@ function CropStepperRow({
             step(-1);
           }}
           onPointerDown={(event) => event.stopPropagation()}
-          aria-label={`Fewer ${label}`}
+          aria-label={_i18nT(`Fewer ${label}`)}
         >
           <Minus className="h-3 w-3" />
         </button>
@@ -4560,7 +4573,7 @@ function CropStepperRow({
             step(1);
           }}
           onPointerDown={(event) => event.stopPropagation()}
-          aria-label={`More ${label}`}
+          aria-label={_i18nT(`More ${label}`)}
         >
           <Plus className="h-3 w-3" />
         </button>
@@ -4587,6 +4600,7 @@ function CropCycleRow({
   onPick: (option: MachineConfigTierOption, index: number) => void;
   help?: ReactNode;
 }) {
+  const _i18nT = useT();
   const index = Math.max(
     0,
     options.findIndex((option) => option.key === currentKey),
@@ -4601,7 +4615,7 @@ function CropCycleRow({
   const row = (
     <div
       className={CROP_TILE_CLASS}
-      title={`${label}: ${current.label}`}
+      title={_i18nT(`${label}: ${current.label}`)}
       onWheel={(event) => {
         if (checklistLocked() || !wheelChangesValues()) return;
         event.stopPropagation();
@@ -4609,7 +4623,7 @@ function CropCycleRow({
       }}
     >
       <div className={CROP_TILE_CAPTION_CLASS}>
-        <span className="min-w-0 truncate">{label}</span>
+        <span className="min-w-0 truncate"><I18nText>{label}</I18nText></span>
       </div>
       <div className="flex min-w-0 items-center gap-0.5">
         <button
@@ -4621,12 +4635,12 @@ function CropCycleRow({
             step(-1);
           }}
           onPointerDown={(event) => event.stopPropagation()}
-          aria-label={`Previous ${label}`}
+          aria-label={_i18nT(`Previous ${label}`)}
         >
           <Minus className="h-3 w-3" />
         </button>
         <span className="h-5 w-0 min-w-0 flex-1 overflow-hidden whitespace-nowrap border border-[var(--mc-47)] bg-[var(--mc-85)] px-0.5 text-center text-[10px] font-medium leading-[18px] text-[var(--mc-ink)] shadow-[inset_1px_1px_0_var(--mc-100),inset_-1px_-1px_0_var(--mc-54)]">
-          {current.label}
+          <I18nText>{current.label}</I18nText>
         </span>
         <button
           type="button"
@@ -4637,7 +4651,7 @@ function CropCycleRow({
             step(1);
           }}
           onPointerDown={(event) => event.stopPropagation()}
-          aria-label={`Next ${label}`}
+          aria-label={_i18nT(`Next ${label}`)}
         >
           <Plus className="h-3 w-3" />
         </button>
@@ -4658,6 +4672,7 @@ function CropTierChip({
   control: MachineConfigTierControl;
   onPick: (key: string) => void;
 }) {
+  const _i18nT = useT();
   const index = Math.max(
     0,
     control.tiers.findIndex((tier) => tier.key === control.current.key),
@@ -4704,10 +4719,10 @@ function CropTierChip({
               color: "#fff",
             }
       }
-      title={`${control.label}: ${control.current.label}. Click for the next tier, right-click for the previous, wheel for both.`}
-      aria-label={`${control.label} tier`}
+      title={_i18nT(`${control.label}: ${control.current.label}. Click for the next tier, right-click for the previous, wheel for both.`)}
+      aria-label={_i18nT(`${control.label} tier`)}
     >
-      {control.current.label}
+      <I18nText>{control.current.label}</I18nText>
     </button>
   );
 }
@@ -4748,6 +4763,7 @@ function CropConfigPanel({
   onSelectMany: (patch: Record<string, string>) => void;
   getControlHelp?: (controlId: string) => ReactNode;
 }) {
+  const _i18nT = useT();
   const [formulasOpen, setFormulasOpen] = useState(readCropFormulasOpen);
   const onToggleFormulas = () => {
     setFormulasOpen((open) => {
@@ -4942,11 +4958,11 @@ function CropConfigPanel({
       className="mt-0.5 flex h-[14px] items-center text-[10px] leading-[12px] text-[var(--mc-ink-muted)]"
     >
       <span className="truncate">
-        {crops.toLocaleString()} planted / {capacity.toLocaleString()} per machine
-      </span>
+        {crops.toLocaleString()}<I18nText> planted / </I18nText>{capacity.toLocaleString()}<I18nText> per machine
+      </I18nText></span>
       <span className="ml-auto shrink-0 text-[var(--mc-ink)]">
-        ×{machines.toLocaleString()} {isFarm ? "Industrial Farm" : "Crop Manager"}
-        {machines === 1 ? "" : "s"}
+        ×{machines.toLocaleString()} <I18nText>{isFarm ? "Industrial Farm" : "Crop Manager"}</I18nText>
+        <I18nText>{machines === 1 ? "" : "s"}</I18nText>
       </span>
     </div>
   );
@@ -4969,7 +4985,7 @@ function CropConfigPanel({
           onToggleFormulas();
         }}
         aria-expanded={formulasOpen}
-        title={formulasOpen ? "Hide the worked formulas" : "Show the worked formulas"}
+        title={_i18nT(formulasOpen ? "Hide the worked formulas" : "Show the worked formulas")}
       >
         <ChevronDown
           aria-hidden
@@ -4979,7 +4995,7 @@ function CropConfigPanel({
             formulasOpen ? "" : "-rotate-90",
           ].join(" ")}
         />
-        <span className="text-[9px] leading-[11px]">Formulas</span>
+        <span className="text-[9px] leading-[11px]"><I18nText>Formulas</I18nText></span>
       </button>
     );
     if (!formulasOpen) {
@@ -5018,12 +5034,12 @@ function CropConfigPanel({
         key={label}
         className="grid min-w-0 grid-cols-[44px_minmax(0,1fr)_auto] items-baseline gap-x-1 whitespace-nowrap"
       >
-        <span className="uppercase tracking-wide">{label}</span>
+        <span className="uppercase tracking-wide"><I18nText>{label}</I18nText></span>
         <span className="min-w-0 overflow-hidden text-ellipsis text-right tabular-nums">
           {math}
         </span>
         <span className="min-w-0 overflow-hidden text-ellipsis text-[10px] font-semibold tabular-nums text-[var(--mc-ink)]">
-          {" "}= {result}
+          <I18nText>{" "}</I18nText>= {result}
         </span>
       </div>
     );
@@ -5046,9 +5062,9 @@ function CropConfigPanel({
     const lines: ReactNode[] = [
       line(
         "food",
-        <>(5+{waterBonus}+{fertBonus}+{skyBonus}+{env.biomeBonus})·5 vs {cropStats.tier}·10</>,
+        <>(5+{waterBonus}+{fertBonus}+{skyBonus}+{env.biomeBonus}<I18nText>)·5 vs </I18nText>{cropStats.tier}·10</>,
         <>
-          {supply} vs {demand}{" "}
+          {supply}<I18nText> vs </I18nText>{demand}<I18nText>{" "}</I18nText>
           <span style={{ color: supply >= demand ? "#7fd94a" : "#e06060" }}>
             → {surplusPct}%
           </span>
@@ -5058,8 +5074,8 @@ function CropConfigPanel({
         "grows",
         <>(6+{env.growth})·{surplusPct}%</>,
         <>
-          {rate} pts per {formatCompact(cycleSec)}s
-        </>,
+          {rate}<I18nText> pts per </I18nText>{formatCompact(cycleSec)}<I18nText>s
+        </I18nText></>,
       ),
       line(
         "harvest",
@@ -5069,18 +5085,18 @@ function CropConfigPanel({
           // green knob moves, a green number moves here.
           isFarm ? (
             <>
-              ⌈{cropStats.growthPoints}/{rate}⌉·{formatCompact(cycleSec)}s ÷ (1+{growthN}
+              ⌈{cropStats.growthPoints}/{rate}⌉·{formatCompact(cycleSec)}<I18nText>s ÷ (1+</I18nText>{growthN}
               )·(1+0.5·{fertN})·2<sup>{ocN}</sup>
             </>
           ) : (
             <>
-              ⌈{cropStats.growthPoints}/{rate}⌉·{formatCompact(cycleSec)}s
-            </>
+              ⌈{cropStats.growthPoints}/{rate}⌉·{formatCompact(cycleSec)}<I18nText>s
+            </I18nText></>
           )
         ) : (
-          <>too hungry to grow</>
+          <><I18nText>too hungry to grow</I18nText></>
         ),
-        rate > 0 ? <>{formatCompact(harvestSec)}s</> : <span style={{ color: "#e06060" }}>never</span>,
+        rate > 0 ? <>{formatCompact(harvestSec)}<I18nText>s</I18nText></> : <span style={{ color: "#e06060" }}><I18nText>never</I18nText></span>,
       ),
       line(
         "drops",
@@ -5100,9 +5116,9 @@ function CropConfigPanel({
       line(
         "output",
         <>
-          {formatCompact(itemsPerHarvest)} ÷ {formatCompact(harvestSec)}s · {crops.toLocaleString()} seeds
-        </>,
-        <>{formatCompact(outPerSec)}/s</>,
+          {formatCompact(itemsPerHarvest)} ÷ {formatCompact(harvestSec)}<I18nText>s · </I18nText>{crops.toLocaleString()}<I18nText> seeds
+        </I18nText></>,
+        <>{formatCompact(outPerSec)}<I18nText>/s</I18nText></>,
       ),
     ];
     if (isFarm) {
@@ -5119,7 +5135,7 @@ function CropConfigPanel({
             {baseEu}·(1+1.25·{growthN}+0.5·({fertN}+{harvestN}+{biomeN}))·4
             <sup>{ocN}</sup>·{machines}
           </>,
-          <>{Math.round(farmEu * machines).toLocaleString()} EU/t</>,
+          <>{Math.round(farmEu * machines).toLocaleString()}<I18nText> EU/t</I18nText></>,
         ),
       );
     } else {
@@ -5127,8 +5143,8 @@ function CropConfigPanel({
       lines.push(
         line(
           "power",
-          <>{(euPerHarvest * 8).toLocaleString()}/8 per crop picked</>,
-          <>{euPerHarvest.toLocaleString()} EU</>,
+          <>{(euPerHarvest * 8).toLocaleString()}<I18nText>/8 per crop picked</I18nText></>,
+          <>{euPerHarvest.toLocaleString()}<I18nText> EU</I18nText></>,
         ),
       );
     }
@@ -5192,8 +5208,8 @@ function CropConfigPanel({
                   ))}
                 </span>
                 <span className="ml-auto tabular-nums">
-                  {used}/{slots} slots
-                </span>
+                  {used}/{slots}<I18nText> slots
+                </I18nText></span>
               </>,
             )}
             <div className="crop-settings-grid grid min-w-0 grid-cols-[repeat(3,minmax(0,1fr))] gap-x-1 gap-y-1">
@@ -5229,18 +5245,18 @@ function CropHelpPanel({
       <p className="text-[18px] font-semibold leading-snug text-amber-300">{title}</p>
       <div className="mt-1.5 space-y-2 text-[16px] leading-relaxed text-slate-100">{children}</div>
       {feeding ? (
-        <p className="mt-2.5 border-t border-white/10 pt-2 text-[16px] leading-relaxed text-slate-100">
-          Feeding basics: this crop is Tier {feeding.tier}, so it wants{" "}
-          <span className="text-white">{feeding.tier * 10}</span> food out of a possible 275. Every
-          point of extra food makes it grow{" "}
-          <span style={{ color: CROP_HELP_GOOD }}>a little faster</span>; every missing point slows
-          it <span style={{ color: CROP_HELP_BAD }}>four times as hard</span>. If it is 25 or more
-          short, it <span style={{ color: CROP_HELP_BAD }}>stops growing completely</span>.
+        <p className="mt-2.5 border-t border-white/10 pt-2 text-[16px] leading-relaxed text-slate-100"><I18nText>
+          Feeding basics: this crop is Tier </I18nText>{feeding.tier}<I18nText>, so it wants</I18nText><I18nText>{" "}</I18nText>
+          <span className="text-white">{feeding.tier * 10}</span><I18nText> food out of a possible 275. Every
+          point of extra food makes it grow</I18nText><I18nText>{" "}</I18nText>
+          <span style={{ color: CROP_HELP_GOOD }}><I18nText>a little faster</I18nText></span><I18nText>; every missing point slows
+          it </I18nText><span style={{ color: CROP_HELP_BAD }}><I18nText>four times as hard</I18nText></span><I18nText>. If it is 25 or more
+          short, it </I18nText><span style={{ color: CROP_HELP_BAD }}><I18nText>stops growing completely</I18nText></span>.
         </p>
       ) : null}
       {finePrint ? (
-        <p className="mt-2 border-t border-white/10 pt-1.5 text-[13px] leading-relaxed text-slate-400">
-          Formula: {finePrint}
+        <p className="mt-2 border-t border-white/10 pt-1.5 text-[13px] leading-relaxed text-slate-400"><I18nText>
+          Formula: </I18nText>{finePrint}
         </p>
       ) : null}
     </div>
@@ -5267,20 +5283,20 @@ function cropControlHelp(recipe: Recipe, controlId: string): ReactNode {
         <CropHelpPanel
           title="Growth"
           finePrint={
-            <>
+            <><I18nText>
               every 12.8 s the plant gains (6 + Growth) points, scaled by feeding. This crop is
-              ripe at {stats.growthPoints.toLocaleString()} points and restarts from 0 after each
+              ripe at </I18nText>{stats.growthPoints.toLocaleString()}<I18nText> points and restarts from 0 after each
               harvest.
-            </>
+            </I18nText></>
           }
         >
-          <p>
+          <p><I18nText>
             The higher the Growth stat, the sooner each harvest comes around. A 31-Growth plant
-            regrows {good("about five times faster")} than a 1-Growth one.
-          </p>
-          <p className="text-slate-300">
+            regrows </I18nText>{good("about five times faster")}<I18nText> than a 1-Growth one.
+          </I18nText></p>
+          <p className="text-slate-300"><I18nText>
             In the game you raise Growth by cross-breeding crops between double crop sticks.
-          </p>
+          </I18nText></p>
         </CropHelpPanel>
       );
     case "cropGainStat":
@@ -5288,20 +5304,20 @@ function cropControlHelp(recipe: Recipe, controlId: string): ReactNode {
         <CropHelpPanel
           title="Gain"
           finePrint={
-            <>
-              drop rounds = {stats.dropChance.toFixed(3)} × 1.03^Gain, and every successful drop
+            <><I18nText>
+              drop rounds = </I18nText>{stats.dropChance.toFixed(3)}<I18nText> × 1.03^Gain, and every successful drop
               has a (Gain + 1)% chance of one bonus item.
-            </>
+            </I18nText></>
           }
         >
-          <p>
-            The higher the Gain stat, the more items each harvest gives. At 31 you collect{" "}
-            {good("roughly 2.5× as much")} as at 1.
-          </p>
-          <p className="text-slate-300">
+          <p><I18nText>
+            The higher the Gain stat, the more items each harvest gives. At 31 you collect</I18nText><I18nText>{" "}</I18nText>
+            {good("roughly 2.5× as much")}<I18nText> as at 1.
+          </I18nText></p>
+          <p className="text-slate-300"><I18nText>
             Like Growth, it&apos;s raised by cross-breeding. It never changes how fast the plant
             grows, only how much it drops.
-          </p>
+          </I18nText></p>
         </CropHelpPanel>
       );
     case "cropWater":
@@ -5309,15 +5325,15 @@ function cropControlHelp(recipe: Recipe, controlId: string): ReactNode {
         <CropHelpPanel
           title="Water"
           feeding={{ tier: stats.tier }}
-          finePrint={<>water bonus = floor((water + 9) ÷ 10): 0 → +1, 50 → +5, 100 → +10.</>}
+          finePrint={<><I18nText>water bonus = floor((water + 9) ÷ 10): 0 → +1, 50 → +5, 100 → +10.</I18nText></>}
         >
-          <p>
-            Full water is {good("+10 food")}, one of the two biggest boosts you control.
-          </p>
-          <p className="text-slate-300">
+          <p><I18nText>
+            Full water is </I18nText>{good("+10 food")}<I18nText>, one of the two biggest boosts you control.
+          </I18nText></p>
+          <p className="text-slate-300"><I18nText>
             A Crop Manager keeps water at full automatically, so &quot;Full&quot; matches an
             automated farm.
-          </p>
+          </I18nText></p>
         </CropHelpPanel>
       );
     case "cropFertilizer":
@@ -5325,15 +5341,15 @@ function cropControlHelp(recipe: Recipe, controlId: string): ReactNode {
         <CropHelpPanel
           title="Fertilizer"
           feeding={{ tier: stats.tier }}
-          finePrint={<>fertilizer bonus = floor((fertilizer + 9) ÷ 10): 0 → +1, 50 → +5, 100 → +10.</>}
+          finePrint={<><I18nText>fertilizer bonus = floor((fertilizer + 9) ÷ 10): 0 → +1, 50 → +5, 100 → +10.</I18nText></>}
         >
-          <p>
-            Fertilizer works like water: keeping it full is {good("+10 food")}. Without it a
-            high-tier crop {bad("slows down or stops")}.
+          <p><I18nText>
+            Fertilizer works like water: keeping it full is </I18nText>{good("+10 food")}<I18nText>. Without it a
+            high-tier crop </I18nText>{bad("slows down or stops")}.
           </p>
-          <p className="text-slate-300">
+          <p className="text-slate-300"><I18nText>
             Crop Managers and Industrial Farms can supply it for you.
-          </p>
+          </I18nText></p>
         </CropHelpPanel>
       );
     case "cropSky":
@@ -5341,12 +5357,12 @@ function cropControlHelp(recipe: Recipe, controlId: string): ReactNode {
         <CropHelpPanel
           title="Sky"
           feeding={{ tier: stats.tier }}
-          finePrint={<>sky bonus = +2 when the block above the crop can see the sky.</>}
+          finePrint={<><I18nText>sky bonus = +2 when the block above the crop can see the sky.</I18nText></>}
         >
-          <p>
-            Plants under open sky get a small {good("+2 food")} bonus. Roofed or underground farms
+          <p><I18nText>
+            Plants under open sky get a small </I18nText>{good("+2 food")}<I18nText> bonus. Roofed or underground farms
             lose it. That only matters when the crop is close to being underfed.
-          </p>
+          </I18nText></p>
         </CropHelpPanel>
       );
     case "cropBiome":
@@ -5355,29 +5371,29 @@ function cropControlHelp(recipe: Recipe, controlId: string): ReactNode {
           title="Biome"
           feeding={{ tier: stats.tier }}
           finePrint={
-            <>
+            <><I18nText>
               biome bonus = max(humidity, likes): each matching tag +14, capped at 2 tags; humidity
               scales 0–14 between 50% and 80% biome humidity.
-            </>
+            </I18nText></>
           }
         >
           <p>
             {biomeTags.length > 0 ? (
-              <>
-                This crop likes{" "}
-                <span className="text-white">{biomeTags.join(" and ").toLowerCase()}</span> places.
-              </>
+              <><I18nText>
+                This crop likes</I18nText><I18nText>{" "}</I18nText>
+                <span className="text-white">{biomeTags.join(" and ").toLowerCase()}</span><I18nText> places.
+              </I18nText></>
             ) : (
-              <>This crop has no favourite biome.</>
-            )}{" "}
-            Each matching like is {good("+14 food")}, so matching both is {good("+28")}, the
+              <><I18nText>This crop has no favourite biome.</I18nText></>
+            )}<I18nText>{" "}</I18nText><I18nText>
+            Each matching like is </I18nText>{good("+14 food")}<I18nText>, so matching both is </I18nText>{good("+28")}<I18nText>, the
             biggest feeding boost there is.
-          </p>
-          <p className="text-slate-300">
+          </I18nText></p>
+          <p className="text-slate-300"><I18nText>
             Without a matching biome, humidity stands in for one like: the percent options are the
             biome&apos;s humidity, worth +4 at 60%, +9 at 70% and the full +14 at 80% or wetter
             (a swamp or jungle). It never stacks with real likes.
-          </p>
+          </I18nText></p>
         </CropHelpPanel>
       );
     default:
@@ -5474,6 +5490,7 @@ export function SolvedMachinesStat({
   onPin: (machines: number | undefined) => void;
   inline?: boolean;
 }) {
+  const _i18nT = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const isPinned = pinned !== undefined && pinned > 0;
@@ -5496,7 +5513,7 @@ export function SolvedMachinesStat({
       {/* The label stays MACHINES either way - it never stops being one.
           The gold value is what says the count is pinned. */}
       <div className="truncate text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]">
-        {label}
+        <I18nText>{label}</I18nText>
       </div>
       {editing ? (
         <input
@@ -5517,7 +5534,7 @@ export function SolvedMachinesStat({
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
           inputMode="decimal"
-          aria-label="Pinned machine count"
+          aria-label={_i18nT("Pinned machine count")}
           className={`nodrag h-5 ${inline ? "w-16" : "w-full"} min-w-0 border border-[var(--mc-47)] bg-[var(--mc-85)] px-1 text-center text-[13px] font-medium leading-4 text-[var(--mc-ink)] outline-none focus:border-cyan-700 focus:ring-1 focus:ring-cyan-400`}
         />
       ) : (
@@ -5529,7 +5546,7 @@ export function SolvedMachinesStat({
             setEditing(true);
           }}
           onPointerDown={(event) => event.stopPropagation()}
-          aria-label={isPinned ? "Change the pinned machine count" : "Pin a machine count"}
+          aria-label={_i18nT(isPinned ? "Change the pinned machine count" : "Pin a machine count")}
           className={`group/pin flex ${inline ? "w-auto shrink-0" : "w-full"} min-w-0 items-center gap-[3px] text-left`}
         >
           <span
@@ -5575,7 +5592,7 @@ function Stat({
 }) {
   return (
     <div className="min-w-0 border border-[var(--mc-47)] bg-[var(--mc-71)] px-1 shadow-[inset_1px_1px_0_var(--mc-93),inset_-1px_-1px_0_var(--mc-47)]">
-      <div className="truncate text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]">{label}</div>
+      <div className="truncate text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]"><I18nText>{label}</I18nText></div>
       <div className={["truncate font-medium", valueClassName ?? ""].join(" ")}>{value}</div>
     </div>
   );
@@ -5669,9 +5686,9 @@ function PowerStat({
             "truncate text-[11px] uppercase leading-[13px]",
             stalled ? "text-red-400" : "text-[var(--mc-ink-muted)]",
           ].join(" ")}
-        >
+        ><I18nText>
           Power
-        </div>
+        </I18nText></div>
         <div className="truncate font-medium tabular-nums">
           {stalled ? (
             report.state === "under-powered" ? (
@@ -5751,9 +5768,9 @@ function SteamStat({
       }} />}
     >
       <div className="min-w-0 border border-[var(--mc-47)] bg-[var(--mc-71)] px-1 shadow-[inset_1px_1px_0_var(--mc-93),inset_-1px_-1px_0_var(--mc-47)]">
-        <div className="truncate text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]">
+        <div className="truncate text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]"><I18nText>
           Steam
-        </div>
+        </I18nText></div>
         <div className="truncate font-medium tabular-nums">
           <MotionNumberText
             values={[drawLitresPerSecond]}
@@ -5763,7 +5780,7 @@ function SteamStat({
                 : formatCompactStable(shown[0] ?? drawLitresPerSecond)
             }
           />
-          <span className="ml-0.5 text-[8px] text-[var(--mc-ink-muted)]">L/s</span>
+          <span className="ml-0.5 text-[8px] text-[var(--mc-ink-muted)]"><I18nText>L/s</I18nText></span>
         </div>
       </div>
     </MinecraftTooltip>
@@ -5830,6 +5847,7 @@ function MachineCountStat({
   onFullFarmsChange?: (checked: boolean) => void;
   onChange: (machineCount: number) => void;
 }) {
+  const _i18nT = useT();
   const machineCountText = String(machineCount);
   const [draftState, setDraftState] = useState({
     machineCount,
@@ -5885,12 +5903,12 @@ function MachineCountStat({
       {fullFarms !== undefined ? (
         <label className="nodrag flex items-center gap-1 whitespace-nowrap text-[11px] leading-[13px] text-[var(--mc-ink-muted)]"
           onPointerDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
-          <input type="checkbox" checked={fullFarms} aria-label="Full farms"
+          <input type="checkbox" checked={fullFarms} aria-label={_i18nT("Full farms")}
             className="h-3 w-3 accent-cyan-700"
-            onChange={(event) => { if (!checklistLocked()) onFullFarmsChange?.(event.target.checked); }} />
-          Full farms{!fullFarms ? " · Seeds" : ""}
+            onChange={(event) => { if (!checklistLocked()) onFullFarmsChange?.(event.target.checked); }} /><I18nText>
+          Full farms</I18nText><I18nText>{!fullFarms ? " · Seeds" : ""}</I18nText>
         </label>
-      ) : <div className="truncate text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]">{label}</div>}
+      ) : <div className="truncate text-[11px] uppercase leading-[13px] text-[var(--mc-ink-muted)]"><I18nText>{label}</I18nText></div>}
       <div className="flex min-w-0 items-center gap-0.5">
         <button
           type="button"
@@ -5900,8 +5918,8 @@ function MachineCountStat({
           }}
           onPointerDown={(event) => event.stopPropagation()}
           className={stepButtonClassName}
-          title="Remove 1"
-          aria-label={`Decrease ${label.toLowerCase()} count`}
+          title={_i18nT("Remove 1")}
+          aria-label={_i18nT(`Decrease ${label.toLowerCase()} count`)}
         >
           <Minus className="h-3 w-3" />
         </button>
@@ -5921,7 +5939,7 @@ function MachineCountStat({
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
           inputMode="numeric"
-          aria-label={`${label} count`}
+          aria-label={_i18nT(`${label} count`)}
           className="nodrag h-[21px] w-0 min-w-0 flex-1 border border-[var(--mc-47)] bg-[var(--mc-85)] px-1 text-center text-[14px] font-medium leading-4 text-[var(--mc-ink)] shadow-[inset_1px_1px_0_var(--mc-100),inset_-1px_-1px_0_var(--mc-54)] outline-none focus:border-cyan-700 focus:bg-[var(--mc-100)] focus:ring-1 focus:ring-cyan-400"
         />
         </MinecraftTooltip>
@@ -5933,8 +5951,8 @@ function MachineCountStat({
           }}
           onPointerDown={(event) => event.stopPropagation()}
           className={stepButtonClassName}
-          title="Add 1"
-          aria-label={`Increase ${label.toLowerCase()} count`}
+          title={_i18nT("Add 1")}
+          aria-label={_i18nT(`Increase ${label.toLowerCase()} count`)}
         >
           <Plus className="h-3 w-3" />
         </button>

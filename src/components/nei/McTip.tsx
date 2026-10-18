@@ -1,4 +1,5 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
 
 import "./nei.css";
 
@@ -20,7 +21,7 @@ export function McTipLines({ lines }: { lines: readonly McTipLine[] }) {
     <>
       {lines.map((line, index) => (
         <div key={index} className="mc-tip-line" data-tone={line.tone && line.tone !== "grey" ? line.tone : undefined}>
-          {line.text}
+          <I18nText game={line.tone === "name"}>{line.text}</I18nText>
         </div>
       ))}
     </>

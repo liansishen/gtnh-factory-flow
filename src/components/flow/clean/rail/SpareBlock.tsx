@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import {
   useRef,
@@ -188,9 +190,9 @@ export function SpareBlock({
         <span
           className="rail-spare-title"
           {...tipProps(`spare-head|${spare.key}`, () => headTip(spare))}
-        >
+        ><I18nText>
           Forced
-        </span>
+        </I18nText></span>
         <RailKey
           label="Split"
           onClick={() => splitSpareEvenly(spare)}
@@ -198,9 +200,9 @@ export function SpareBlock({
             title: "Split",
             actions: [{ input: "left", label: "Share it evenly between them" }],
           })}
-        >
+        ><I18nText>
           Split
-        </RailKey>
+        </I18nText></RailKey>
         <RailKey
           label="Auto"
           disabled={!spare.custom}
@@ -209,9 +211,9 @@ export function SpareBlock({
             title: "Auto",
             actions: [{ input: "left", label: "Back to the plan's own pick" }],
           })}
-        >
+        ><I18nText>
           Auto
-        </RailKey>
+        </I18nText></RailKey>
       </div>
       {spare.bearers.map((b, i) => {
         const share = shares[i] ?? 0;
@@ -252,9 +254,9 @@ export function SpareBlock({
             <span className="rail-spare-name">{labelOf(spare, b, here)}</span>
             {on ? (
               <span className="rail-spare-amount">
-                {spare.importing ? "-" : "+"}
+                <I18nText>{spare.importing ? "-" : "+"}</I18nText>
                 {amountOf(b, share)}
-                {energy ? <i> EU/t</i> : null}
+                {energy ? <i><I18nText> EU/t</I18nText></i> : null}
               </span>
             ) : null}
             <div

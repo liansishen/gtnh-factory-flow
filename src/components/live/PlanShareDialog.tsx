@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import "../chrome/mod-panel.css";
 import { LoaderCircle, UserPlus } from "lucide-react";
@@ -28,6 +29,7 @@ import { Face } from "./LiveFaces";
  * never this plan. In the mod's panel skin, as the other boxes of its bar.
  */
 export function PlanShareDialog({ onClose }: { onClose: () => void }) {
+  const _i18nT = useT();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogA11y(dialogRef, { onClose, initialFocus: "#plan-share-search" });
   const user = useCommunityAuthStore((state) => state.user);
@@ -155,35 +157,44 @@ export function PlanShareDialog({ onClose }: { onClose: () => void }) {
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Plan together"
+        aria-label={_i18nT("Plan together")}
         data-plan-share-dialog
         className="pn pn-skin"
       >
         <div className="pn-title">
-          <span>Plan together</span>
-          <button type="button" onClick={onClose} aria-label="Close" className="pn-x" />
+          <span>
+            <I18nText>Plan together</I18nText>
+          </span>
+          <button type="button" onClick={onClose} aria-label={_i18nT("Close")} className="pn-x" />
         </div>
         <div className="pn-body">
           {!user ? (
-            <p className="text-sm text-fg-muted">Sign in to invite.</p>
+            <p className="text-sm text-fg-muted">
+              <I18nText>Sign in to invite.</I18nText>
+            </p>
           ) : loadError ? (
             <p className="text-sm text-red-400">{loadError}</p>
           ) : !synced || !info ? (
             <p className="flex items-center gap-2 text-sm text-fg-muted">
-              <LoaderCircle className="h-4 w-4 animate-spin" /> Loading.
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+              <I18nText> Loading.</I18nText>
             </p>
           ) : (
             <div className="space-y-3">
               <p className="text-xs text-fg-muted">
-                Everyone here can edit the plan with you, live. Posting a copy to Community is
-                separate.
+                <I18nText>
+                  Everyone here can edit the plan with you, live. Posting a copy to Community is
+                  separate.
+                </I18nText>
               </p>
               <ul className="space-y-1" data-plan-members>
                 <li className="flex items-center gap-2 text-sm">
                   <Face username={info.ownerName || "?"} color={colorFor(info.ownerId)} />
                   <span className="min-w-0 flex-1 truncate">
-                    {isOwner ? "You" : info.ownerName}
-                    <span className="ml-1 text-xs text-fg-muted">owner</span>
+                    {isOwner ? _i18nT("You") : info.ownerName}
+                    <span className="ml-1 text-xs text-fg-muted">
+                      <I18nText>owner</I18nText>
+                    </span>
                   </span>
                 </li>
                 {members.map((member) => {
@@ -215,7 +226,9 @@ export function PlanShareDialog({ onClose }: { onClose: () => void }) {
               {isOwner ? (
                 full ? (
                   <p className="text-xs text-fg-muted">
-                    A plan can be shared with {LIBRARY_MAX_MEMBERS} people at most.
+                    <I18nText>A plan can be shared with </I18nText>
+                    {LIBRARY_MAX_MEMBERS}
+                    <I18nText> people at most.</I18nText>
                   </p>
                 ) : (
                   <AccountSearch
@@ -231,7 +244,7 @@ export function PlanShareDialog({ onClose }: { onClose: () => void }) {
                   onClick={() => void leave()}
                   className="rounded border border-red-800 px-3 py-1 text-sm text-red-300 hover:bg-red-950/50 disabled:opacity-50"
                 >
-                  {busy === "leave" ? "Leaving" : "Leave this plan"}
+                  {busy === "leave" ? _i18nT("Leaving") : _i18nT("Leave this plan")}
                 </button>
               )}
               {actionError ? <p className="text-sm text-red-400">{actionError}</p> : null}
@@ -253,6 +266,7 @@ function AccountSearch({
   busyId?: string;
   onPick: (account: PlanMember) => void;
 }) {
+  const _i18nT = useT();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PlanMember[]>();
   const [searching, setSearching] = useState(false);
@@ -300,7 +314,7 @@ function AccountSearch({
   return (
     <div className="space-y-1">
       <label className="block text-xs font-medium text-fg-muted" htmlFor="plan-share-search">
-        Add someone
+        <I18nText>Add someone</I18nText>
       </label>
       <input
         id="plan-share-search"
@@ -310,14 +324,16 @@ function AccountSearch({
           setQuery(event.target.value);
           setSearching(Boolean(event.target.value.trim()));
         }}
-        placeholder="Search by name"
+        placeholder={_i18nT("Search by name")}
         autoComplete="off"
         maxLength={24}
         className="h-8 w-full rounded border border-line-strong bg-surface-sunken px-2 text-sm outline-none focus:border-cyan-600"
       />
       {error ? <p className="text-xs text-red-400">{error}</p> : null}
       {typed && !searching && results && shown.length === 0 ? (
-        <p className="text-xs text-fg-muted">No one by that name.</p>
+        <p className="text-xs text-fg-muted">
+          <I18nText>No one by that name.</I18nText>
+        </p>
       ) : null}
       {shown.length > 0 ? (
         <ul className="max-h-48 space-y-0.5 overflow-y-auto" data-account-results>
@@ -336,7 +352,9 @@ function AccountSearch({
                 <Face username={account.username} color={colorFor(account.id)} />
                 <span className="min-w-0 flex-1 truncate">{account.username}</span>
                 <UserPlus className="h-3.5 w-3.5 text-fg-muted" aria-hidden />
-                <span className="sr-only">Add</span>
+                <span className="sr-only">
+                  <I18nText>Add</I18nText>
+                </span>
               </button>
             </li>
           ))}

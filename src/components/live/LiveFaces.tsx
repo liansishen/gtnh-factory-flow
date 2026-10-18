@@ -2,6 +2,7 @@
 
 import type { LivePerson } from "@/lib/live/protocol";
 import { useLiveSession, type LiveStatus } from "@/store/live-session";
+import { useT } from "@/lib/i18n/react";
 
 /** Up to two letters for a face: the name's first, and the first after a break if any. */
 export function initialsOf(username: string): string {
@@ -61,6 +62,7 @@ export function Face({
 
 /** Faces of whoever else has the open live plan open: one per account. */
 export function LiveFaces({ max = 5 }: { max?: number }) {
+  const _i18nT = useT();
   const present = useLiveSession((state) => state.present);
   const status = useLiveSession((state) => state.status);
   if (status === "off" || present.length === 0) {
@@ -72,7 +74,7 @@ export function LiveFaces({ max = 5 }: { max?: number }) {
     <div
       data-live-faces
       className="flex shrink-0 items-center -space-x-1.5"
-      aria-label={`Here now: ${present.map((person) => person.username).join(", ")}`}
+      aria-label={`${_i18nT("Here now")}: ${present.map((person) => person.username).join(", ")}`}
     >
       {shown.map((person: LivePerson) => (
         <Face

@@ -1,4 +1,6 @@
 "use client";
+import { useGameName } from "@/lib/i18n/react";
+
 
 import { makeResourceKey } from "@/lib/model";
 import { fluidSwatchStyle } from "../fluid-swatch";
@@ -43,6 +45,7 @@ export function DrawerIcon({
   storage: FactoryStorage;
   alternatives?: ResourceAmount["alternatives"];
 }) {
+  const _i18nName = useGameName();
   const borrowed = useFactoryStore((state) =>
     hasArt(storage) ? undefined : recipeArt(state.project.recipes, storage.kind, storage.resourceId),
   );
@@ -55,7 +58,7 @@ export function DrawerIcon({
       <span
         className="cd-icon cd-swatch"
         role="img"
-        aria-label={storage.displayName}
+        aria-label={_i18nName((storage.displayName) ?? "")}
         style={fluidSwatchStyle({ id: storage.resourceId, dominantColor: color, iconAtlas: art.iconAtlas })}
       />
     );

@@ -1,0 +1,19 @@
+[
+  { "re": "^short of (.+)$", "flags": "", "zh": "缺少 $1" },
+  { "re": "^(.+) has nowhere to go$", "flags": "", "zh": "$1 没有去处" },
+  { "re": "^nowhere for (.+)$", "flags": "", "zh": "$1 没有去处" },
+  { "re": "^nothing takes (.+)$", "flags": "", "zh": "$1 没有下游需求" },
+  { "re": "^(?:the line )?wants ([\\d,.kM]+)$", "flags": "", "zh": "产线需要 $1" },
+  { "re": "^(\\d+) cards? · (\\d+) drawers?$", "flags": "", "zh": "$1 张卡片 · $2 个资源仓" },
+  { "re": "^(\\d+)m ago$", "flags": "", "zh": "$1 分钟前" },
+  { "re": "^(\\d+)h ago$", "flags": "", "zh": "$1 小时前" },
+  { "re": "^(\\d+)d ago$", "flags": "", "zh": "$1 天前" },
+  { "re": "^Remove (.+) from the search$", "flags": "", "zh": "从搜索中移除 $1" },
+  { "re": "^Loading (.+) recipes$", "flags": "", "zh": "正在加载 $1 的配方" },
+  { "re": "^Filter (.+)$", "flags": "", "zh": "筛选 $1" },
+  { "re": "^Tier (.+)$", "flags": "", "zh": "电压等级 $1" },
+  { "re": "^(\\d+) tasks?$", "flags": "i", "zh": "$1 个任务" },
+  { "re": "^(\\d+) comments?$", "flags": "i", "zh": "$1 条评论" },
+  { "re": "^(\\d+) selected$", "flags": "i", "zh": "已选择 $1 项" },
+  { "re": "^([\\d.]+) machines? running$", "flags": "", "zh": "$1 台机器运行中" }
+]

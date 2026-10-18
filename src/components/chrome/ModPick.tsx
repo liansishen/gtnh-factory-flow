@@ -4,6 +4,7 @@ import "./mod-panel.css";
 
 import { useCallback, useState } from "react";
 import { ChromeMenu, chromeAnchorOf, MENU_ANCHOR_ATTR, type ChromeAnchor } from "./ChromeMenu";
+import { useT } from "@/lib/i18n/react";
 
 /**
  * A choice among a few, the mod's way: a flat key naming the choice that opens the compact list menu (the mod's
@@ -23,6 +24,7 @@ export function ModPick<T extends string>({
   label: string;
   title?: string;
 }) {
+  const t = useT();
   const [anchor, setAnchor] = useState<ChromeAnchor>();
   const close = useCallback(() => setAnchor(undefined), []);
   const current = options.find((option) => option.value === value);
@@ -31,10 +33,10 @@ export function ModPick<T extends string>({
       <button
         type="button"
         className="pn-pick-key"
-        aria-label={label}
+        aria-label={t(label)}
         aria-haspopup="menu"
         aria-expanded={anchor !== undefined}
-        title={title}
+        title={title ? t(title) : undefined}
         data-open={anchor ? "" : undefined}
         {...{ [MENU_ANCHOR_ATTR]: "" }}
         onClick={(event) => {
@@ -42,7 +44,7 @@ export function ModPick<T extends string>({
           setAnchor((open) => (open ? undefined : next));
         }}
       >
-        <span>{current?.label ?? value}</span>
+        <span>{t(current?.label ?? value)}</span>
         <span className="pn-pick-arrow" aria-hidden />
       </button>
       {anchor ? (

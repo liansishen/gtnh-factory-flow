@@ -462,7 +462,8 @@
 
 .mc-controls {
   max-width: none;
-  width: 420px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding-bottom: 6px;
 }
 .mc-controls-grid {
@@ -481,6 +482,15 @@
 }
 .mc-controls-effect {
   color: var(--mc-muted);
+}
+html[data-compact] .mc-controls-row {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 2px;
+  padding: 5px 2px;
+}
+html[data-compact] .mc-controls-key,
+html[data-compact] .mc-controls-effect {
+  overflow-wrap: anywhere;
 }
 
 /* Keyboard focus: a gold ring inside the key, shown for the keyboard only. */

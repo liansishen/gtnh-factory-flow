@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import { Bookmark, Factory, Folder, FolderPlus, LayoutGrid, Star, Users } from "lucide-react";
 import {
@@ -14,7 +15,11 @@ import { getUiScale } from "@/lib/ui-scale";
 import { useCommunityUser } from "@/components/community/auth";
 import { IconPicker, iconSuggestionsFromStats } from "@/components/IconPicker";
 import { formatRelativeDate } from "@/components/shelf-cards";
-import { deleteCommunityPlan, listCommunityPlans, patchCommunityPlan } from "@/lib/community/client";
+import {
+  deleteCommunityPlan,
+  listCommunityPlans,
+  patchCommunityPlan,
+} from "@/lib/community/client";
 import { sharedPlanLink } from "@/lib/community/shared-link";
 import type { CommunityPlanSummary } from "@/lib/community/types";
 import type { DesignSummary } from "@/lib/designs/design-library";
@@ -60,6 +65,7 @@ const SORTS: { value: SortKey; label: string }[] = [
 ];
 
 export function LibraryPage() {
+  const _i18nT = useT();
   const library = useLibraryTab();
   const everyDesign = useDesignStore((state) => state.designs);
   // Copies of plans shared with us live under Shared with me, not among ours.
@@ -162,7 +168,19 @@ export function LibraryPage() {
       ),
       sort,
     );
-  }, [designs, viewFolderId, favoritesOnly, search, parsedSearch.tags, myPosts, maxEuT, makesKeys, takesKeys, maxTier, sort]);
+  }, [
+    designs,
+    viewFolderId,
+    favoritesOnly,
+    search,
+    parsedSearch.tags,
+    myPosts,
+    maxEuT,
+    makesKeys,
+    takesKeys,
+    maxTier,
+    sort,
+  ]);
   const knownTags = useMemo(
     () => [...(myPosts?.values() ?? [])].flatMap((post) => post.tags ?? []),
     [myPosts],
@@ -413,24 +431,38 @@ export function LibraryPage() {
                 playBoardSound("shelfTick");
                 setLibraryView(railView(value));
               }}
-              aria-label="Where in Plans"
+              aria-label={_i18nT("Where in Plans")}
               className="h-9 w-full border-2 border-[var(--mc-33)] bg-[#17191d] px-2 text-[13px] font-bold text-neutral-100 outline-none shadow-[inset_2px_2px_0_#30343b,inset_-2px_-2px_0_#050607]"
             >
-              <option value="all">My designs ({designs.length})</option>
+              <option value="all">
+                <I18nText>My designs (</I18nText>
+                {designs.length})
+              </option>
               <option value="favorites">
-                Favorites ({designs.filter((design) => design.favorite).length})
+                <I18nText>Favorites (</I18nText>
+                {designs.filter((design) => design.favorite).length})
               </option>
               {folders.map((folder) => (
                 <option key={folder.id} value={`folder:${folder.id}`}>
                   {folder.name} ({perFolder.get(folder.id) ?? 0})
                 </option>
               ))}
-              <option value="new">New collection…</option>
+              <option value="new">
+                <I18nText>New collection…</I18nText>
+              </option>
               {showShared ? (
-                <option value="shared">Shared with me ({sharedCount ?? 0})</option>
+                <option value="shared">
+                  <I18nText>Shared with me (</I18nText>
+                  {sharedCount ?? 0})
+                </option>
               ) : null}
-              <option value="public">Community</option>
-              <option value="saved">Saved ({savedIds.length})</option>
+              <option value="public">
+                <I18nText>Community</I18nText>
+              </option>
+              <option value="saved">
+                <I18nText>Saved (</I18nText>
+                {savedIds.length})
+              </option>
             </select>
           </div>
           <aside className="flex w-[184px] shrink-0 flex-col gap-1 overflow-y-auto bg-[#101215] px-2 py-2 compact:hidden">
@@ -482,7 +514,7 @@ export function LibraryPage() {
                 <Folder className="h-3.5 w-3.5 shrink-0 text-[var(--mc-ink-muted)]" aria-hidden />
                 <InlineName
                   initialName=""
-                  placeholder="Collection name"
+                  placeholder={_i18nT("Collection name")}
                   onCommit={(name) => {
                     setNamingFolder(false);
                     if (name.trim()) {
@@ -507,7 +539,9 @@ export function LibraryPage() {
               ].join(" ")}
             >
               <FolderPlus className="h-3.5 w-3.5" aria-hidden />
-              <span className="whitespace-nowrap text-[12px] font-bold">New collection</span>
+              <span className="whitespace-nowrap text-[12px] font-bold">
+                <I18nText>New collection</I18nText>
+              </span>
             </button>
 
             {showShared ? (
@@ -587,7 +621,9 @@ export function LibraryPage() {
                         });
                         notifySetupsChanged();
                       } catch (thrown) {
-                        setError(thrown instanceof Error ? thrown.message : "Saving the post failed.");
+                        setError(
+                          thrown instanceof Error ? thrown.message : "Saving the post failed.",
+                        );
                       }
                     }
                   },
@@ -604,7 +640,8 @@ export function LibraryPage() {
                           {
                             label: detailPost.isPublic ? "Make it private" : "Make it public",
                             icon: detailPost.isPublic ? ("private" as const) : ("public" as const),
-                            onClick: () => void setPostVisibility(detailDesign, !detailPost.isPublic),
+                            onClick: () =>
+                              void setPostVisibility(detailDesign, !detailPost.isPublic),
                           },
                         ]
                       : signedIn
@@ -634,24 +671,29 @@ export function LibraryPage() {
                 }}
                 onClose={() => setDetailId(undefined)}
               />
-                  ) : (
+            ) : (
               <>
                 <SetupsFilterBar
                   filters={filters}
-                  placeholder="Search your designs (#tag)"
+                  placeholder={_i18nT("Search your designs (#tag)")}
                   sortOptions={SORTS}
                   knownTags={knownTags}
                 />
 
                 {visibleSelected.size > 0 ? (
                   <div className="flex h-9 shrink-0 items-center gap-2 border-b border-[var(--mc-33)] bg-cyan-500/10 px-4 text-xs text-[var(--mc-ink)] compact:px-2">
-                    <span className="font-bold text-cyan-200">{visibleSelected.size} selected</span>
+                    <span className="font-bold text-cyan-200">
+                      {visibleSelected.size}
+                      <I18nText> selected</I18nText>
+                    </span>
                     <span className="text-[var(--mc-ink-muted)] compact:hidden">
-                      Ctrl-click to add, Shift-click for a run
+                      <I18nText>Ctrl-click to add, Shift-click for a run</I18nText>
                     </span>
                     <span className="ml-auto flex items-center gap-1.5">
                       {selectedIds.some((id) => !designs.find((d) => d.id === id)?.closed) ? (
-                        <BarButton onClick={() => void closeSelected()}>Close tabs</BarButton>
+                        <BarButton onClick={() => void closeSelected()}>
+                          {_i18nT("Close tabs")}
+                        </BarButton>
                       ) : null}
                       {folders.length > 0 ? (
                         <select
@@ -662,16 +704,20 @@ export function LibraryPage() {
                               void fileSelected(value === "none" ? undefined : value);
                             }
                           }}
-                          aria-label="Add the selection to a collection"
+                          aria-label={_i18nT("Add the selection to a collection")}
                           className="h-6 border-2 border-[var(--mc-33)] bg-[#17191d] px-1 text-xs text-neutral-100 outline-none shadow-[inset_2px_2px_0_#30343b,inset_-2px_-2px_0_#050607]"
                         >
-                          <option value="">Add to collection…</option>
+                          <option value="">
+                            <I18nText>Add to collection…</I18nText>
+                          </option>
                           {folders.map((folder) => (
                             <option key={folder.id} value={folder.id}>
                               {folder.name}
                             </option>
                           ))}
-                          <option value="none">No collection</option>
+                          <option value="none">
+                            <I18nText>No collection</I18nText>
+                          </option>
                         </select>
                       ) : null}
                       <BarButton
@@ -684,9 +730,11 @@ export function LibraryPage() {
                           }
                         }}
                       >
-                        {bulkDeleteArmed ? `Confirm delete ${visibleSelected.size}` : "Delete"}
+                        {bulkDeleteArmed
+                          ? `Confirm delete ${visibleSelected.size}`
+                          : _i18nT("Delete")}
                       </BarButton>
-                      <BarButton onClick={clearSelection}>Clear</BarButton>
+                      <BarButton onClick={clearSelection}>{_i18nT("Clear")}</BarButton>
                     </span>
                   </div>
                 ) : null}
@@ -696,12 +744,16 @@ export function LibraryPage() {
                   {shown.length === 0 ? (
                     <p className="px-0.5 pt-1 text-[12px] leading-relaxed text-[var(--mc-ink-muted)]">
                       {search || maxTier
-                        ? "No designs match."
+                        ? _i18nT("No designs match.")
                         : viewFolderId
-                          ? "Nothing here yet. Drag a design onto this collection, or use Add to collection in its menu."
+                          ? _i18nT(
+                              "Nothing here yet. Drag a design onto this collection, or use Add to collection in its menu.",
+                            )
                           : favoritesOnly
-                            ? "Nothing starred yet. Click the star on a design to put it here."
-                            : "Nothing here yet. Press + on the tab strip to start one."}
+                            ? _i18nT(
+                                "Nothing starred yet. Click the star on a design to put it here.",
+                              )
+                            : _i18nT("Nothing here yet. Press + on the tab strip to start one.")}
                     </p>
                   ) : (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-2">
@@ -745,9 +797,7 @@ export function LibraryPage() {
                             favorite={design.favorite === true}
                             onFavorite={() => void toggleFavorite(design.id)}
                             onPost={
-                              !post && signedIn
-                                ? () => void postDesign(design.id)
-                                : undefined
+                              !post && signedIn ? () => void postDesign(design.id) : undefined
                             }
                             onCopyLink={post ? () => void copyLink(design) : undefined}
                             menuOpen={tileMenu?.designId === design.id}
@@ -788,7 +838,7 @@ export function LibraryPage() {
         <LibraryMenu
           left={tileMenu.left}
           top={tileMenu.top}
-          label={`Options for ${menuDesign.name}`}
+          label={`${_i18nT("Options for")} ${menuDesign.name}`}
           onClose={closeMenus}
         >
           <MenuItem
@@ -823,7 +873,9 @@ export function LibraryPage() {
           />
           {folders.length > 0 ? (
             <>
-              <MenuHeading>Add to collection</MenuHeading>
+              <MenuHeading>
+                <I18nText>Add to collection</I18nText>
+              </MenuHeading>
               {folders.map((folder) => (
                 <MenuItem
                   key={folder.id}
@@ -852,7 +904,7 @@ export function LibraryPage() {
                 }}
               />
               <MenuItem
-                label={menuPost.isPublic ? "Make private" : "Make public"}
+                label={menuPost.isPublic ? _i18nT("Make private") : _i18nT("Make public")}
                 onClick={() => {
                   closeMenus();
                   void setPostVisibility(menuDesign, !menuPost.isPublic);
@@ -870,7 +922,11 @@ export function LibraryPage() {
           ) : null}
           <ArmedMenuItem
             label="Delete"
-            armedLabel={menuPost ? "Confirm delete (the post comes down too)" : "Confirm delete"}
+            armedLabel={
+              menuPost
+                ? _i18nT("Confirm delete (the post comes down too)")
+                : _i18nT("Confirm delete")
+            }
             armed={armed?.id === menuDesign.id && armed.what === "delete"}
             onArm={() => setArmed({ id: menuDesign.id, what: "delete" })}
             onFire={() => {
@@ -885,14 +941,17 @@ export function LibraryPage() {
 
       {iconEditId ? (
         <IconPicker
-          title="Pick an icon"
+          title={_i18nT("Pick an icon")}
           suggestions={iconSuggestionsFromStats(detailPost?.needs, detailPost?.outputs)}
           onPick={(icon) => {
             const id = iconEditId;
             setIconEditId(undefined);
             void updateDesignIdentity(id, { icon });
             if (detailPost) {
-              void patchCommunityPlan(detailPost.id, { icon }).then(notifySetupsChanged, () => undefined);
+              void patchCommunityPlan(detailPost.id, { icon }).then(
+                notifySetupsChanged,
+                () => undefined,
+              );
             }
           }}
           onClear={
@@ -902,7 +961,10 @@ export function LibraryPage() {
                   setIconEditId(undefined);
                   void updateDesignIdentity(id, { icon: null });
                   if (detailPost) {
-                    void patchCommunityPlan(detailPost.id, { icon: null }).then(notifySetupsChanged, () => undefined);
+                    void patchCommunityPlan(detailPost.id, { icon: null }).then(
+                      notifySetupsChanged,
+                      () => undefined,
+                    );
                   }
                 }
               : undefined
@@ -915,7 +977,7 @@ export function LibraryPage() {
         <LibraryMenu
           left={folderMenu.left}
           top={folderMenu.top}
-          label={`Options for collection ${menuFolder.name}`}
+          label={`${_i18nT("Options for collection")} ${menuFolder.name}`}
           onClose={closeMenus}
         >
           <MenuItem
@@ -1153,6 +1215,7 @@ function RailItem({
   /** Under a head entry: stepped in, so the rail reads as a tree. */
   nested?: boolean;
 }) {
+  const _i18nT = useT();
   return (
     <div
       role="button"
@@ -1189,12 +1252,14 @@ function RailItem({
         <span className="min-w-0 flex-1 truncate text-left text-[12px] font-bold">{label}</span>
       )}
       {count !== undefined ? (
-        <span className="shrink-0 text-[12px] font-bold tabular-nums text-[var(--mc-ink-muted)]">{count}</span>
+        <span className="shrink-0 text-[12px] font-bold tabular-nums text-[var(--mc-ink-muted)]">
+          {count}
+        </span>
       ) : null}
       {onMenu ? (
         <button
           type="button"
-          aria-label={`Options for collection ${label}`}
+          aria-label={`${_i18nT("Options for collection")} ${label}`}
           onClick={(event) => {
             event.stopPropagation();
             const rect = event.currentTarget.getBoundingClientRect();

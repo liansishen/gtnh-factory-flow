@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 import { targetStatus } from "./target-status";
 import { wheelChangesValues } from "@/lib/device-settings";
 import { TargetRateHelp } from "./TargetRateHelp";
@@ -70,6 +72,7 @@ import "./pool-worksheet.css";
 import "./pool-worksheet-density.css";
 
 export function PoolWorksheet() {
+  const _i18nT = useT();
   const summaryId = useId();
   const targetHelp = useRef<HTMLElement>(null);
   const targetHelpButton = useRef<HTMLButtonElement>(null);
@@ -362,7 +365,7 @@ export function PoolWorksheet() {
       <tbody key={group.id} className="pool-group-frame">
         <tr>
           <td colSpan={10}>
-            <table className="pool-sheet-table" aria-label={"Recipes in " + group.name}>
+            <table className="pool-sheet-table" aria-label={_i18nT("Recipes in " + group.name)}>
               <colgroup>
                 <col className="pool-col-picture" />
                 <col className="pool-col-machine" />
@@ -391,7 +394,7 @@ export function PoolWorksheet() {
       data-viewer-inspect
       data-pool-worksheet
       className="pool-worksheet pool-worksheet--dense nodrag nopan nowheel"
-      aria-label="Pool worksheet"
+      aria-label={_i18nT("Pool worksheet")}
       onPointerDown={(event) => event.stopPropagation()}
       onDoubleClick={(event) => event.stopPropagation()}
       onContextMenu={(event) => event.stopPropagation()}
@@ -430,22 +433,22 @@ export function PoolWorksheet() {
                   <div className="pool-products-scroll">
                     <table
                       className="pool-summary-table pool-products-table"
-                      aria-label="Pool products"
+                      aria-label={_i18nT("Pool products")}
                     >
                       <thead>
                         <tr className="pool-rates-columns">
-                          <th scope="col" className="pool-rates-name-heading"><div className="pool-overview-title"><h3>Desired rates</h3>{!readOnly ? <span className="pool-drop-hint">(Drag items here)</span> : null}</div></th>
-                          <th scope="col">Rule</th>
-                          <th scope="col" title="Positive amounts set output goals; negative amounts set input goals.">Target (±)</th>
-                          <th scope="col">Actual</th>
-                          <th scope="col">Status</th>
-                          <th scope="col"><span className="sr-only">Actions</span>{!readOnly ? <AddPoolProduct /> : null}</th>
+                          <th scope="col" className="pool-rates-name-heading"><div className="pool-overview-title"><h3><I18nText>Desired rates</I18nText></h3>{!readOnly ? <span className="pool-drop-hint"><I18nText>(Drag items here)</I18nText></span> : null}</div></th>
+                          <th scope="col"><I18nText>Rule</I18nText></th>
+                          <th scope="col" title={_i18nT("Positive amounts set output goals; negative amounts set input goals.")}><I18nText>Target (±)</I18nText></th>
+                          <th scope="col"><I18nText>Actual</I18nText></th>
+                          <th scope="col"><I18nText>Status</I18nText></th>
+                          <th scope="col"><span className="sr-only"><I18nText>Actions</I18nText></span>{!readOnly ? <AddPoolProduct /> : null}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {products.length === 0 ? (
                           <tr className="pool-rates-empty"><td colSpan={6}>
-                            <p>{readOnly ? "No desired rates set" : "Drag items here or press +"}</p>
+                            <p><I18nText>{readOnly ? "No desired rates set" : "Drag items here or press +"}</I18nText></p>
                           </td></tr>
                         ) : null}
                         {products.map((storage) => (
@@ -455,25 +458,25 @@ export function PoolWorksheet() {
                     </table>
                   </div>
                 </ProductsPane>
-                {helpTarget ? <section ref={targetHelp} tabIndex={-1} className="pool-target-popover pool-target-help" aria-label="Target explanation">
+                {helpTarget ? <section ref={targetHelp} tabIndex={-1} className="pool-target-popover pool-target-help" aria-label={_i18nT("Target explanation")}>
                   <TargetRateHelp storage={helpTarget} input={isInputRate(helpTarget, roles.get(helpTarget.id))} result={result.storages[helpTarget.id]} project={project} />
                 </section> : null}
               </div>
               <WorksheetPower
                 entries={groups.flatMap((entry) => (entry.machine ? [entry.machine] : []))}
-                title="Total power"
+                title={_i18nT("Total power")}
               />
             </div>
             {calculationIssue ? <p role="alert" className="pool-calculation-issue">{calculationIssue.message}</p> : null}
             {searchOpen ? (
-              <div className="pool-machine-toolbar" role="search" aria-label="Find in worksheet">
+              <div className="pool-machine-toolbar" role="search" aria-label={_i18nT("Find in worksheet")}>
                 <label className="pool-sheet-search"><Search className="h-3.5 w-3.5" />
-                  <input ref={searchInput} aria-label="Filter worksheet" placeholder="Search machines or items" value={query} onChange={(event) => setQuery(event.target.value)} />
+                  <input ref={searchInput} aria-label={_i18nT("Filter worksheet")} placeholder={_i18nT("Search machines or items")} value={query} onChange={(event) => setQuery(event.target.value)} />
                 </label>
-                <button type="button" className="pool-sheet-icon-button" aria-label="Close worksheet search" title="Close search (Esc)" onClick={closeSearch}><X /></button>
+                <button type="button" className="pool-sheet-icon-button" aria-label={_i18nT("Close worksheet search")} title={_i18nT("Close search (Esc)")} onClick={closeSearch}><X /></button>
               </div>
             ) : null}
-            <table className="pool-sheet-table" aria-label="Recipes running in the pool">
+            <table className="pool-sheet-table" aria-label={_i18nT("Recipes running in the pool")}>
               <colgroup>
                 <col className="pool-col-picture" />
                 <col className="pool-col-machine" />
@@ -490,9 +493,9 @@ export function PoolWorksheet() {
             </table>
             {!shown.length ? (
               <div className="pool-sheet-empty">
-                {groups.length
+                <I18nText>{groups.length
                   ? "No recipes match this filter."
-                  : "Add recipes from the item browser."}
+                  : "Add recipes from the item browser."}</I18nText>
               </div>
             ) : null}
           </div>
@@ -503,6 +506,7 @@ export function PoolWorksheet() {
 }
 
 function ProductsPane({ children, id }: { children: ReactNode; id: string }) {
+  const _i18nT = useT();
   const [hover, setHover] = useState(false);
   const [resourceDragging, setResourceDragging] = useState(false);
   const readOnly = useFactoryStore((state) => state.isReadOnly);
@@ -523,7 +527,7 @@ function ProductsPane({ children, id }: { children: ReactNode; id: string }) {
     <div
       className="pool-sheet-products"
       id={id}
-      aria-label="Desired rates drop zone"
+      aria-label={_i18nT("Desired rates drop zone")}
       data-resource-drop={!readOnly && hover || undefined}
       data-resource-ready={!readOnly && resourceDragging || undefined}
       onDragOver={(event) => {
@@ -552,6 +556,7 @@ function ProductsPane({ children, id }: { children: ReactNode; id: string }) {
 }
 
 function AddPoolProduct({ groupId }: { groupId?: string }) {
+  const _i18nT = useT();
   const [open, setOpen] = useState(false);
   const add = useFactoryStore((state) => state.addPoolStorage);
   return (
@@ -559,7 +564,7 @@ function AddPoolProduct({ groupId }: { groupId?: string }) {
       <button
         type="button"
         className="pool-add-button"
-        aria-label={groupId ? "Add rate to this group" : "Add rate"}
+        aria-label={_i18nT(groupId ? "Add rate to this group" : "Add rate")}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
@@ -605,6 +610,7 @@ const MachineRows = memo(function MachineRows({
   collapsed: boolean;
   onToggleCollapsed: () => void;
 }) {
+  const _i18nT = useT();
   useRateDisplayUnits();
   const { owner, machine, sections } = group;
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -673,7 +679,7 @@ const MachineRows = memo(function MachineRows({
                   <div className="pool-machine-details">
                     {collapsed ? (
                       <span className="pool-collapsed-name" title={label}>
-                        {label}
+                        <I18nText>{label}</I18nText>
                       </span>
                     ) : (
                       controls
@@ -748,8 +754,8 @@ const MachineRows = memo(function MachineRows({
                   <button
                     type="button"
                     className="pool-sheet-icon-button pool-settings-toggle"
-                    aria-label={"Settings for " + label}
-                    title="Machine settings"
+                    aria-label={_i18nT("Settings for " + label)}
+                    title={_i18nT("Machine settings")}
                     ref={settingsButton}
                     disabled={!settings}
                     aria-expanded={Boolean(settings) && settingsOpen}
@@ -763,8 +769,8 @@ const MachineRows = memo(function MachineRows({
                       <button
                         type="button"
                         className="pool-sheet-icon-button"
-                        aria-label="Duplicate machine"
-                        title="Duplicate machine"
+                        aria-label={_i18nT("Duplicate machine")}
+                        title={_i18nT("Duplicate machine")}
                         onClick={() => useFactoryStore.getState().duplicateNode(owner.id)}
                       >
                         <Copy />
@@ -772,8 +778,8 @@ const MachineRows = memo(function MachineRows({
                       <button
                         type="button"
                         className="pool-sheet-icon-button"
-                        aria-label="Replace recipe"
-                        title="Replace recipe"
+                        aria-label={_i18nT("Replace recipe")}
+                        title={_i18nT("Replace recipe")}
                         onClick={() => useFactoryStore.getState().beginRecipeRefactor(owner.id)}
                       >
                         <RefreshCw />
@@ -781,8 +787,8 @@ const MachineRows = memo(function MachineRows({
                       <button
                         type="button"
                         className="pool-sheet-icon-button"
-                        aria-label="Remove machine"
-                        title="Remove machine"
+                        aria-label={_i18nT("Remove machine")}
+                        title={_i18nT("Remove machine")}
                         onClick={() => useFactoryStore.getState().deleteNode(owner.id)}
                       >
                         <Trash2 />
@@ -794,7 +800,7 @@ const MachineRows = memo(function MachineRows({
                       type="button"
                       className="pool-collapse-machine"
                       aria-label={(collapsed ? "Expand " : "Collapse ") + label}
-                      title={collapsed ? "Show recipes" : "Fold recipes"}
+                      title={_i18nT(collapsed ? "Show recipes" : "Fold recipes")}
                       aria-expanded={!collapsed}
                       onClick={onToggleCollapsed}
                     >
@@ -806,8 +812,8 @@ const MachineRows = memo(function MachineRows({
                 <button
                   type="button"
                   className="pool-sheet-icon-button"
-                  aria-label={"Remove recipe " + (index + 1) + " from shared machine"}
-                  title="Remove recipe from shared machine"
+                  aria-label={_i18nT("Remove recipe " + (index + 1) + " from shared machine")}
+                  title={_i18nT("Remove recipe from shared machine")}
                   onClick={() =>
                     useFactoryStore.getState().removeRecipeSection(owner.id, section.section)
                   }
@@ -826,7 +832,7 @@ const MachineRows = memo(function MachineRows({
               id={settingsId}
               className="pool-settings-section"
               role="region"
-              aria-label={"Machine settings for " + label}
+              aria-label={_i18nT("Machine settings for " + label)}
               onKeyDown={(event) => {
                 if (event.key === "Escape") {
                   event.stopPropagation();
@@ -838,7 +844,7 @@ const MachineRows = memo(function MachineRows({
               <button
                 type="button"
                 className="pool-sheet-icon-button"
-                aria-label="Close machine settings"
+                aria-label={_i18nT("Close machine settings")}
                 onClick={closeSettings}
               >
                 <X />
@@ -855,7 +861,7 @@ const MachineRows = memo(function MachineRows({
       render={renderRows}
     />
   ) : (
-    renderRows(<span>{label}</span>, null, null)
+    renderRows(<span><I18nText>{label}</I18nText></span>, null, null)
   );
 });
 
@@ -868,8 +874,9 @@ function CollapsedPorts({
   nodeId: string;
   side: "inputs" | "outputs";
 }) {
+  const _i18nT = useT();
   return (
-    <div className="pool-collapsed-ports" aria-label={side === "inputs" ? "Takes" : "Makes"}>
+    <div className="pool-collapsed-ports" aria-label={_i18nT(side === "inputs" ? "Takes" : "Makes")}>
       {sections.map((section) => (
         <PortList
           key={section.section}
@@ -888,12 +895,13 @@ function CollapsedPorts({
 }
 
 function ColumnHeadings() {
+  const _i18nT = useT();
   return <tbody className="pool-column-headings"><tr>
-    <th colSpan={2} scope="col">Machine</th>
-    <th scope="col" className="pool-tier-heading" title="Voltage tier and amperage">Tier</th>
-    <th scope="col">Count</th>
-    <th scope="col"><span className="pool-status-heading">Status</span><span className="pool-status-heading-dot" aria-hidden="true">●</span></th><th scope="col">Circuit</th><th scope="col">Power</th>
-    <th scope="col">Takes</th><th scope="col">Makes</th><th scope="col">Actions</th>
+    <th colSpan={2} scope="col"><I18nText>Machine</I18nText></th>
+    <th scope="col" className="pool-tier-heading" title={_i18nT("Voltage tier and amperage")}><I18nText>Tier</I18nText></th>
+    <th scope="col"><I18nText>Count</I18nText></th>
+    <th scope="col"><span className="pool-status-heading"><I18nText>Status</I18nText></span><span className="pool-status-heading-dot" aria-hidden="true">●</span></th><th scope="col"><I18nText>Circuit</I18nText></th><th scope="col"><I18nText>Power</I18nText></th>
+    <th scope="col"><I18nText>Takes</I18nText></th><th scope="col"><I18nText>Makes</I18nText></th><th scope="col"><I18nText>Actions</I18nText></th>
   </tr></tbody>;
 }
 
@@ -907,7 +915,7 @@ function Status({ section }: { section: WorksheetSection }) {
         className={`pool-status pool-status--${section.result?.powerStalled ? "power-stalled" : section.verdict.kind}`}
         tabIndex={0} role="img" aria-label={label}
       >
-        <span className="pool-status-text">{label}</span>
+        <span className="pool-status-text"><I18nText>{label}</I18nText></span>
       </span>
     </MinecraftTooltip>
   );
@@ -924,9 +932,10 @@ function PortList({
   section: WorksheetSection;
   nonConsumed?: ResourceAmount[];
 }) {
+  const _i18nT = useT();
   if (!ports.length && !nonConsumed.length) return <span className="pool-sheet-muted">—</span>;
   return (
-    <div className="pool-port-list" role="group" aria-label="Recipe items">
+    <div className="pool-port-list" role="group" aria-label={_i18nT("Recipe items")}>
       {ports.map((port) => (
         <div className="pool-port" key={port.handleId}>
           <MinecraftTooltip
@@ -966,7 +975,7 @@ function PortList({
       {nonConsumed.map((resource, index) => (
         <div className="pool-port flow-port pool-port-line" key={`nc:${index}`}>
           <ResourceLink resource={resource} nodeId={nodeId} iconsOnly />
-          <span className="pool-port-note">NC · ×{resource.amount}</span>
+          <span className="pool-port-note"><I18nText>NC · ×</I18nText>{resource.amount}</span>
         </div>
       ))}
     </div>
@@ -1035,7 +1044,7 @@ function ResourceLink({
       >
         {iconsOnly && !resource.iconPath && !resource.iconAtlas && !hasCategoryArt && resource.kind !== "power" ? (
           <span className="pool-resource-fallback" aria-hidden>
-            {resourceLabel(displayResource).slice(0, 2)}
+            <I18nText game>{resourceLabel(displayResource).slice(0, 2)}</I18nText>
           </span>
         ) : (
           <ResourceIcon
@@ -1057,7 +1066,7 @@ function ResourceLink({
         )}
         {iconsOnly ? null : (
           <span title={nameTooltip ? resourceLabel(displayResource) : undefined}>
-            {resourceLabel(displayResource)}
+            <I18nText game>{resourceLabel(displayResource)}</I18nText>
           </span>
         )}
       </button>
@@ -1092,7 +1101,7 @@ function MachinePower({ entry }: { entry?: MachineListEntry }) {
       aria-label={description}
     >
       <strong>
-        {made ? "+" : ""}
+        <I18nText>{made ? "+" : ""}</I18nText>
         {number(average)}
       </strong>
       <small>{unit}</small>
@@ -1101,6 +1110,7 @@ function MachinePower({ entry }: { entry?: MachineListEntry }) {
 }
 
 function Product({ storage, role, onExplain, helpOpen }: { storage: FactoryStorage; onExplain: (button: HTMLButtonElement) => void; helpOpen: boolean; role: StorageRole | undefined }) {
+  const _i18nT = useT();
   const scopeName = useFactoryStore(
     (state) =>
       state.project.productionGroups?.find((group) => group.id === storage.productionGroupId)?.name,
@@ -1135,15 +1145,15 @@ function Product({ storage, role, onExplain, helpOpen }: { storage: FactoryStora
           />
         </div>
         {scopeName ? (
-          <span className="pool-product-scope">
-            Target in {scopeName}
+          <span className="pool-product-scope"><I18nText>
+            Target in </I18nText>{scopeName}
             {!readOnly ? (
               <button
                 type="button"
                 onClick={() => useFactoryStore.getState().moveToProductionGroup([storage.id])}
-              >
+              ><I18nText>
                 Make global
-              </button>
+              </I18nText></button>
             ) : null}
           </span>
         ) : null}
@@ -1171,16 +1181,16 @@ function Product({ storage, role, onExplain, helpOpen }: { storage: FactoryStora
         </span>
       </td>
       <td className="pool-product-status" data-tone={status.tone}>
-        {status.explain ? <button type="button" aria-expanded={helpOpen} onClick={(event) => onExplain(event.currentTarget)} aria-label={status.label + ": explain target for " + (storage.displayName ?? storage.resourceId)}>
-          <span className="pool-state-dot" aria-hidden /><span className="pool-rate-label-full">{status.label}</span><span className="pool-rate-label-compact">{status.compact ?? status.label}</span><span className="pool-status-why">Why?</span>
-        </button> : <span className="pool-rate-state"><span className="pool-state-dot" aria-hidden /><span className="pool-rate-label-full">{status.label}</span><span className="pool-rate-label-compact">{status.compact ?? status.label}</span></span>}
+        {status.explain ? <button type="button" aria-expanded={helpOpen} onClick={(event) => onExplain(event.currentTarget)} aria-label={_i18nT(status.label + ": explain target for " + (storage.displayName ?? storage.resourceId))}>
+          <span className="pool-state-dot" aria-hidden /><span className="pool-rate-label-full"><I18nText>{status.label}</I18nText></span><span className="pool-rate-label-compact"><I18nText>{status.compact ?? status.label}</I18nText></span><span className="pool-status-why"><I18nText>Why?</I18nText></span>
+        </button> : <span className="pool-rate-state"><span className="pool-state-dot" aria-hidden /><span className="pool-rate-label-full"><I18nText>{status.label}</I18nText></span><span className="pool-rate-label-compact"><I18nText>{status.compact ?? status.label}</I18nText></span></span>}
       </td>
       <td>
         {!readOnly ? (
           <button
             type="button"
             className="pool-sheet-icon-button"
-            aria-label={`Remove rate ${storage.displayName ?? storage.resourceId}`}
+            aria-label={_i18nT(`Remove rate ${storage.displayName ?? storage.resourceId}`)}
             onClick={() => useFactoryStore.getState().deleteStorage(storage.id)}
           >
             <X />

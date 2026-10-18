@@ -1,4 +1,5 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
 
 import type { CSSProperties } from "react";
 import { MouseIcon } from "@/components/flow/clean/interaction/TipPanel";
@@ -46,12 +47,16 @@ function BoardPicture({ names, scale }: { names: boolean; scale: number }) {
       <div className="spv-card" style={{ left: 54, top: 36 }}>
         <span className="sp-chip" />
         <span className="spv-pic" />
-        <span className="sp-name">Electric Blast Furnace</span>
+        <span className="sp-name">
+          <I18nText game>Electric Blast Furnace</I18nText>
+        </span>
       </div>
       <div className="spv-card" style={{ left: 146, top: 80 }}>
         <span className="sp-chip" data-tier="ev" />
         <span className="spv-pic" data-tone="blue" />
-        <span className="sp-name">Large Chemical Reactor</span>
+        <span className="sp-name">
+          <I18nText game>Large Chemical Reactor</I18nText>
+        </span>
       </div>
     </div>
   );

@@ -259,6 +259,15 @@ describe("filterFlowBalances", () => {
   it("returns nothing when there is no match", () => {
     expect(filterFlowBalances(items, "titanium")).toEqual([]);
   });
+
+  it("finds a resource by its Chinese name", () => {
+    expect(filterFlowBalances(items, "铁")).toEqual([items[0]]);
+    expect(filterFlowBalances(items, "水")).toEqual([items[1]]);
+  });
+
+  it("returns nothing for an unknown Chinese word", () => {
+    expect(filterFlowBalances(items, "不存在的词")).toEqual([]);
+  });
 });
 
 describe("applyResourceMarks", () => {

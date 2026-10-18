@@ -1,5 +1,12 @@
 # GTNH Factory Flow
 
+This fork adds native Simplified Chinese / English selection, game-name presentation and bilingual search. Choose **Language / 语言** in Settings; the preference stays on this device. Canonical recipes, plans and solver inputs retain their original identity.
+
+- Fork: [liansishen/gtnh-factory-flow](https://github.com/liansishen/gtnh-factory-flow)
+- Upstream baseline: `jackwrichards/gtnh-factory-flow@04fbd841540ec7a0c109623c04fba84e300cf217`
+- [Internationalization and coverage](docs/INTERNATIONALIZATION.md)
+- [Server and local-dataset operation](docs/LOCAL-RUNNING.md)
+
 A production-chain planner for GregTech: New Horizons, live at
 [gtnhplanner.com](https://gtnhplanner.com).
 
@@ -19,15 +26,18 @@ npm run typecheck
 npm run test
 ```
 
-The app needs a recipe dataset. Either proxy the live one:
+Install a dataset for native bilingual server search:
 
 ```bash
-GTNH_DATASET_BACKEND_URL=https://gtnhplanner.com npm run dev
+npm run datasets:download -- --version local-2.9.0-rc-2
+npm run dev
 ```
 
-or place a dataset and its `datasets.manifest.json` under `public/datasets/gtnh/`
-(ignored by git). Community features
-need Supabase; see [docs/COMMUNITY.md](docs/COMMUNITY.md).
+Datasets and their `datasets.manifest.json` live under the gitignored
+`public/datasets/gtnh/`. A remote dataset backend can be selected with
+`GTNH_DATASET_BACKEND_URL`; its query API must implement bilingual search for
+Chinese queries to work. See [local-running instructions](docs/LOCAL-RUNNING.md).
+Accounts and Community require Supabase or the optional local database.
 
 ## How it fits together
 

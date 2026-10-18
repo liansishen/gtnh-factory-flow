@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
 
 import { create } from "zustand";
 import { ChromeMenu, type ChromeAnchor, type MenuEntry } from "@/components/chrome/ChromeMenu";
@@ -51,6 +52,7 @@ function close() {
 }
 
 export function AddToTaskMenu() {
+  const _i18nT = useT();
   const open = useAddToTask((state) => state.open);
   if (!open || (!open.board && !open.boards) || (open.board && !open.tasks)) return null;
   const { cards } = open;
@@ -105,7 +107,7 @@ export function AddToTaskMenu() {
       anchor={open.anchor}
       entries={entries}
       label="Which task board"
-      title="Which task board"
+      title={_i18nT("Which task board")}
       minWidth={160}
       onClose={close}
     />

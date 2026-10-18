@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import { useEffect, useRef, useState, type MouseEvent, type WheelEvent } from "react";
 import { startPromptClock } from "../../virtual/prompt-phase";
@@ -42,6 +44,7 @@ export function PortRateControls({
   unset: boolean;
   wasClick: (event: MouseEvent) => boolean;
 }) {
+  const _i18nT = useT();
   const [draft, setDraft] = useState<string>();
   const cancelled = useRef(false);
   const kind = p.port.kind;
@@ -116,7 +119,7 @@ export function PortRateControls({
         data-wheel-value=""
         data-side={p.side}
         data-mode={pinned ? "exact" : "any"}
-        aria-label={pinned ? "Rate set: exactly" : "Rate: any"}
+        aria-label={_i18nT(pinned ? "Rate set: exactly" : "Rate: any")}
         {...tipAttrs(openKeyTip(p, pinned))}
         onClick={(event) => {
           event.stopPropagation();
@@ -153,7 +156,7 @@ export function PortRateControls({
           <input
             autoFocus
             value={draft}
-            aria-label={`Rate of ${p.name}`}
+            aria-label={_i18nT(`Rate of ${p.name}`)}
             className="nodrag"
             onChange={(event) => setDraft(event.target.value)}
             onBlur={commit}
@@ -172,7 +175,7 @@ export function PortRateControls({
         ) : pinned ? (
           formatSlotRateBare(p.rate!, kind)
         ) : (
-          "Set"
+          _i18nT("Set")
         )}
       </div>
     </>

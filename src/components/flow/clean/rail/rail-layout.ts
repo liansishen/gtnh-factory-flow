@@ -1,3 +1,4 @@
+import { matchesGameNameFilter } from "@/lib/i18n/game-search";
 import {
   visibleLines,
   type RailDrawer,
@@ -58,10 +59,7 @@ export interface LayoutInput {
   peak: boolean;
 }
 
-const matches = (filter: string, label: string) => {
-  const f = filter.trim().toLowerCase();
-  return f === "" || label.toLowerCase().includes(f);
-};
+const matches = (filter: string, label: string) => matchesGameNameFilter(filter, label);
 
 export function spareHeight(spare: SpareView): number {
   return SPARE_HEAD_H + spare.bearers.length * ROW_H + 2;

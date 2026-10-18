@@ -1,4 +1,5 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import "./tasks.css";
 
@@ -101,6 +102,7 @@ interface Carry {
 }
 
 function Columns({ onMake }: { onMake: (status: PlanTaskStatus) => void }) {
+  const _i18nT = useT();
   const tasks = useFactoryStore((state) => state.project.tasks);
   const items = useFactoryStore((state) => state.project.taskItems);
   const comments = useFactoryStore((state) => state.project.taskComments);
@@ -261,15 +263,20 @@ function Columns({ onMake }: { onMake: (status: PlanTaskStatus) => void }) {
           <section key={status} className="tb-col" data-task-column={status}>
             <header className="tb-col-head">
               <StatusDot status={status} />
-              <span className="tb-col-name">{label}</span>
+              <span className="tb-col-name">
+                <I18nText>{label}</I18nText>
+              </span>
               <span className="tb-col-count">{list.length}</span>
               {isReadOnly ? null : (
                 <button
                   type="button"
                   className="tb-add"
-                  aria-label={`Add a task to ${label}`}
+                  aria-label={`${_i18nT("Add a task to")} ${label}`}
                   data-task-add={status}
-                  {...tipAttrs({ id: `task-add|${status}`, title: `Add a task to ${label}` })}
+                  {...tipAttrs({
+                    id: `task-add|${status}`,
+                    title: `${_i18nT("Add a task to")} ${label}`,
+                  })}
                   onClick={() => onMake(status)}
                 />
               )}
@@ -304,9 +311,15 @@ function Columns({ onMake }: { onMake: (status: PlanTaskStatus) => void }) {
               ) : null}
               {empty && status === TASK_STATUSES[0] ? (
                 <div className="tb-empty" data-task-empty="">
-                  <p>No tasks yet.</p>
-                  <p>Press + to add one.</p>
-                  <p>Or add a card from its menu.</p>
+                  <p>
+                    <I18nText>No tasks yet.</I18nText>
+                  </p>
+                  <p>
+                    <I18nText>Press + to add one.</I18nText>
+                  </p>
+                  <p>
+                    <I18nText>Or add a card from its menu.</I18nText>
+                  </p>
                 </div>
               ) : null}
             </div>

@@ -1,4 +1,6 @@
 "use client";
+import { useT } from "@/lib/i18n/react";
+
 
 import "./checklist.css";
 
@@ -17,6 +19,7 @@ const keyClass =
   "pointer-events-auto flex h-8 w-8 shrink-0 items-center justify-center border-2 border-[var(--mc-15)]";
 
 export function ChecklistKeys({ folded = false }: { folded?: boolean }) {
+  const _i18nT = useT();
   const readOnly = useFactoryStore((s) => s.isReadOnly);
   const active = useFactoryStore((s) => s.checklistMode);
   const project = useFactoryStore((s) => s.project);
@@ -30,9 +33,9 @@ export function ChecklistKeys({ folded = false }: { folded?: boolean }) {
     <div className="relative flex items-center gap-2">
       <button
         type="button"
-        aria-label="Checklist mode"
+        aria-label={_i18nT("Checklist mode")}
         aria-pressed={active}
-        title="Checklist mode"
+        title={_i18nT("Checklist mode")}
         className={`${keyClass} ${active ? "bg-[var(--mc-85)] text-[var(--mc-ink)] shadow-[inset_2px_2px_0_var(--mc-100)]" : "bg-[var(--mc-49)] text-white shadow-[inset_2px_2px_0_var(--mc-85),inset_-2px_-2px_0_var(--mc-25)] hover:brightness-110"}`}
         onClick={() => {
           playBoardSound(active ? "checklistOff" : "checklistOn");
@@ -44,10 +47,10 @@ export function ChecklistKeys({ folded = false }: { folded?: boolean }) {
       {active && (
         <div className={`pointer-events-auto flex h-8 w-max items-center gap-2 whitespace-nowrap text-white ${folded ? "" : "absolute left-0 top-[calc(100%+10px)] z-30 border border-[var(--mc-15)] bg-[var(--mc-49)] px-2 shadow-[2px_2px_0_rgba(0,0,0,0.3)]"}`}>
           <span role="status" className="font-mono text-[11px] tabular-nums"
-            title="Completed machines, drawers and wires" aria-label={`${done} of ${total} completed`}>
+            title={_i18nT("Completed machines, drawers and wires")} aria-label={_i18nT(`${done} of ${total} completed`)}>
             {done} / {total}
           </span>
-          <button type="button" aria-label="Reset checklist" title={readOnly ? "Reset checklist" : "Reset checklist (can be undone)"}
+          <button type="button" aria-label={_i18nT("Reset checklist")} title={_i18nT(readOnly ? "Reset checklist" : "Reset checklist (can be undone)")}
             disabled={!done} className="flex h-7 w-7 items-center justify-center hover:bg-white/10 disabled:opacity-30"
             onClick={() => useFactoryStore.getState().clearChecklist()}>
             <RotateCcw className="h-3.5 w-3.5" />

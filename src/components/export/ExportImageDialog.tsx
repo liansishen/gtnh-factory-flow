@@ -1,4 +1,6 @@
 "use client";
+import { I18nText, useT } from "@/lib/i18n/react";
+
 
 import { Check, Eye, EyeOff, ImageDown, LoaderCircle, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -82,6 +84,7 @@ const CHECKER_STYLE: React.CSSProperties = {
  * itself; a GIF carries the motion.
  */
 export function ExportImageDialog({ onClose }: { onClose: () => void }) {
+  const _i18nT = useT();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDialogA11y(dialogRef, { onClose });
   const project = useFactoryStore((state) => state.project);
@@ -396,16 +399,16 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Screenshot editor" className="fixed inset-0 z-[100] grid place-items-center bg-neutral-950/50 p-4">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={_i18nT("Screenshot editor")} className="fixed inset-0 z-[100] grid place-items-center bg-neutral-950/50 p-4">
       <div className="flex max-h-[calc(94*var(--ui-vh))] w-full max-w-5xl flex-col overflow-y-auto rounded border border-line-strong bg-surface p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-base font-semibold">
-            <ImageDown className="h-4 w-4" /> Export an image
-          </h2>
+            <ImageDown className="h-4 w-4" /><I18nText> Export an image
+          </I18nText></h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={_i18nT("Close")}
             className="rounded p-1 text-fg-subtle hover:bg-surface-raised"
           >
             <X className="h-4 w-4" />
@@ -427,7 +430,7 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
                   ...(background === "transparent" ? CHECKER_STYLE : {}),
                 }}
               >
-                <img src={previewUrl} alt="Board export preview" className="block w-full" />
+                <img src={previewUrl} alt={_i18nT("Board export preview")} className="block w-full" />
                 {footerVisible && layout && previewScale > 0 ? (
                   <div
                     style={{
@@ -475,8 +478,8 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
           {isCapturing ? (
             <div className="absolute inset-0 grid place-items-center bg-neutral-950/40">
               <span className="flex items-center gap-2 rounded border border-line-strong bg-surface px-3 py-1.5 text-sm text-fg-subtle">
-                <LoaderCircle className="h-4 w-4 animate-spin" /> Photographing the board
-              </span>
+                <LoaderCircle className="h-4 w-4 animate-spin" /><I18nText> Photographing the board
+              </I18nText></span>
             </div>
           ) : null}
         </div>
@@ -484,7 +487,7 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
         <div className="mt-3 space-y-3 text-sm">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-fg-subtle">Type</span>
+              <span className="text-xs font-medium text-fg-subtle"><I18nText>Type</I18nText></span>
               <div className="flex overflow-hidden rounded border border-line-strong">
                 {FORMATS.map((entry) => (
                   <button
@@ -498,13 +501,13 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
                         : "bg-surface px-3 py-1 text-xs text-fg-subtle hover:bg-surface-raised"
                     }
                   >
-                    {entry.label}
+                    <I18nText>{entry.label}</I18nText>
                   </button>
                 ))}
               </div>
             </div>
             <div className={mode === "pool" ? "hidden" : "flex items-center gap-2"}>
-              <span className="text-xs font-medium text-fg-subtle">Cards</span>
+              <span className="text-xs font-medium text-fg-subtle"><I18nText>Cards</I18nText></span>
               <div className="flex overflow-hidden rounded border border-line-strong">
                 {CARD_DETAILS.map((entry) => (
                   <button
@@ -518,13 +521,13 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
                         : "bg-surface px-3 py-1 text-xs text-fg-subtle hover:bg-surface-raised"
                     }
                   >
-                    {entry.label}
+                    <I18nText>{entry.label}</I18nText>
                   </button>
                 ))}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-fg-subtle">Rates</span>
+              <span className="text-xs font-medium text-fg-subtle"><I18nText>Rates</I18nText></span>
               <div className="flex overflow-hidden rounded border border-line-strong">
                 {RATE_UNITS.map((entry) => (
                   <button
@@ -538,7 +541,7 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
                         : "bg-surface px-2.5 py-1 text-xs text-fg-subtle hover:bg-surface-raised"
                     }
                   >
-                    {entry.label}
+                    <I18nText>{entry.label}</I18nText>
                   </button>
                 ))}
               </div>
@@ -546,13 +549,13 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-xs font-medium text-fg-subtle">Paper</span>
+            <span className="mr-1 text-xs font-medium text-fg-subtle"><I18nText>Paper</I18nText></span>
             {CANVAS_THEMES.map((theme) => (
               <button
                 key={theme.id}
                 type="button"
                 title={theme.name}
-                aria-label={`${theme.name} background`}
+                aria-label={_i18nT(`${theme.name} background`)}
                 aria-pressed={background === theme.id}
                 onClick={() => setBackground(theme.id)}
                 className={[
@@ -566,8 +569,8 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
             ))}
             <button
               type="button"
-              title="Transparent"
-              aria-label="Transparent background"
+              title={_i18nT("Transparent")}
+              aria-label={_i18nT("Transparent background")}
               aria-pressed={background === "transparent"}
               onClick={() => setBackground("transparent")}
               className={[
@@ -586,9 +589,9 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
                 type="checkbox"
                 checked={includeFooter}
                 onChange={(event) => setIncludeFooter(event.target.checked)}
-              />
+              /><I18nText>
               Summary bar
-            </label>
+            </I18nText></label>
             <label
               className={includeFooter ? "flex items-center gap-1.5" : "hidden"}
             >
@@ -596,9 +599,9 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
                 type="checkbox"
                 checked={includeTitle}
                 onChange={(event) => setIncludeTitle(event.target.checked)}
-              />
+              /><I18nText>
               Title and stats
-            </label>
+            </I18nText></label>
             <label
               className={includeFooter ? "flex items-center gap-1.5" : "hidden"}
             >
@@ -606,17 +609,17 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
                 type="checkbox"
                 checked={includeIo}
                 onChange={(event) => setIncludeIo(event.target.checked)}
-              />
+              /><I18nText>
               Inputs and outputs
-            </label>
+            </I18nText></label>
             <label className={mode === "pool" ? "hidden" : "flex items-center gap-1.5"}>
               <input
                 type="checkbox"
                 checked={includeAnnotations}
                 onChange={(event) => setIncludeAnnotations(event.target.checked)}
-              />
+              /><I18nText>
               Annotations
-            </label>
+            </I18nText></label>
           </div>
 
           {includeFooter && includeIo ? (
@@ -648,9 +651,9 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
               type="button"
               onClick={onClose}
               className="rounded border border-line-strong px-3 py-1.5 text-sm hover:bg-surface-raised"
-            >
+            ><I18nText>
               Close
-            </button>
+            </I18nText></button>
             <button
               type="button"
               onClick={() => void exportNow()}
@@ -662,7 +665,7 @@ export function ExportImageDialog({ onClose }: { onClose: () => void }) {
               ) : saved ? (
                 <Check className="h-4 w-4" />
               ) : null}
-              {saved ? "Saved" : `Save ${format.toUpperCase()}`}
+              <I18nText>{saved ? "Saved" : `Save ${format.toUpperCase()}`}</I18nText>
             </button>
           </div>
         </div>
@@ -701,12 +704,13 @@ function ResourceChipRow({
   excluded: ReadonlySet<string>;
   onToggle: (key: string) => void;
 }) {
+  const _i18nT = useT();
   if (stats.length === 0) {
     return null;
   }
   return (
     <div className="flex items-start gap-2">
-      <span className="w-14 shrink-0 pt-1 text-xs font-medium text-fg-subtle">{label}</span>
+      <span className="w-14 shrink-0 pt-1 text-xs font-medium text-fg-subtle"><I18nText>{label}</I18nText></span>
       <div className="flex max-h-24 min-w-0 flex-1 flex-wrap content-start gap-1 overflow-y-auto">
         {stats.map((stat) => {
           const key = statKey(stat);
@@ -717,7 +721,7 @@ function ResourceChipRow({
               type="button"
               onClick={() => onToggle(key)}
               aria-pressed={!isExcluded}
-              title={isExcluded ? "Show on the summary bar" : "Hide from the summary bar"}
+              title={_i18nT(isExcluded ? "Show on the summary bar" : "Hide from the summary bar")}
               className={[
                 "inline-flex max-w-48 items-center gap-1 rounded border px-1.5 py-0.5 text-xs",
                 isExcluded
@@ -731,7 +735,7 @@ function ResourceChipRow({
                 <Eye className="h-3 w-3 shrink-0 text-cyan-500" />
               )}
               <span className={isExcluded ? "truncate line-through" : "truncate"}>
-                {stat.displayName ?? stat.resourceId}
+                <I18nText game>{stat.displayName ?? stat.resourceId}</I18nText>
               </span>
             </button>
           );

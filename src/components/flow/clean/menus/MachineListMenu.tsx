@@ -1,4 +1,6 @@
 "use client";
+import { I18nText } from "@/lib/i18n/react";
+
 
 import { useMemo } from "react";
 import type { MachineHandler } from "@/lib/model/types";
@@ -33,7 +35,7 @@ export function MachineListMenu({
   const mapIcon = mapIcons.get(recipeMap) as MachineHandlerIcon | undefined;
   return (
     <MenuPortal anchor={anchor} width={381} maxHeight={533} label="Machines that run this recipe" onClose={onClose}>
-      <div className="cm-head">Machines that run this recipe</div>
+      <div className="cm-head"><I18nText>Machines that run this recipe</I18nText></div>
       <div className="cm-scroll">
         {ordered.map((handler) => {
           const own = machineIconAtTier(entries.get(handler.id), handler.minimumTier);
@@ -52,7 +54,7 @@ export function MachineListMenu({
             >
               <ArtBox src={icon?.iconPath} atlas={icon && !icon.iconPath ? { ...icon, displayName: icon.displayName ?? handler.label } : undefined} size={18} />
               {/* The recipe map's picture stands in for a machine with none of its own, never its name (a bee's map is named for the species). */}
-              <span className="cm-name">{own?.displayName ?? handler.label}</span>
+              <span className="cm-name"><I18nText game>{own?.displayName ?? handler.label}</I18nText></span>
               <span className="cm-note">{getMachineGroup(handler)}</span>
             </div>
           );
