@@ -14,19 +14,25 @@ Environment=NODE_ENV=production
 Environment=HOSTNAME=127.0.0.1
 Environment=PORT=3180
 Environment=NEXT_TELEMETRY_DISABLED=1
-Environment=GTNH_PREWARM_ON_STARTUP=1
+Environment=GTNH_PREWARM_ON_STARTUP=0
 Environment=GTNH_MAX_LOADED_RECIPE_SHARDS=8
 Environment=GTNH_MAX_HYDRATED_RECIPE_SUMMARIES=8000
-Environment=NODE_OPTIONS=--max-old-space-size=1536
+Environment=NODE_OPTIONS=--max-old-space-size=2048
 EnvironmentFile=/etc/gtnh-factory-flow/environment
 ExecStart=/usr/bin/node /opt/gtnh-factory-flow/current/server.js
+# Warm API caches directly; instrumentation has a separate module cache.
+ExecStartPost=/usr/bin/curl --retry 8 --retry-connrefused --retry-delay 1 --max-time 120 --fail --silent --show-error --output /dev/null "http://127.0.0.1:3180/api/datasets/local-2.9.0-rc-2/resources?query=gangban&limit=1"
+ExecStartPost=/usr/bin/curl --max-time 120 --fail --silent --show-error --output /dev/null "http://127.0.0.1:3180/api/datasets/local-2.9.0-rc-2/recipes?query=gangban&limit=1"
+TimeoutStartSec=180
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30
 UMask=0027
 Nice=5
-MemoryHigh=1800M
-MemoryMax=2G
+MemoryHigh=2304M
+MemoryMax=2560M
+MemorySwapMax=768M
+LimitCORE=0
 NoNewPrivileges=true
 PrivateTmp=true
 PrivateDevices=true

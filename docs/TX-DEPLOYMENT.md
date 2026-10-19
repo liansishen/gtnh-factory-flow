@@ -31,9 +31,10 @@ NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_SITE_URL=https://gtnhplanner.hepdd.com npm
 ```
 
 Package `.next/standalone/`, copy `.next/static/` into its `.next/static/`, and
-copy `public/` without datasets into its `public/`. Dataset files are excluded
-from Next.js output tracing and installed separately. Transfer the archive with
-its SHA-256 and verify it before extracting into a new release directory.
+copy `public/` without datasets into its `public/`. Next.js traces dataset files
+through instrumentation; exclude `./public/datasets` and `./.next/cache` from the
+runtime archive so shared-data symlinks can be installed. Transfer the archive
+with its SHA-256 and verify it before extracting into a new release directory.
 Keep release files root-owned and readable by the `gtnh-flow` service user.
 
 Link the release's `public/datasets/gtnh` to the shared dataset directory and its
@@ -47,11 +48,18 @@ Chinese, English and pinyin resource/recipe queries run on TX. Keep
 `/var/cache/nginx/gtnhplanner-assets/`, capped at 2 GB. A first request for an
 uncached texture needs the upstream site; recipe queries and local dataset
 files remain on TX.
+Nginx compresses JSON, JavaScript, CSS and WebAssembly responses to reduce first-load
+and plan-import transfer sizes.
 
-The service runs as an unprivileged user with a 1.5 GB Node heap limit, a 2 GB
-service memory limit and write access to its cache directory. Supabase account
-sync, Community and live collaboration require separate backend configuration.
-Plans and language preferences are stored in the visitor's browser.
+The service runs as an unprivileged user with a 2 GB Node heap limit, a 2.5 GB
+service memory limit, a 768 MB swap limit and write access to its cache directory.
+Systemd warms resource and recipe queries through the API before marking the
+service started. `GTNH_PREWARM_ON_STARTUP=0` avoids retaining an additional copy
+of the dataset in the separately bundled Next.js instrumentation module. Update
+the two warm-up URLs when changing the installed dataset version.
+
+Supabase account sync, Community and live collaboration require separate backend
+configuration. Plans and language preferences are stored in the visitor's browser.
 
 ## Checks
 

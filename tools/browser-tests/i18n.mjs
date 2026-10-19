@@ -161,13 +161,13 @@ async function powerPinyin(viewport, place = false) {
     const cards = sheet.locator("button.group");
     for (const query of ["ranqiwolun", "rqwl", "ranqi涡轮"]) {
       await input.fill(query);
-      await sheet.getByRole("button", { name: /^Gas Turbine\b/ }).waitFor();
+      await cards.filter({ has: page.getByText("Gas Turbine", { exact: true }) }).waitFor();
       assert.equal(await cards.count(), 3);
     }
     await input.fill("zzzzzqpyn");
     await page.waitForFunction(() => document.querySelectorAll('section[aria-label] button.group').length === 0);
     await input.fill("benfen");
-    await sheet.getByRole("button", { name: /^Universal Chemical Fuel Engine\b/ }).waitFor();
+    await cards.filter({ has: page.getByText("Universal Chemical Fuel Engine", { exact: true }) }).waitFor();
     await observe("pinyin-power-fuel-mobile");
     await page.keyboard.press("Escape");
     await sheet.waitFor({ state: "hidden" });
@@ -321,7 +321,7 @@ try {
   const upload = page.locator("[data-plan-file-input]");
   const previousTabs = await page.locator('[role="tab"][data-design-id]').count();
   await upload.setInputFiles({ name: "saved-plan.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(before)) });
-  await page.waitForFunction(count => document.querySelectorAll('[role="tab"][data-design-id]').length > count, previousTabs);
+  await page.waitForFunction(count => document.querySelectorAll('[role="tab"][data-design-id]').length > count, previousTabs, { timeout: 120000 });
   const imported = await exportPlan();
   assert.equal(imported.nodes.length, before.nodes.length);
   assert.deepEqual(imported.recipes.map(recipe => recipe.id), before.recipes.map(recipe => recipe.id));

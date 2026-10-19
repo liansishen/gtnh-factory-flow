@@ -4,7 +4,6 @@ const datasetBackendUrl = process.env.GTNH_DATASET_BACKEND_URL?.replace(/\/+$/, 
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  outputFileTracingExcludes: { "/*": ["./public/datasets/gtnh/**/*"] },
   outputFileTracingRoot: process.cwd(),
   turbopack: {
     root: process.cwd(),
