@@ -118,5 +118,10 @@
   "Made by bees": "蜜蜂产出",
   "Grown": "作物产出",
   "From bees": "蜜蜂产出",
-  "Show": "显示"
+  "Show": "显示",
+  "Search in Chinese, English or pinyin": "支持中文、英文和拼音搜索",
+  "Choose English or Simplified Chinese in Settings. Your language stays on this device and your plans keep their original IDs.": "在设置中选择英文或简体中文。语言保存在当前设备，方案保留原有 ID。",
+  "Search resources and recipes with full pinyin, initials or mixed Chinese and pinyin: gangban, gb and 钢ban find Steel Plate.": "资源和配方支持全拼、简拼及汉字拼音混合搜索：输入 gangban、gb 或 钢ban 即可找到钢板。",
+  "Pinyin also works in board filters, name lists and generator or fuel searches. Literal English matches stay first.": "画布筛选、名称列表、发电设备和燃料搜索也支持拼音。英文直接匹配优先显示。",
+  "Translation credits and licenses": "翻译来源与许可"
 }

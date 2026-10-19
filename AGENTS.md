@@ -77,7 +77,7 @@ Scratch harnesses are `*.local.test.ts` (excluded from the suite); run one with
 
 ## Production
 
-These production notes describe the upstream service. This fork has no authorized shared-server deployment.
+This fork's TX deployment is documented in `docs/TX-DEPLOYMENT.md`. The notes below describe the upstream service.
 
 - One DigitalOcean droplet: Caddy -> Next.js :3000, systemd unit `gtnh-flow`, releases in
   `/opt/releases`, datasets in `/opt/shared/gtnh-datasets`, behind Cloudflare. Diagnose with

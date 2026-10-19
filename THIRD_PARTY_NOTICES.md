@@ -6,7 +6,15 @@ The application retains the upstream MIT license in `LICENSE`. Game assets and t
 
 Chinese game terminology includes material from [Kiwi233/Translation-of-GTNH](https://github.com/Kiwi233/Translation-of-GTNH).
 
-Copyright (c) 2022 Kiwi. MIT license; the complete notice is retained in [docs/licenses/Kiwi-Translation-of-GTNH-MIT.txt](docs/licenses/Kiwi-Translation-of-GTNH-MIT.txt).
+Copyright (c) 2022 Kiwi and the translation contributors credited by that project.
+Its root code license is MIT; the complete notice is retained in
+[docs/licenses/Kiwi-Translation-of-GTNH-MIT.txt](docs/licenses/Kiwi-Translation-of-GTNH-MIT.txt).
+Its [README](https://github.com/Kiwi233/Translation-of-GTNH#汉化采用协议)
+separately states that the translation material uses **CC-BY-NC-SA**, with no
+version specified. Translation-derived dictionary material in this fork retains
+the attribution, noncommercial and share-alike restrictions stated by its source.
+The dictionaries were aligned and adapted for English-name lookup and composed
+labels; their provenance is recorded in `src/lib/i18n/game-data.meta.json`.
 
 ## GT5-Unofficial
 

@@ -40,6 +40,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "4.3.0",
+    date: "2026-10-19",
+    headline: "Search in Chinese, English or pinyin",
+    notes: [
+      "Choose English or Simplified Chinese in Settings. Your language stays on this device and your plans keep their original IDs.",
+      "Search resources and recipes with full pinyin, initials or mixed Chinese and pinyin: gangban, gb and 钢ban find Steel Plate.",
+      "Pinyin also works in board filters, name lists and generator or fuel searches. Literal English matches stay first.",
+    ],
+    actions: [{ label: "Translation credits and licenses", href: "/third-party-notices.txt" }],
+  },
+  {
     version: "4.2.0",
     date: "2026-10-17",
     headline: "Pick where the zoomed-out view starts",

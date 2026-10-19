@@ -355,7 +355,12 @@ try {
   await page.getByRole("menuitem", { name: /What's new|更新内容/ }).click();
   await appDialog.waitFor();
   await observe("changelog-desktop-zh");
-  assert.match(await appDialog.innerText(), /选择缩小视图的起点/);
+  assert.match(await appDialog.innerText(), /支持中文、英文和拼音搜索/);
+  const notices = appDialog.getByRole("link", { name: "翻译来源与许可", exact: true });
+  assert.equal(await notices.getAttribute("href"), "/third-party-notices.txt");
+  const credits = await context.request.get(new URL("/third-party-notices.txt", base).toString());
+  assert.equal(credits.status(), 200);
+  assert.match(await credits.text(), /CC-BY-NC-SA/);
   await page.keyboard.press("Escape");
   await page.locator('[data-mb="account"]').click();
   await appDialog.waitFor();
