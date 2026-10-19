@@ -10,8 +10,9 @@ Browser -> DeVPS nginx :443 -> 127.0.0.1:13180
 ```
 
 DE runs the app and the RC-2 query dataset. DeVPS runs nginx, the tunnel and
-certificate renewal. Dataset textures are fetched from `gtnhplanner.com` and
-cached on DeVPS, capped at 512 MB; uncached textures need that upstream site.
+certificate renewal. Installed textures are served through DE. Missing textures
+are fetched from `gtnhplanner.com` and cached on DeVPS, capped at 512 MB;
+uncached missing textures need that upstream site.
 Resource and recipe searches use this fork's Chinese, English and pinyin code
 on DE. Keep `GTNH_DATASET_BACKEND_URL` unset.
 
@@ -36,6 +37,8 @@ limit and a 2.5 GB service memory limit. DE has no swap; the app's swap allowanc
 is zero. Systemd runs resource and recipe warm-up HTTP requests before reporting
 the service started. `GTNH_PREWARM_ON_STARTUP=0` prevents a second copy of the
 dataset in Next.js's separately bundled instrumentation module.
+The management-only `/api/datasets/<version>/prewarm` endpoint is blocked at the
+public ingress. Systemd warms the ordinary resource and recipe query endpoints.
 
 ## DeVPS files and service
 
@@ -99,6 +102,8 @@ the runtime archive: Next.js traces the dataset through instrumentation even
 though data is installed separately. Include `LICENSE`, `THIRD_PARTY_NOTICES.md`
 and `docs/licenses/`, and record the clean source revision in `deployment.json`.
 Verify the transferred archive's SHA-256 before extracting a new release.
+For configuration-only updates, record `configurationRevision` separately from
+the runtime source revision so both deployed versions remain traceable.
 
 Install datasets separately from a checksum-verified archive. Link the new
 release's `public/datasets/gtnh` and `.next/cache` to the shared locations above.

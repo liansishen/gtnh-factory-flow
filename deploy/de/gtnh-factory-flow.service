@@ -21,9 +21,9 @@ Environment=NODE_OPTIONS=--max-old-space-size=2048
 EnvironmentFile=/etc/gtnh-factory-flow/environment
 ExecStart=/opt/gtnh-factory-flow/node/bin/node /opt/gtnh-factory-flow/current/server.js
 # Warm the API bundle; instrumentation keeps a separate module cache.
-ExecStartPost=/usr/bin/curl --retry 8 --retry-connrefused --retry-delay 1 --max-time 120 --fail --silent --show-error --output /dev/null "http://127.0.0.1:3180/api/datasets/local-2.9.0-rc-2/resources?query=gangban&limit=1"
-ExecStartPost=/usr/bin/curl --max-time 120 --fail --silent --show-error --output /dev/null "http://127.0.0.1:3180/api/datasets/local-2.9.0-rc-2/recipes?query=gangban&limit=1"
-TimeoutStartSec=180
+ExecStartPost=/usr/bin/curl --retry 30 --retry-connrefused --retry-delay 2 --retry-max-time 60 --max-time 60 --fail --silent --show-error --output /dev/null "http://127.0.0.1:3180/api/datasets/local-2.9.0-rc-2/resources?query=gangban&limit=1"
+ExecStartPost=/usr/bin/curl --retry 30 --retry-connrefused --retry-delay 2 --retry-max-time 60 --max-time 60 --fail --silent --show-error --output /dev/null "http://127.0.0.1:3180/api/datasets/local-2.9.0-rc-2/recipes?query=gangban&limit=1"
+TimeoutStartSec=300
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30
