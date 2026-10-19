@@ -29,8 +29,9 @@ English source strings are the keys. Nothing is extracted to message ids.
 - `src/lib/i18n/messages.ts` - `translateMessage(source, locale)`. It answers an
   exact dictionary entry first (the merge of `messages-zh.json`,
   `messages-planner-zh.json`, `messages-secondary-zh.json`,
-  `messages-inventory-zh.json` and `messages-runtime-zh.json`), then a dynamic
-  rule from the three `rules-*.json` files, and otherwise returns the English source unchanged. A
+  `messages-inventory-zh.json`, `messages-runtime-zh.json` and the non-recipe,
+  machine-settings and menu catalogs), then a dynamic rule from the three
+  `rules-*.json` files, and otherwise returns the English source unchanged. A
   miss is always the source text, never a half-substituted string. Lookup
   normalizes whitespace; the translated core keeps the surrounding spacing the
   source had.
@@ -133,7 +134,10 @@ Shipped assets under `src/lib/i18n/`:
 | `messages-planner-zh.json` | planner-specific strings | 240 | authored here |
 | `messages-secondary-zh.json` | per-area additions | 169 | authored here |
 | `messages-inventory-zh.json` | inventory additions | 190 | authored here |
-| `messages-runtime-zh.json` | settings, controls, toolbar tooltips, resource filters, current release notes | 157 | authored here |
+| `messages-runtime-zh.json` | settings, controls, toolbar tooltips, resource filters, current release notes | 162 | authored here |
+| `messages-nonrecipe-zh.json` | non-recipe picker groups and descriptions | 36 | authored here |
+| `messages-machine-settings-zh.json` | machine settings and power guidance | 80 | authored here |
+| `messages-menus-zh.json` | plan tab, sharing and related menu actions | 73 | authored here |
 | `rules-zh.json` | community dynamic rules | 127 | community source |
 | `rules-planner-zh.json` | planner dynamic rules | 18 | authored here |
 | `rules-runtime-zh.json` | release history count | 1 | authored here |
@@ -224,6 +228,11 @@ checks Chinese/English/pinyin searches, recipe outputs and a placed tool recipe,
 and compares exported plan data across a language switch. It also visits the
 legacy `/community` redirect. Use the same environment variables as above.
 
+The focused regression `node tools/browser-tests/planner-menus.mjs` exercises the
+non-recipe picker, plan tabs, sharing and machine settings on desktop and mobile.
+It checks translated search and option labels, retained user-authored names and
+canonical settings in exported plans. Use the same environment variables as above.
+
 For each string it runs the shipped `translateMessage` and counts the result as
 covered (an exact entry or a dynamic rule) or fallback (the English source came
 back). Excluded, each with a counted reason: identifiers, CSS class names,
@@ -251,10 +260,10 @@ kind.
 
 A snapshot from the last run (regenerate for current numbers):
 
-- verified inventory: 548 of 566 (96.8%), 18 fallback
-- translation-call candidates: 386 of 386 (100%), 0 fallback
-- data messages: 207 of 1071 (19.3%), 864 fallback
-- all distinct inventoried strings: 1059 of 1941 (54.6%)
+- verified inventory: 547 of 565 (96.8%), 18 fallback
+- translation-call candidates: 409 of 409 (100%), 0 fallback
+- data messages: 212 of 1076 (19.7%), 864 fallback
+- all distinct inventoried strings: 1086 of 1968 (55.2%)
 - name engine: 98.5% of 67,824 dataset display names (48,156 dictionary, 18,683
   generated, 985 fallback)
 
@@ -272,8 +281,8 @@ reported separately; 985 dataset names still fall back to English.
 ### Known gaps
 
 - Missing UI messages return the English source. The missing JSON lists their
-  locations, including historical changelog entries. The newest seven release
-  entries (4.3.3, 4.3.2, 4.3.1, 4.3.0, 4.2.0, 4.1.0, 4.0.0), settings and the controls list have Chinese copy;
+  locations, including historical changelog entries. The newest eight release
+  entries (4.3.0.4, 4.3.3, 4.3.2, 4.3.1, 4.3.0, 4.2.0, 4.1.0, 4.0.0), settings and the controls list have Chinese copy;
   the older release history keeps English fallback.
 - Composed names are approximate: the engine matches words and shape patterns,
   not grammar. It refuses registry ids, so a canonical id (`minecraft:stick`,
@@ -290,8 +299,8 @@ reported separately; 985 dataset names still fall back to English.
    to `messages-zh.json` and `dict/rules.json` to `rules-zh.json`. Planner-specific
    strings and per-area additions live in `messages-planner-zh.json`,
    `messages-secondary-zh.json`, `messages-inventory-zh.json`,
-   `messages-runtime-zh.json`, `rules-planner-zh.json` and
-   `rules-runtime-zh.json`; strings the report finds missing go there. The
+   `messages-runtime-zh.json`, the non-recipe, machine-settings and menu catalogs,
+   `rules-planner-zh.json` and `rules-runtime-zh.json`; strings the report finds missing go there. The
    game-data files and `game-data.meta.json` are copied the same way (the adapter
    is `tools/i18n-game-data.mjs`). Do not hand-edit the community assets here.
 2. When the pack line moves, regenerate the game data against the new dataset so
@@ -300,9 +309,9 @@ reported separately; 985 dataset names still fall back to English.
 3. Run `npm run i18n:report` and review `docs/i18n-missing.json`. The list is the
    work queue. A clean list means static lookup is complete, not that the app is
    translated at runtime.
-4. Run `npm run test` and both browser tests:
-   `node tools/browser-tests/i18n.mjs` and
-   `node tools/browser-tests/tooltips.mjs`. `plan-invariants.test.ts` fails if a
+4. Run `npm run test` and the browser tests:
+   `node tools/browser-tests/i18n.mjs`, `node tools/browser-tests/tooltips.mjs` and
+   `node tools/browser-tests/planner-menus.mjs`. `plan-invariants.test.ts` fails if a
    locale change ever touches a plan, its ids, its numbers or a player's own
    text; the browser tests switch language on the running app and pin the same
    invariant end to end.

@@ -405,7 +405,7 @@ function MyPlans({ query }: { query: string }) {
           anchor={menu.anchor}
           entries={entries(menu)}
           label={`${_i18nT("Plan options for")} ${menu.name}`}
-          title={menu.kind === "delete" ? `Delete '${menu.name}' for good?` : undefined}
+          title={menu.kind === "delete" ? <>{_i18nT("Delete")} '{menu.name}' {_i18nT("for good?")}</> : undefined}
           minWidth={menu.kind === "delete" ? 150 : 190}
           onClose={() => setMenu(undefined)}
         />

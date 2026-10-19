@@ -1,5 +1,5 @@
 "use client";
-import { I18nText, useT } from "@/lib/i18n/react";
+import { I18nText, useGameName, useT } from "@/lib/i18n/react";
 
 
 import { useState } from "react";
@@ -58,6 +58,7 @@ export function SpecialSheet({
   onClose: () => void;
 }) {
   const _i18nT = useT();
+  const _i18nName = useGameName();
   const [open, setOpen] = useState<{ id: string; anchor: MenuAnchor }>();
   const [draft, setDraft] = useState<{ id: string; text: string }>();
   const none = rows.length === 0;
@@ -75,7 +76,7 @@ export function SpecialSheet({
         anchor={anchor}
         width={wide ? (none ? 533 : 711) : 330}
         maxHeight={660}
-        label="Settings"
+        label={_i18nT("Settings")}
         onClose={onClose}
         keepOpenOn="[data-cc-sheet]"
       >
@@ -112,9 +113,9 @@ export function SpecialSheet({
                       className="cs-pin"
                       data-on={row.pinned ? "" : undefined}
                       aria-pressed={row.pinned === true}
-                      aria-label={_i18nT(row.pinned
-                          ? `Unpin ${row.label} from the card`
-                          : `Pin ${row.label} to the card`)}
+                      aria-label={row.pinned
+                        ? `${_i18nT("Unpin")} ${_i18nName(row.label)} ${_i18nT("from the card")}`
+                        : `${_i18nT("Pin")} ${_i18nName(row.label)} ${_i18nT("to the card")}`}
                       onClick={() => {
                         if (!locked) row.onPin?.();
                       }}
@@ -124,7 +125,7 @@ export function SpecialSheet({
                   ) : (
                     <span className="cs-pin" style={{ visibility: "hidden" }} />
                   )}
-                  <span className="cs-label"><I18nText>{row.label}</I18nText></span>
+                  <span className="cs-label"><I18nText game>{row.label}</I18nText></span>
                   <div
                     role="button"
                     tabIndex={0}
@@ -144,7 +145,7 @@ export function SpecialSheet({
                         className="nodrag"
                         value={draft.text}
                         inputMode="decimal"
-                        aria-label={row.label}
+                        aria-label={_i18nName(row.label)}
                         style={{
                           width: "100%",
                           background: "transparent",
@@ -164,7 +165,7 @@ export function SpecialSheet({
                         }}
                       />
                     ) : (
-                      <span className="cs-value">{row.value}</span>
+                      <span className="cs-value"><I18nText game>{row.value}</I18nText></span>
                     )}
                     <span className="cs-chev" />
                   </div>
@@ -178,13 +179,13 @@ export function SpecialSheet({
                   <div key={reading.label} className="cs-f">
                     <span className="cs-f-label"><I18nText>{reading.label}</I18nText></span>
                     <span className="cs-f-math" />
-                    <span className="cs-f-result">{reading.value}</span>
+                    <span className="cs-f-result"><I18nText game>{reading.value}</I18nText></span>
                   </div>
                 ))}
               </div>
             ) : null}
           </div>
-          {none || !foot ? null : <div className="cs-foot">{foot}</div>}
+          {none || !foot ? null : <div className="cs-foot"><I18nText>{foot}</I18nText></div>}
         </div>
       </MenuPortal>
       {open && openRow?.options ? (

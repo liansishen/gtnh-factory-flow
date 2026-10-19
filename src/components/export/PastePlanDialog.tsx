@@ -68,7 +68,7 @@ export function PastePlanDialog({ onClose }: { onClose: () => void }) {
             className="pn-field"
             style={{ wordBreak: "break-all" }}
           />
-          {error ? <p className="pn-err">{error}</p> : null}
+          {error ? <p className="pn-err"><I18nText>{error}</I18nText></p> : null}
           <div className="pn-keys">
             <button type="button" onClick={onClose} className="pn-key"><I18nText>
               Cancel

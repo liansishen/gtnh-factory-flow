@@ -1,5 +1,5 @@
 "use client";
-import { I18nText } from "@/lib/i18n/react";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 
 import "./menus.css";
@@ -27,17 +27,17 @@ function Tag({ tier }: { tier: string }) {
   );
 }
 
-function overclockText(facts: PowerFacts): string {
-  if (facts.overclocks === 0) return "none";
+function overclockText(facts: PowerFacts, t: (source: string) => string): string {
+  if (facts.overclocks === 0) return t("none");
   if (facts.perfect === 0) return String(facts.overclocks);
-  return `${facts.perfect} perfect, ${facts.overclocks - facts.perfect}`;
+  return `${facts.perfect} ${t("perfect")}, ${facts.overclocks - facts.perfect}`;
 }
 
 function Box({ label, unit, before, after }: { label: string; unit: string; before: string; after: string }) {
   return (
     <div className="pw-box">
       <span>
-        <I18nText>{label}</I18nText> <small>{unit}</small>
+        <I18nText>{label}</I18nText> <small><I18nText>{unit}</I18nText></small>
       </span>
       <b>
         {before} <span style={{ display: "inline", color: "#a3a3a3" }}>→</span> {after}
@@ -79,11 +79,12 @@ function Scale({ facts }: { facts: PowerFacts }) {
 }
 
 export function PowerFactsPanel({ facts }: { facts: PowerFacts }) {
+  const t = useT();
   const { now, next } = facts;
   const hatchAmps = facts.amps === 1 ? 1 : 2;
   const hatches = facts.amps / hatchAmps;
   const stats: Array<[string, string]> = [
-    ["Overclocks", overclockText(facts)],
+    ["Overclocks", overclockText(facts, t)],
     ["Parallels", String(now.parallels)],
     ["Time / recipe", seconds(now.duration)],
     ["Recipes / second", compact(now.runsPerSecond)],
@@ -161,11 +162,11 @@ export function PowerGuide({ part }: { part?: "amps" | "tier" | "power" }) {
   ];
   const section = (title: string, rows: Array<[string, string]>, on: boolean) => (
     <div className="pw-guide-sec" data-on={on ? "" : undefined}>
-      <div className="pw-title">{title}</div>
+      <div className="pw-title"><I18nText>{title}</I18nText></div>
       {rows.map(([what, how]) => (
         <div key={what} className="pw-guide-row">
-          <span>{what}</span>
-          <span>{how}</span>
+          <span><I18nText>{what}</I18nText></span>
+          <span><I18nText>{how}</I18nText></span>
         </div>
       ))}
     </div>

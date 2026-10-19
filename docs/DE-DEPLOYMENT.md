@@ -91,6 +91,11 @@ certbot renew --dry-run --cert-name plan.playgtnh.dpdns.org --run-deploy-hooks
 
 ## Build and update
 
+The displayed fork version is `<upstream version>.<fork revision>`. Keep the first
+three segments pinned to the incorporated upstream release and increment the fourth
+once per deployed release. Check the hosted `/api/version` before preparing the next
+revision, and add its player-facing notes to `src/lib/changelog.ts`.
+
 Build locally; this machine's SSH alias `DE` uses `ProxyJump DeVPS`, so uploads
 and management commands also traverse DeVPS.
 

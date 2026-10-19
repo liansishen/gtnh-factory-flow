@@ -76,7 +76,8 @@ export function ChromeMenu({
   anchor: ChromeAnchor;
   entries: MenuEntry[];
   label: string;
-  title?: string;
+  /** A sentence over the rows: a source string translated here, or pieces a caller has already translated (an interpolated sentence). */
+  title?: ReactNode;
   minWidth?: number;
   /** `right` hangs the menu's right edge from the anchor's right edge (the keys at the bar's end). */
   align?: "left" | "right";

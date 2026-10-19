@@ -214,7 +214,7 @@ export function ModScreenshot({ onClose }: { onClose: () => void }) {
       : 0;
   const pixels =
     capture && layout
-      ? `${Math.round(layout.boardWidth * capture.pixelRatio).toLocaleString("en-US")} x ${Math.round(layout.totalHeight * capture.pixelRatio).toLocaleString("en-US")} pixels`
+      ? `${Math.round(layout.boardWidth * capture.pixelRatio).toLocaleString("en-US")} x ${Math.round(layout.totalHeight * capture.pixelRatio).toLocaleString("en-US")} ${_i18nT("pixels")}`
       : undefined;
 
   // ---- The picture itself --------------------------------------------------
@@ -257,11 +257,11 @@ export function ModScreenshot({ onClose }: { onClose: () => void }) {
       anchor.download = name;
       anchor.click();
       URL.revokeObjectURL(url);
-      setStatus({ text: `Saved as ${name}`, good: true });
+      setStatus({ text: `${_i18nT("Saved as")} ${name}`, good: true });
       playBoardSound("tick");
     } catch (error) {
       setStatus({
-        text: `Couldn't save it: ${error instanceof Error ? error.message : "failed"}`,
+        text: `${_i18nT("Couldn't save it")}: ${error instanceof Error ? _i18nT(error.message) : _i18nT("failed")}`,
         good: false,
       });
     } finally {
@@ -276,11 +276,11 @@ export function ModScreenshot({ onClose }: { onClose: () => void }) {
     try {
       const blob = await compose();
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-      setStatus({ text: "Copied: paste it anywhere", good: true });
+      setStatus({ text: _i18nT("Copied: paste it anywhere"), good: true });
       playBoardSound("tick");
     } catch (error) {
       setStatus({
-        text: `Couldn't copy it: ${error instanceof Error ? error.message : "failed"}`,
+        text: `${_i18nT("Couldn't copy it")}: ${error instanceof Error ? _i18nT(error.message) : _i18nT("failed")}`,
         good: false,
       });
     } finally {
@@ -368,7 +368,7 @@ export function ModScreenshot({ onClose }: { onClose: () => void }) {
             ) : null}
             {problem && !capturing ? (
               <div className="mshot-note" data-bad="">
-                {problem}
+                <I18nText>{problem}</I18nText>
               </div>
             ) : null}
           </div>
@@ -392,14 +392,14 @@ export function ModScreenshot({ onClose }: { onClose: () => void }) {
                       }
                     }}
                   >
-                    {entry.label}
+                    {_i18nT(entry.label)}
                   </span>
                 ))}
               </span>
             </div>
             <Toggle label="Plan name" on={title} onChange={setTitle} />
             <Toggle label="Inputs and outputs" on={io} onChange={setIo} />
-            <div className="mshot-size">{pixels ?? "Taking the picture..."}</div>
+            <div className="mshot-size">{pixels ?? _i18nT("Taking the picture...")}</div>
             {status ? (
               <div className="mshot-status" data-good={status.good ? "" : undefined}>
                 {status.text}
@@ -441,18 +441,19 @@ function Toggle({
   on: boolean;
   onChange: (next: boolean) => void;
 }) {
+  const _i18nT = useT();
   return (
     <div
       className="mshot-row"
       role="switch"
       aria-checked={on}
-      aria-label={label}
+      aria-label={_i18nT(label)}
       onClick={() => {
         onChange(!on);
         playBoardSound("tick", { gain: on ? 0.9 : 1.1 });
       }}
     >
-      <span>{label}</span>
+      <span><I18nText>{label}</I18nText></span>
       <span className="ms-switch" data-on={on ? "" : undefined}>
         <span className="ms-knob" />
       </span>

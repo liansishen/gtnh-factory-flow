@@ -27,7 +27,7 @@ export function markVersionSeen(version = APP_VERSION): void {
   }
 }
 
-/** Newest-first compare of two `1.2.3` strings. */
+/** Numeric comparison of upstream and four-segment fork versions. */
 export function compareVersions(left: string, right: string): number {
   const parse = (value: string) => value.split(".").map((part) => Number.parseInt(part, 10) || 0);
   const a = parse(left);
@@ -54,9 +54,17 @@ export function compareVersions(left: string, right: string): number {
  */
 const NOTES_READ_KEY = "gtnh-factory-flow.changelog-read.v1";
 
+// Legacy fork release labels retain their recorded names and compare by fork revision.
+function releaseVersion(version: string): string {
+  return APP_VERSION.startsWith("4.3.0.") && /^4\.3\.[123]$/.test(version)
+    ? `4.3.0.${version.split(".")[2]}`
+    : version;
+}
+
 function readNotesRead(): string | undefined {
   try {
-    return window.localStorage.getItem(NOTES_READ_KEY) ?? undefined;
+    const read = window.localStorage.getItem(NOTES_READ_KEY) ?? undefined;
+    return read ? releaseVersion(read) : undefined;
   } catch {
     return undefined;
   }
@@ -85,11 +93,10 @@ export function unseenEntries(): ChangelogEntry[] {
   if (compareVersions(read, APP_VERSION) >= 0) {
     return [];
   }
-  return CHANGELOG.filter(
-    (entry) =>
-      compareVersions(entry.version, read) > 0 &&
-      compareVersions(entry.version, APP_VERSION) <= 0,
-  );
+  return CHANGELOG.filter((entry) => {
+    const version = releaseVersion(entry.version);
+    return compareVersions(version, read) > 0 && compareVersions(version, APP_VERSION) <= 0;
+  });
 }
 
 /**

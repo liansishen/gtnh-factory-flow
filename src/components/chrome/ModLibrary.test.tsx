@@ -132,6 +132,16 @@ describe("the library", () => {
     expect(actions.removeDesign).toHaveBeenCalledWith("a");
   });
 
+  it("translates deletion confirmation while preserving the authored plan name", () => {
+    setLocale("zh-CN");
+    render(<ModLibrary />);
+    fireEvent.contextMenu(screen.getByText("Benzene"));
+    fireEvent.click(screen.getByText("删除方案"));
+    expect(document.querySelector(".mm-title")?.textContent).toBe("删除 'Benzene' 确定吗？");
+    fireEvent.click(screen.getByText("保留"));
+    expect(actions.removeDesign).not.toHaveBeenCalled();
+  });
+
   it("COMMUNITY shows the public shelf with its sort and tier, and counts what it found", () => {
     render(<ModLibrary />);
     fireEvent.click(screen.getByText("COMMUNITY"));

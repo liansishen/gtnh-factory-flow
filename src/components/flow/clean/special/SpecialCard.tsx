@@ -1,5 +1,5 @@
 "use client";
-import { I18nText, useT } from "@/lib/i18n/react";
+import { I18nText, useGameName, useT } from "@/lib/i18n/react";
 
 
 import "../clean.css";
@@ -278,6 +278,7 @@ function SpecialChipView({
   wasClick: (event: MouseEvent) => boolean;
 }) {
   const [draft, setDraft] = useState<string>();
+  const _i18nName = useGameName();
   if (!chip.edit)
     return (
       <StripChip
@@ -331,13 +332,13 @@ function SpecialChipView({
       }}
     >
       {draft === undefined ? (
-        chip.value
+        <I18nText game>{chip.value}</I18nText>
       ) : (
         <input
           autoFocus
           value={draft}
           inputMode="decimal"
-          aria-label={chip.label}
+          aria-label={_i18nName(chip.label)}
           className="nodrag"
           onChange={(event) => setDraft(event.target.value)}
           onBlur={commit}

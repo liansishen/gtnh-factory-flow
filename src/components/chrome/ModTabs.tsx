@@ -525,6 +525,7 @@ export function ModTabs({ onPaste, onShare }: ModTabsActions) {
                 {...tipAttrs({
                   id: `tab|public:${view.id}`,
                   title: view.name,
+                  verbatimTitle: true,
                   sub: "Shared plan: view only. Middle-click to close",
                 })}
               >
@@ -589,6 +590,7 @@ export function ModTabs({ onPaste, onShare }: ModTabsActions) {
                   : tipAttrs({
                       id: `tab|${design.id}`,
                       title: design.name,
+                      verbatimTitle: true,
                       sub: "Middle-click to close, right-click for more",
                     }))}
               >
@@ -679,8 +681,15 @@ export function ModTabs({ onPaste, onShare }: ModTabsActions) {
         <ChromeMenu
           anchor={menu.anchor}
           entries={entries(menu)}
-          label={menu.kind === "plus" ? _i18nT("New plan") : `Plan options for ${menu.name}`}
-          title={menu.kind === "delete" ? `Delete '${menu.name}' for good?` : undefined}
+          label={menu.kind === "plus" ? _i18nT("New plan") : `${_i18nT("Plan options for")} ${menu.name}`}
+          // The plan's name is the player's own words: only the words round it are translated.
+          title={
+            menu.kind === "delete" ? (
+              <>
+                {_i18nT("Delete")} &apos;{menu.name}&apos; {_i18nT("for good?")}
+              </>
+            ) : undefined
+          }
           minWidth={menu.kind === "plus" ? 190 : menu.kind === "delete" ? 150 : 170}
           onClose={closeMenu}
         />

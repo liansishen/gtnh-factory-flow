@@ -65,10 +65,11 @@ Scratch harnesses are `*.local.test.ts` (excluded from the suite); run one with
 - Deploy only when explicitly told to, once per instruction. Pushing `main` deploys
   nothing. The GitHub deploy and dataset workflows are decoys (no runner); never dispatch
   them. The deploy command lives outside the repo (the origin IP is not public).
-- `APP_VERSION` in `src/lib/version.ts` is bumped once per deploy: minor if the release
-  carries features, patch if only fixes. First check https://plan.playgtnh.dpdns.org/api/version:
-  behind `version.ts` means the last bump has not shipped, so fold new work into the top
-  changelog entry; equal means bump and open a new entry.
+- `APP_VERSION` in `src/lib/version.ts` has four segments: `UPSTREAM_VERSION` supplies
+  the first three and changes when incorporating an upstream release; `FORK_REVISION`
+  is incremented once per fork deploy. First check https://plan.playgtnh.dpdns.org/api/version:
+  an unshipped revision keeps its number and top changelog entry; a shipped revision
+  starts the next fourth-segment number and a new entry.
 - Every release has an entry in `src/lib/changelog.ts`: concrete bullets about what
   changed for players. Players open it from the header's version chip (unread dot, stamp
   `changelog-read.v1`); nothing opens by itself. Shift-click the chip for the dev menu.

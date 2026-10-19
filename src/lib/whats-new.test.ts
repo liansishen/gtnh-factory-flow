@@ -18,6 +18,13 @@ describe("compareVersions", () => {
     expect(compareVersions("1.44.0", "1.45.0")).toBeLessThan(0);
     expect(compareVersions("1.46", "1.46.0")).toBe(0);
   });
+
+  it("compares the fork revision numerically after the upstream version", () => {
+    expect(compareVersions("4.3.0.4", "4.3.0")).toBeGreaterThan(0);
+    expect(compareVersions("4.3.0.10", "4.3.0.9")).toBeGreaterThan(0);
+    expect(compareVersions("4.3.1.1", "4.3.0.99")).toBeGreaterThan(0);
+    expect(compareVersions("4.3.0.0", "4.3.0")).toBe(0);
+  });
 });
 
 describe("the version stamp", () => {

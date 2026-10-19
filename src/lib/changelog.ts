@@ -40,6 +40,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "4.3.0.4",
+    date: "2026-10-20",
+    headline: "Chinese menus and machine settings",
+    notes: [
+      "Non-recipe machines, their filters and previews now follow your language.",
+      "Plan tab menus, the new-plan menu and sharing actions now follow your language.",
+      "Machine settings translate their labels, options and explanations while preserving saved settings.",
+      "The first three version numbers track the upstream release; the fourth counts this fork's releases.",
+    ],
+  },
+  {
     version: "4.3.3",
     date: "2026-10-19",
     headline: "Chinese names for tiered tools and machines",

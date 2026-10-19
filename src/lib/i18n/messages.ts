@@ -4,6 +4,9 @@ import secondaryZh from "./messages-secondary-zh.json";
 import plannerZh from "./messages-planner-zh.json";
 import inventoryZh from "./messages-inventory-zh.json";
 import runtimeZh from "./messages-runtime-zh.json";
+import nonrecipeZh from "./messages-nonrecipe-zh.json";
+import machineSettingsZh from "./messages-machine-settings-zh.json";
+import menusZh from "./messages-menus-zh.json";
 import rulesZh from "./rules-zh.json";
 import plannerRules from "./rules-planner-zh.json";
 import runtimeRules from "./rules-runtime-zh.json";
@@ -13,7 +16,7 @@ export function normalizeMessageKey(source: string): string {
   return source.trim().replace(/\s+/g, " ");
 }
 
-const exact = new Map(Object.entries({ ...messagesZh, ...secondaryZh, ...plannerZh, ...inventoryZh, ...runtimeZh })
+const exact = new Map(Object.entries({ ...messagesZh, ...secondaryZh, ...plannerZh, ...inventoryZh, ...runtimeZh, ...nonrecipeZh, ...machineSettingsZh, ...menusZh })
   .map(([key, value]) => [normalizeMessageKey(key), value.trim()]));
 
 export function hasMessageTranslation(source: string): boolean {

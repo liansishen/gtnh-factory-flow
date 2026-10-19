@@ -2,6 +2,8 @@
 
 import "./chrome.css";
 
+import { useT } from "@/lib/i18n/react";
+
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { isCompactViewport, useIsCompactViewport } from "@/lib/compact-view";
 import { usePlanLayout } from "@/components/use-plan-layout";
@@ -85,6 +87,7 @@ export interface ModBarProps {
  * the rate unit, EU/t, Avg) is the board's own toolbar (BoardToolbar), along the top of the board.
  */
 export function ModBar({ onShare, onScreenshot, onSettings, onChangelog, onDevMenu, unreadNotes }: ModBarProps) {
+  const _i18nT = useT();
   useHistoryShortcuts();
   useEffect(() => ensureInteractionHost(), []);
   const barRef = useRef<HTMLElement | null>(null);
@@ -269,7 +272,7 @@ export function ModBar({ onShare, onScreenshot, onSettings, onChangelog, onDevMe
         <PixelIcon name="help" />
       </BarKey>
       {menu?.kind === "share" ? (
-        <ChromeMenu anchor={menu.anchor} entries={shareEntries} label="Share this plan" minWidth={110} align="right" onClose={closeMenu} />
+        <ChromeMenu anchor={menu.anchor} entries={shareEntries} label={_i18nT("Share this plan")} minWidth={110} align="right" onClose={closeMenu} />
       ) : null}
       {menu?.kind === "help" ? (
         <ChromeMenu
@@ -279,7 +282,7 @@ export function ModBar({ onShare, onScreenshot, onSettings, onChangelog, onDevMe
             unreadNotes,
             openControls: () => setControlsOpen(true),
           })}
-          label="Help"
+          label={_i18nT("Help")}
           minWidth={190}
           align="right"
           onClose={closeMenu}
@@ -308,19 +311,20 @@ function LivePresence({ tight }: { tight: boolean }) {
   const status = useLiveSession((state) => state.status);
   const present = useLiveSession((state) => state.present);
   const pending = useLiveSession((state) => state.pending);
+  const _i18nT = useT();
   if (status === "off") return null;
   // A narrow bar keeps the first two faces and counts the rest.
   const shown = present.slice(0, tight ? 2 : 5);
   const more = present.length - shown.length;
-  const waiting = status !== "live" && pending > 0 ? ` (${pending} waiting)` : "";
+  const waiting = status !== "live" && pending > 0 ? ` (${pending} ${_i18nT("waiting")})` : "";
   return (
     <div
       className="mb-live"
       data-live-status={status}
       {...tipAttrs({
         id: "bar|live",
-        title: `${LIVE_STATUS_TIP[status]}${waiting}`,
-        sub: present.length > 0 ? `Here now: ${present.map((person) => person.username).join(", ")}` : undefined,
+        title: `${_i18nT(LIVE_STATUS_TIP[status])}${waiting}`,
+        sub: present.length > 0 ? `${_i18nT("Here now")}: ${present.map((person) => person.username).join(", ")}` : undefined,
       })}
     >
       <span className="mb-live-dot" data-status={status} aria-hidden />
@@ -330,7 +334,7 @@ function LivePresence({ tight }: { tight: boolean }) {
             <span
               key={person.id}
               className="mb-face"
-              aria-label={person.client === "game" ? `${person.username} (in game)` : person.username}
+              aria-label={person.client === "game" ? `${person.username} ${_i18nT("(in game)")}` : person.username}
               style={{ background: person.color, color: inkOn(person.color) }}
             >
               {initialsOf(person.username)}

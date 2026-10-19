@@ -5,7 +5,7 @@ import { buildReport, deviceId, faceRects, sendsLine, titleOf, versions } from "
 
 /** The site's guard (src/lib/server/feedback-guard.ts) knows the web's own shapes. */
 const DEVICE = /^web-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const MOD_VERSION = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?$/;
+const WEB_VERSION = /^\d+\.\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.+-]+)?$/;
 const OS = /^[A-Za-z0-9 ._()/+-]{1,100}$/;
 
 describe("feedback report", () => {
@@ -13,7 +13,7 @@ describe("feedback report", () => {
 
   it("carries the shapes the route's guard wants", () => {
     const v = versions();
-    expect(MOD_VERSION.test(v.mod)).toBe(true);
+    expect(WEB_VERSION.test(v.mod)).toBe(true);
     expect(v.mod).toBe(APP_VERSION);
     expect(v.java).toBe("");
     expect(v.pack).toBe("");

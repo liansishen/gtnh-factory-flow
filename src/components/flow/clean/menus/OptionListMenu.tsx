@@ -1,7 +1,7 @@
 "use client";
 import { matchesGameNameFilter } from "@/lib/i18n/game-search";
 
-import { I18nText, useT } from "@/lib/i18n/react";
+import { I18nText, useGameName, useT } from "@/lib/i18n/react";
 
 
 import { useState } from "react";
@@ -26,17 +26,18 @@ export function OptionListMenu({
   onClose: () => void;
 }) {
   const _i18nT = useT();
+  const _i18nName = useGameName();
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
   const shown = control.options.filter((option) => matchesGameNameFilter(needle, option.label));
   return (
-    <MenuPortal anchor={anchor} width={292} maxHeight={457} label={control.label} onClose={onClose}>
+    <MenuPortal anchor={anchor} width={292} maxHeight={457} label={_i18nName(control.label)} onClose={onClose}>
       <input
         autoFocus
         className="cm-filter nodrag"
         placeholder={_i18nT("Filter...")}
         value={query}
-        aria-label={_i18nT(`Filter ${control.label}`)}
+        aria-label={`${_i18nT("Filter options")} ${_i18nName(control.label)}`}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={(event) => {
           event.stopPropagation();
@@ -55,7 +56,7 @@ export function OptionListMenu({
             onClick={() => onPick(option.key)}
           >
             <ArtBox src={option.icon} size={18} />
-            <span className="cm-name"><I18nText>{option.label}</I18nText></span>
+            <span className="cm-name"><I18nText game>{option.label}</I18nText></span>
           </div>
         ))}
       </div>

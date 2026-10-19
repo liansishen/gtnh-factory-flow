@@ -8,7 +8,8 @@
  * computed with the other settings at their defaults, and each flow name it
  * introduces remembers the choice that produced it.
  */
-import { hasChinese } from "@/lib/i18n/game-names";
+import { hasChinese, translateGameName } from "@/lib/i18n/game-names";
+import { translateGameLabel } from "@/lib/i18n/game-labels";
 import { planBilingualQuery } from "@/lib/i18n/game-search";
 import { buildPinyinSearchIndex, isReservedSearchToken, type PinyinSearchIndex } from "@/lib/i18n/pinyin-search";
 import { resolvePowerResource } from "./planner-data";
@@ -58,6 +59,10 @@ export interface PowerStencilHit {
 interface SourceIndex {
   source: PowerSourceDefinition;
   nameText: string;
+  /** The Chinese labels the player sees, spaces removed: the machine and every flow it lists. */
+  zhNames: string[];
+  /** normalized Chinese flow label -> the first (most default) way to get it. */
+  zhFlows: Map<string, PowerFlowMatch>;
   /** lowercased flow name -> the first (most default) way to get it. */
   flows: Map<string, PowerFlowMatch>;
   /** "direction:kind:id" (resolved resource) -> same, for exact clause hits. */
@@ -112,6 +117,10 @@ function recordFlows(
     if (!entry.flows.has(key)) {
       entry.flows.set(key, { direction, name, ...choice });
     }
+    const zh = normalizeChinese(translateGameLabel(name, "zh-CN"));
+    if (zh && !entry.zhFlows.has(zh)) {
+      entry.zhFlows.set(zh, { direction, name, ...choice });
+    }
     const resource = resolvePowerResource(rawName);
     if (resource) {
       const idKey = `${direction}:${resource.kind}:${resource.id}`;
@@ -150,6 +159,8 @@ function buildIndex(): SourceIndex[] {
       // and a blurb match would swallow the flow match that knows which
       // setting to dial in.
       nameText: `${source.name} ${source.unlock ?? ""}`.toLowerCase(),
+      zhNames: [],
+      zhFlows: new Map(),
       flows: new Map(),
       flowsById: new Map(),
       optionFlowSets: new Map(),
@@ -179,6 +190,14 @@ function buildIndex(): SourceIndex[] {
         }
       }
     }
+    // The machine's own Chinese name only: a flow name is answered by zhFlows,
+    // which knows the direction and the setting the card must be placed with.
+    entry.zhNames = [
+      ...new Set([
+        normalizeChinese(translateGameLabel(source.name, "zh-CN")),
+        normalizeChinese(translateGameName(source.name, "zh-CN")),
+      ]),
+    ].filter(Boolean);
     return entry;
   });
 }
@@ -214,6 +233,32 @@ function searchNeedles(query: string, index: SourceIndex[]): string[] {
   const aliases = pinyinAliases(query, index);
   return aliases.length === 0 ? needles : [...new Set([...needles, ...aliases])];
 }
+/** Chinese labels are matched with spaces removed, so "XL涡轮" finds "XL 涡轮燃气轮机". */
+function normalizeChinese(value: string): string {
+  return value.normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+}
+
+/** The Chinese query as one needle, or nothing when the query has no Chinese. */
+function chineseNeedle(query: string): string | undefined {
+  if (!hasChinese(query)) {
+    return undefined;
+  }
+  const normalized = normalizeChinese(query);
+  return normalized === "" ? undefined : normalized;
+}
+
+/**
+ * Whether a query names the machine. A Chinese query also answers the Chinese
+ * label the player reads: planning cannot always spell that label back into
+ * English (a machine name the dictionary only knows whole), so the label itself
+ * is matched too.
+ */
+function matchesName(entry: SourceIndex, needles: string[], zhNeedle: string | undefined): boolean {
+  return (
+    needles.some((needle) => entry.nameText.includes(needle)) ||
+    (zhNeedle !== undefined && entry.zhNames.some((name) => name.includes(zhNeedle)))
+  );
+}
 
 export function searchPowerSources(query: string): PowerSearchHit[] {
   const index = (indexCache ??= buildIndex());
@@ -222,22 +267,19 @@ export function searchPowerSources(query: string): PowerSearchHit[] {
     return index.map((entry) => ({ source: entry.source }));
   }
   const needles = searchNeedles(query, index);
+  const zhNeedle = chineseNeedle(query);
 
   const nameHits: PowerSearchHit[] = [];
   const flowHits: PowerSearchHit[] = [];
   for (const entry of index) {
-    if (needles.some((needle) => entry.nameText.includes(needle))) {
+    if (matchesName(entry, needles, zhNeedle)) {
       nameHits.push({ source: entry.source });
       continue;
     }
     // The best flow match: a default-settings flow beats a dialed one, and
     // makes beats takes when both answer (players search for products).
     let best: PowerFlowMatch | undefined;
-    for (const [key, match] of entry.flows) {
-      const flowName = key.slice(key.indexOf(":") + 1);
-      if (!needles.some((needle) => flowName.includes(needle))) {
-        continue;
-      }
+    const consider = (match: PowerFlowMatch) => {
       if (
         !best ||
         (best.settingId !== undefined && match.settingId === undefined) ||
@@ -246,6 +288,19 @@ export function searchPowerSources(query: string): PowerSearchHit[] {
           (best.settingId === undefined) === (match.settingId === undefined))
       ) {
         best = match;
+      }
+    };
+    for (const [key, match] of entry.flows) {
+      const flowName = key.slice(key.indexOf(":") + 1);
+      if (needles.some((needle) => flowName.includes(needle))) {
+        consider(match);
+      }
+    }
+    if (zhNeedle !== undefined) {
+      for (const [flowName, match] of entry.zhFlows) {
+        if (flowName.includes(zhNeedle)) {
+          consider(match);
+        }
       }
     }
     if (best) {
@@ -289,6 +344,7 @@ export function searchPowerSourcesForStencil(
   const index = (indexCache ??= buildIndex());
   const trimmed = query.trim().toLowerCase();
   const needles = searchNeedles(query, index);
+  const zhNeedle = chineseNeedle(query);
 
   if (clauses.length === 0) {
     // No conditions: only a typed name (or the power keyword) brings
@@ -300,7 +356,7 @@ export function searchPowerSourcesForStencil(
       trimmed.length >= 2 && ("power".startsWith(trimmed) || "energy".startsWith(trimmed));
     const hits: PowerStencilHit[] = [];
     for (const entry of index) {
-      if (needles.some((needle) => entry.nameText.includes(needle))) {
+      if (matchesName(entry, needles, zhNeedle)) {
         hits.push({ source: entry.source, matches: [] });
       } else if ((wantsPower || trimmed === "eu") && entry.flowsById.has("makes:power:eu")) {
         hits.push({ source: entry.source, matches: [entry.flowsById.get("makes:power:eu")!] });
@@ -312,7 +368,7 @@ export function searchPowerSourcesForStencil(
   const sideOp = (role: "takes" | "makes") => (role === "takes" ? takesOp : makesOp);
   const hits: PowerStencilHit[] = [];
   for (const entry of index) {
-    if (trimmed !== "" && !needles.some((needle) => entry.nameText.includes(needle))) {
+    if (trimmed !== "" && !matchesName(entry, needles, zhNeedle)) {
       continue;
     }
     const matches: PowerFlowMatch[] = [];

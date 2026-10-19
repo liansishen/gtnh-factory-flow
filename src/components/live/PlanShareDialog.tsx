@@ -173,7 +173,7 @@ export function PlanShareDialog({ onClose }: { onClose: () => void }) {
               <I18nText>Sign in to invite.</I18nText>
             </p>
           ) : loadError ? (
-            <p className="text-sm text-red-400">{loadError}</p>
+            <p className="text-sm text-red-400"><I18nText>{loadError}</I18nText></p>
           ) : !synced || !info ? (
             <p className="flex items-center gap-2 text-sm text-fg-muted">
               <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -207,7 +207,7 @@ export function PlanShareDialog({ onClose }: { onClose: () => void }) {
                     >
                       <Face username={member.username} color={colorFor(member.id)} />
                       <span className="min-w-0 flex-1 truncate">
-                        {isMe ? "You" : member.username}
+                        {isMe ? _i18nT("You") : member.username}
                       </span>
                       {isOwner ? (
                         <button
@@ -216,7 +216,7 @@ export function PlanShareDialog({ onClose }: { onClose: () => void }) {
                           onClick={() => void remove(member)}
                           className="rounded border border-line px-2 py-0.5 text-xs text-fg-subtle hover:border-line-strong hover:text-fg disabled:opacity-50"
                         >
-                          {busy === member.id ? "Removing" : "Remove"}
+                          {busy === member.id ? _i18nT("Removing") : _i18nT("Remove")}
                         </button>
                       ) : null}
                     </li>
@@ -247,7 +247,7 @@ export function PlanShareDialog({ onClose }: { onClose: () => void }) {
                   {busy === "leave" ? _i18nT("Leaving") : _i18nT("Leave this plan")}
                 </button>
               )}
-              {actionError ? <p className="text-sm text-red-400">{actionError}</p> : null}
+              {actionError ? <p className="text-sm text-red-400"><I18nText>{actionError}</I18nText></p> : null}
             </div>
           )}
         </div>
@@ -329,7 +329,7 @@ function AccountSearch({
         maxLength={24}
         className="h-8 w-full rounded border border-line-strong bg-surface-sunken px-2 text-sm outline-none focus:border-cyan-600"
       />
-      {error ? <p className="text-xs text-red-400">{error}</p> : null}
+      {error ? <p className="text-xs text-red-400"><I18nText>{error}</I18nText></p> : null}
       {typed && !searching && results && shown.length === 0 ? (
         <p className="text-xs text-fg-muted">
           <I18nText>No one by that name.</I18nText>

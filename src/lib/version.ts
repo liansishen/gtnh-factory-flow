@@ -1,16 +1,9 @@
 /**
- * The user-facing app version, shown as a chip in the header.
- *
- * ONE bump per RELEASE (a deploy to the live site), never one per commit,
- * with a single changelog entry covering it: minor for a release carrying
- * features (1.1.0), patch for one that is only fixes (1.0.1).
- *
- * Check `https://plan.playgtnh.dpdns.org/api/version` first. If it is BEHIND this
- * number, the release has not shipped yet: fold new work into the top
- * changelog entry and leave the number alone. If it MATCHES, everything is
- * live and the next change starts a new release.
- *
- * Every bump needs an entry in `src/lib/changelog.ts`, written for players:
- * a headline plus a few one-line notes.
+ * The first three version segments identify the incorporated upstream release.
+ * Increment the fourth segment once per fork deploy, with one changelog entry.
+ * Check the hosted /api/version first; keep an unshipped revision for that deploy.
+ * Change UPSTREAM_VERSION only when incorporating a new upstream release.
  */
-export const APP_VERSION = "4.3.3";
+export const UPSTREAM_VERSION = "4.3.0";
+export const FORK_REVISION = 4;
+export const APP_VERSION = `${UPSTREAM_VERSION}.${FORK_REVISION}`;

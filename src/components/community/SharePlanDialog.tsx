@@ -228,7 +228,7 @@ export function SharePlanDialog({
     try {
       await navigator.clipboard.writeText(url);
     } catch {
-      window.prompt("Copy this link:", url);
+      window.prompt(_i18nT("Copy this link:"), url);
       return;
     }
 
@@ -250,12 +250,12 @@ export function SharePlanDialog({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label={dialogTitle}
+        aria-label={_i18nT(dialogTitle)}
         className="pn pn-skin"
         data-wide=""
       >
         <div className="pn-title">
-          <span>{dialogTitle}</span>
+          <span><I18nText>{dialogTitle}</I18nText></span>
           <button type="button" onClick={onClose} aria-label={_i18nT("Close")} className="pn-x" />
         </div>
         <div className="pn-body">
@@ -321,7 +321,7 @@ export function SharePlanDialog({
                     )
                   : _i18nT("Private: only you can see it. The link opens nothing for anyone else.")}
               </p>
-              {error ? <p className="text-sm text-red-500">{error}</p> : null}
+              {error ? <p className="text-sm text-red-500"><I18nText>{error}</I18nText></p> : null}
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -490,7 +490,7 @@ export function SharePlanDialog({
                 </div>
               </div>
 
-              {error ? <p className="text-sm text-red-500">{error}</p> : null}
+              {error ? <p className="text-sm text-red-500"><I18nText>{error}</I18nText></p> : null}
 
               <div className="flex justify-end gap-2">
                 <button

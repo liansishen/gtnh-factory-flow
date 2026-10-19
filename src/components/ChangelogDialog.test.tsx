@@ -21,14 +21,14 @@ describe("the changelog in Chinese", () => {
   it("translates the newest three releases", () => {
     render(<ChangelogDialog onClose={vi.fn()} />);
     expect(screen.getByText("所有改动，最新的在最前。")).toBeTruthy();
+    expect(screen.getByText("菜单与机器设置汉化补全")).toBeTruthy();
+    expect(screen.getByText("版本号前三段对应官方版本，第四段记录本分支的发布次数。")).toBeTruthy();
     expect(screen.getByText("带电压等级的工具与机器名称汉化修复")).toBeTruthy();
     expect(screen.getByText("带电压等级的工具、机器外壳和组件现会完整显示中文名称。")).toBeTruthy();
     expect(screen.getByText("气锤名称在显示和搜索中现会保留正确的 LV、MV、HV 等级。")).toBeTruthy();
     expect(screen.getByText("中文和手机端提示显示修复")).toBeTruthy();
     expect(screen.getByText("工具栏和抽屉按钮的提示现会随界面语言切换。")).toBeTruthy();
     expect(screen.getByText("物品提示会隐藏原始 NBT 技术数据，配方和导出的方案仍保留完整数据。")).toBeTruthy();
-    expect(screen.getByText("在线规划器已迁至新地址")).toBeTruthy();
-    expect(screen.getByText("在线规划器现已迁至 plan.playgtnh.dpdns.org。")).toBeTruthy();
   });
 
   it("translates the Full history count through the dynamic rule", () => {
@@ -41,6 +41,8 @@ describe("the changelog in Chinese", () => {
     render(<ChangelogDialog onClose={vi.fn()} />);
     expect(CHANGELOG.length - 3).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /完整历史/ }));
+    expect(screen.getByText("在线规划器已迁至新地址")).toBeTruthy();
+    expect(screen.getByText("在线规划器现已迁至 plan.playgtnh.dpdns.org。")).toBeTruthy();
     expect(screen.getByText("支持中文、英文和拼音搜索")).toBeTruthy();
     expect(screen.getByRole("link", { name: "翻译来源与许可" }).getAttribute("href")).toBe("/third-party-notices.txt");
     expect(screen.getByText("Reports from the mod are checked")).toBeTruthy();

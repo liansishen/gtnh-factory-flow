@@ -99,4 +99,24 @@ describe("power search pinyin", () => {
       "xl-turbo-gas-turbine",
     ]);
   });
+
+  it("finds a machine by the Chinese name the picker shows it under", () => {
+    // The dictionary knows these machine names whole, so the planned English
+    // cannot spell them: the Chinese label itself answers.
+    expect(searchPowerSources("固体氧化物燃料电池").map((hit) => hit.source.id)).toEqual([
+      "solid-oxide-fuel-cell-1",
+      "solid-oxide-fuel-cell-2",
+    ]);
+    expect(searchPowerSources("XL涡轮燃气轮机").map((hit) => hit.source.id)).toEqual(["xl-turbo-gas-turbine"]);
+    expect(searchPowerSources("啊啊啊")).toEqual([]);
+  });
+
+  it("keeps the dialed setting when a Chinese fuel name answers", () => {
+    const phenol = searchPowerSources("苯酚").find(
+      (hit) => hit.source.id === "universal-chemical-fuel-engine",
+    );
+    expect(phenol?.via?.direction).toBe("takes");
+    expect(phenol?.via?.name).toBe("Phenol");
+    expect(hitPlacementSettings(phenol!)).toEqual({ fuel: "Phenol" });
+  });
 });

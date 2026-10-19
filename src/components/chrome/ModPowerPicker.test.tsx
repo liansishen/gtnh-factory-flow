@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { setLocale } from "@/lib/i18n/locale";
+import { translateMessage } from "@/lib/i18n/messages";
 import { useFactoryStore } from "@/store/factory-store";
 import { ModPowerPicker } from "./ModPowerPicker";
 
@@ -29,6 +31,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   useFactoryStore.setState({ powerMenuOpen: false });
+  setLocale("en");
 });
 
 const titles = () => [...document.querySelectorAll(".mp-brass span")].map((element) => element.textContent);
@@ -108,5 +111,120 @@ describe("the non-recipe machines picker", () => {
       fireEvent.keyDown(window, { key: "Escape" });
     });
     expect(useFactoryStore.getState().powerMenuOpen).toBe(false);
+  });
+});
+
+/** The Chinese words the shared dictionaries already answer, read through the same function the app uses. */
+const zh = (source: string) => translateMessage(source, "zh-CN");
+
+describe("the non-recipe machines picker in Chinese", () => {
+  const searchBox = () => screen.getByPlaceholderText(zh("Machine, fuel, or product..."));
+
+  beforeEach(() => setLocale("zh-CN"));
+
+  it("translates the sheet, its groups, its machines and its filter keys", () => {
+    render(<ModPowerPicker />);
+    expect(screen.getByRole("dialog", { name: "非配方机器" })).toBeTruthy();
+    expect(document.querySelector(".mp-title")?.textContent).toBe("非配方机器");
+    expect(titles()).toEqual(expect.arrayContaining(["其他", "发电机", "涡轮机", "反应堆", "终局"]));
+    const gasTurbine = document.querySelector('[data-source="gas-turbine"]')!;
+    expect(gasTurbine.textContent).toContain("燃气涡轮");
+    // The tier tag is a canonical label, not copy: it stays the game's own.
+    expect(gasTurbine.querySelector(".mp-tier")?.textContent).toBe("LV");
+    expect([...document.querySelectorAll(".mp-head .ml-drop")].map((key) => key.textContent)).toEqual([
+      zh("All types"),
+      zh("All tiers"),
+    ]);
+  });
+
+  it("shows the type menu in Chinese and still narrows the board", () => {
+    render(<ModPowerPicker />);
+    fireEvent.click(screen.getByText(zh("All types")));
+    const menu = screen.getByRole("menu", { name: zh("Type") });
+    const rows = [...menu.querySelectorAll(".mm-row")];
+    expect(rows.map((row) => row.textContent)).toEqual(
+      expect.arrayContaining(["其他", "涡轮机", "反应堆"]),
+    );
+    fireEvent.click(rows.find((row) => row.textContent === "涡轮机")!);
+    expect(titles()).toEqual(["涡轮机"]);
+  });
+
+  it("finds a machine by the Chinese name it is shown under", () => {
+    render(<ModPowerPicker />);
+    fireEvent.change(searchBox(), { target: { value: "固体氧化物燃料电池" } });
+    expect(document.querySelector('[data-source="solid-oxide-fuel-cell-1"]')).toBeTruthy();
+    expect(document.querySelector('[data-source="solid-oxide-fuel-cell-1"]')?.textContent).toContain(
+      "固体氧化物燃料电池 Mk I",
+    );
+  });
+
+  it("finds a fuel by its Chinese name and places the canonical setting", () => {
+    render(<ModPowerPicker />);
+    fireEvent.change(searchBox(), { target: { value: "苯酚" } });
+    const tile = document.querySelector('[data-source="universal-chemical-fuel-engine"]')!;
+    const via = tile.querySelector(".mp-via")!;
+    expect(via.textContent).toContain("苯酚");
+    expect(via.textContent).not.toMatch(/Takes|Makes|Phenol/);
+    fireEvent.click(tile);
+    expect(added.source).toHaveBeenCalledWith("universal-chemical-fuel-engine", { fuel: "Phenol" });
+  });
+
+  it("translates the planning cards and finds them by their Chinese names", () => {
+    render(<ModPowerPicker />);
+    fireEvent.change(searchBox(), { target: { value: "流体储罐" } });
+    const tile = document.querySelector('[data-source="fluid-tank"]')!;
+    expect(tile.textContent).toContain("流体储罐");
+  });
+
+  it("says nothing matched, in Chinese", () => {
+    render(<ModPowerPicker />);
+    fireEvent.change(searchBox(), { target: { value: "zzzz-nothing" } });
+    expect(document.querySelector(".mp-none")?.textContent).toBe(zh("No machine burns, makes or is named that."));
+  });
+
+  it("translates the preview of the machine the mouse rests on", () => {
+    vi.useFakeTimers();
+    try {
+      render(<ModPowerPicker />);
+      fireEvent.mouseEnter(document.querySelector('[data-source="gas-turbine"]')!);
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+      const preview = document.querySelector(".mp-preview")!;
+      expect(preview.querySelector(".mp-preview-name")?.textContent).toBe("燃气涡轮");
+      expect(preview.querySelector(".mp-preview-kind")?.textContent).toBe("发电机，解锁于 LV");
+      expect(preview.querySelector(".mp-preview-blurb")?.textContent).toBe("燃烧苯及其他气体燃料。");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("translates the preview of a planning card", () => {
+    vi.useFakeTimers();
+    try {
+      render(<ModPowerPicker />);
+      fireEvent.mouseEnter(document.querySelector('[data-source="custom-rate"]')!);
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+      const preview = document.querySelector(".mp-preview")!;
+      expect(preview.querySelector(".mp-preview-name")?.textContent).toBe(zh("Custom Rate"));
+      expect(preview.querySelector(".mp-preview-kind")?.textContent).toBe("其他");
+      expect(preview.querySelector(".mp-preview-blurb")?.textContent).toBe(
+        "自定义速率：用旋钮供给或消耗任意资源。",
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("goes back to the English words when the language does", () => {
+    render(<ModPowerPicker />);
+    expect(document.querySelector(".mp-title")?.textContent).toBe("非配方机器");
+    act(() => setLocale("en"));
+    expect(document.querySelector(".mp-title")?.textContent).toBe("NON-RECIPE MACHINES");
+    expect(titles()).toContain("GENERATORS");
+    act(() => setLocale("zh-CN"));
+    expect(document.querySelector(".mp-title")?.textContent).toBe("非配方机器");
   });
 });

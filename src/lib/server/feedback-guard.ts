@@ -31,6 +31,8 @@ const DEVICE =
 
 /** The web planner's device id: `web-` and a UUID, made once in the browser. */
 const WEB_DEVICE = /^web-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+/** Web releases carry an optional fourth segment for the fork revision. */
+const WEB_VERSION = /^\d+\.\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.+-]+)?$/;
 
 /** Where a report says it came from; the game's reports say nothing. */
 export function originOf(report: FeedbackReport): "game" | "web" {
@@ -46,7 +48,7 @@ export function looksSentByTheWeb(report: FeedbackReport): boolean {
   return (
     originOf(report) === "web" &&
     WEB_DEVICE.test(report.deviceId) &&
-    MOD_VERSION.test(v.mod) &&
+    WEB_VERSION.test(v.mod) &&
     v.pack === "" &&
     v.java === "" &&
     OS.test(v.os) &&

@@ -1,5 +1,5 @@
 "use client";
-import { I18nText, useT } from "@/lib/i18n/react";
+import { I18nText, useGameName, useT } from "@/lib/i18n/react";
 
 
 import { useMemo, useRef, useState } from "react";
@@ -18,6 +18,7 @@ import {
   toggledPins,
   type SettingControl,
 } from "./settings-model";
+import { localizeFormulaResult } from "./formula-result";
 import { workingLines } from "./working-lines";
 
 /** Each setting's number in a colour of its own, as on the mod's sheet. */
@@ -51,6 +52,7 @@ function Term({ term }: { term: FormulaTerm }) {
 }
 
 function FormulaRows({ lines }: { lines: FormulaLine[] }) {
+  const _i18nT = useT();
   return (
     <>
       <div className="cs-title"><I18nText>Formulas</I18nText></div>
@@ -64,7 +66,7 @@ function FormulaRows({ lines }: { lines: FormulaLine[] }) {
           </span>
           <span className="cs-f-result" data-tone={entry.tone}>
             <I18nText>{entry.math.length > 0 ? "= " : ""}</I18nText>
-            {entry.result}
+            {localizeFormulaResult(entry.result, _i18nT)}
           </span>
         </div>
       ))}
@@ -89,6 +91,7 @@ function PinGlyph() {
  */
 export function SettingsSheet({ nodeId, anchor, onClose }: { nodeId: string; anchor: MenuAnchor; onClose: () => void }) {
   const _i18nT = useT();
+  const _i18nName = useGameName();
   const project = useFactoryStore((state) => state.project);
   const locked = useFactoryStore((state) => state.isReadOnly || state.checklistMode);
   const updateNode = useFactoryStore((state) => state.updateNode);
@@ -116,12 +119,12 @@ export function SettingsSheet({ nodeId, anchor, onClose }: { nodeId: string; anc
 
   return (
     <>
-      <MenuPortal anchor={anchor} width={wide ? (none ? 597 : 813) : 330} maxHeight={660} label="Machine settings" onClose={onClose} keepOpenOn="[data-cc-sheet]">
+      <MenuPortal anchor={anchor} width={wide ? (none ? 597 : 813) : 330} maxHeight={660} label={_i18nT("Machine settings")} onClose={onClose} keepOpenOn="[data-cc-sheet]">
         <div ref={sheetRef} className="cs-body" data-cc-sheet="" style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
           <div style={{ display: "flex", alignItems: "stretch", minHeight: 0, overflowY: "auto" }}>
             <div className="cs-col" style={{ flex: wide ? "0 0 auto" : "1 1 auto", minWidth: wide ? (none ? 220 : 250) : 0 }}>
               <div className="cs-title"><I18nText>Settings</I18nText></div>
-              {none ? <div className="cs-none">{NONE}</div> : null}
+              {none ? <div className="cs-none"><I18nText>{NONE}</I18nText></div> : null}
               {controls.map((control) => {
                 const pinned = isPinned(project, machine, control);
                 return (
@@ -144,14 +147,16 @@ export function SettingsSheet({ nodeId, anchor, onClose }: { nodeId: string; anc
                       className="cs-pin"
                       data-on={pinned ? "" : undefined}
                       aria-pressed={pinned}
-                      aria-label={_i18nT(pinned ? `Unpin ${control.label} from the card` : `Pin ${control.label} to the card`)}
+                      aria-label={pinned
+                        ? `${_i18nT("Unpin")} ${_i18nName(control.label)} ${_i18nT("from the card")}`
+                        : `${_i18nT("Pin")} ${_i18nName(control.label)} ${_i18nT("to the card")}`}
                       onClick={() => {
                         if (!locked) setSettingPins(machine, toggledPins(project, machine, controls, control.id));
                       }}
                     >
                       <PinGlyph />
                     </button>
-                    <span className="cs-label"><I18nText>{control.label}</I18nText></span>
+                    <span className="cs-label"><I18nText game>{control.label}</I18nText></span>
                     <div
                       role="button"
                       tabIndex={0}
@@ -161,7 +166,7 @@ export function SettingsSheet({ nodeId, anchor, onClose }: { nodeId: string; anc
                       }}
                     >
                       {control.icon ? <ArtBox src={control.icon} size={16} /> : null}
-                      <span className="cs-value">{control.value}</span>
+                      <span className="cs-value"><I18nText game>{control.value}</I18nText></span>
                       <span className="cs-chev" />
                     </div>
                   </div>

@@ -799,7 +799,7 @@ export function StripChip({
         onStep(chip.id, event.deltaY < 0 ? 1 : -1);
       }}
     >
-      {chip.value}
+      <I18nText game>{chip.value}</I18nText>
     </div>
   );
 }

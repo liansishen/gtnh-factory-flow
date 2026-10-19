@@ -129,6 +129,16 @@ describe("what a report from the web planner looks like", () => {
     expect(looksSentByTheGame(webReport())).toBe(false);
   });
 
+  it("accepts four-segment fork releases and keeps malformed versions out", () => {
+    const withVersion = (mod: string) => webReport({ versions: { mod, pack: "", java: "", os: "Win32" } });
+    expect(looksSentByTheWeb(withVersion("4.3.0.4"))).toBe(true);
+    expect(looksGenuine(withVersion("4.3.0.10"))).toBe(true);
+    for (const mod of ["4.3", "4.3.0.4.1", "4.3.0.x", "4.3.0."]) {
+      expect(looksSentByTheWeb(withVersion(mod)), mod).toBe(false);
+    }
+    expect(looksSentByTheGame(report({ versions: { mod: "4.3.0.4", pack: "2.9.0-RC-2", java: "21", os: "Windows 11" } }))).toBe(false);
+  });
+
   it("is refused with the game's shapes, a Java, a log or a missing origin", () => {
     expect(looksSentByTheWeb(webReport({ origin: undefined }))).toBe(false);
     expect(looksSentByTheWeb(webReport({ deviceId: DEVICE }))).toBe(false);

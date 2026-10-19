@@ -1,5 +1,5 @@
 "use client";
-import { useT } from "@/lib/i18n/react";
+import { I18nText, useT } from "@/lib/i18n/react";
 
 import "./chrome.css";
 
@@ -168,7 +168,7 @@ function BoardKeys({ tight }: { tight: boolean }) {
           menuAnchor
         >
           <PixelBolt className="mb-bolt" />
-          {tight ? null : "Non-recipe"}
+          {tight ? null : <I18nText>Non-recipe</I18nText>}
         </BarKey>
         <BarKey
           id="undo"

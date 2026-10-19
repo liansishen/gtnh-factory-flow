@@ -1,5 +1,5 @@
 "use client";
-import { I18nText, useT } from "@/lib/i18n/react";
+import { I18nText, useGameName, useT } from "@/lib/i18n/react";
 
 import "./chrome.css";
 import "./power-picker.css";
@@ -165,11 +165,9 @@ export function ModPowerPicker() {
     const out: Entry[] = [];
     if (tierFilter === "all" && (groupFilter === "all" || groupFilter === "other")) {
       for (const card of OTHERS) {
-        if (
-          !needle ||
-          card.name.toLowerCase().includes(needle) ||
-          card.blurb.toLowerCase().includes(needle)
-        ) {
+        // A planning card is not a machine: it is searched by its own words in either language.
+        const text = [card.name, card.blurb, _i18nT(card.name), _i18nT(card.blurb)];
+        if (!needle || text.some((each) => each.toLowerCase().includes(needle))) {
           out.push({ kind: "other", card });
         }
       }
@@ -181,7 +179,7 @@ export function ModPowerPicker() {
       out.push({ kind: "source", hit });
     }
     return out;
-  }, [open, query, groupFilter, tierFilter]);
+  }, [open, query, groupFilter, tierFilter, _i18nT]);
 
   const place = useCallback(
     (entry: Entry) => {
@@ -205,7 +203,7 @@ export function ModPowerPicker() {
 
   const searching = query.trim() !== "";
   const groupTitle = (id: PowerGroupId) =>
-    POWER_GROUPS.find((group) => group.id === id)?.name ?? id;
+    _i18nT(POWER_GROUPS.find((group) => group.id === id)?.name ?? id);
   const inGroup = (id: PowerGroupId) =>
     entries.filter((entry) =>
       entry.kind === "other" ? id === "other" : entry.hit.source.group === id,
@@ -394,9 +392,11 @@ function Tile({
   onPlace: (entry: Entry) => void;
   onRest: (rect: DOMRect | undefined) => void;
 }) {
+  const t = useT();
+  const gameName = useGameName();
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
-  const name = entry.kind === "other" ? entry.card.name : entry.hit.source.name;
+  const name = entry.kind === "other" ? t(entry.card.name) : gameName(entry.hit.source.name);
   const tier = entry.kind === "other" ? undefined : entry.hit.source.unlock;
   const via = entry.kind === "source" ? entry.hit.via : undefined;
   return (
@@ -423,8 +423,7 @@ function Tile({
       {tier ? <TierTag tier={tier} /> : null}
       {via ? (
         <span className="mp-via">
-          {via.direction === "takes" ? "Takes " : "Makes "}
-          {via.name}
+          {t(via.direction === "takes" ? "Takes" : "Makes")} {gameName(via.name)}
         </span>
       ) : null}
     </div>
@@ -600,12 +599,14 @@ function TankArt({ size }: { size: number }) {
 
 /** The machine under the mouse, beside its tile: its picture large, its name, kind and unlock tier, what it does. */
 function Preview({ entry, rect, scale }: { entry: Entry; rect: DOMRect; scale: number }) {
+  const t = useT();
+  const gameName = useGameName();
   const source = entry.kind === "source" ? entry.hit.source : undefined;
-  const name = source?.name ?? (entry.kind === "other" ? entry.card.name : "");
+  const name = source ? gameName(source.name) : entry.kind === "other" ? t(entry.card.name) : "";
   const kind = source
-    ? (POWER_GROUPS.find((group) => group.id === source.group)?.name ?? "")
-    : "Other";
-  const blurb = source?.blurb ?? (entry.kind === "other" ? entry.card.blurb : "");
+    ? t(POWER_GROUPS.find((group) => group.id === source.group)?.name ?? "")
+    : t("Other");
+  const blurb = source?.blurb ? t(source.blurb) : entry.kind === "other" ? t(entry.card.blurb) : "";
   const width = 190;
   const vw = window.innerWidth / scale;
   let left = rect.right / scale + 6;
@@ -620,13 +621,12 @@ function Preview({ entry, rect, scale }: { entry: Entry; rect: DOMRect; scale: n
       <div className="mp-preview-name">{name}</div>
       <div className="mp-preview-kind">
         {kind}
-        {source?.unlock ? `, unlocks at ${source.unlock}` : ""}
+        {source?.unlock ? `${t(", unlocks at")} ${source.unlock}` : ""}
       </div>
       <div className="mp-preview-blurb">{blurb}</div>
       {entry.kind === "source" && entry.hit.via ? (
         <div className="mp-via">
-          {entry.hit.via.direction === "takes" ? "Takes " : "Makes "}
-          {entry.hit.via.name}
+          {t(entry.hit.via.direction === "takes" ? "Takes" : "Makes")} {gameName(entry.hit.via.name)}
         </div>
       ) : null}
     </div>

@@ -172,4 +172,14 @@ describe("the board's toolbar", () => {
       expect(JSON.parse(key(id).getAttribute("data-tip")!).title.length).toBeGreaterThan(3);
     }
   });
+
+  it("translates the Non-recipe key's own words, not only its tip", () => {
+    renderStrip();
+    expect(key("nonrecipe").textContent).toBe("Non-recipe");
+    act(() => setLocale("zh-CN"));
+    expect(key("nonrecipe").textContent).toBe("非配方");
+    expect(key("nonrecipe").getAttribute("aria-label")).toBe("非配方机器");
+    act(() => setLocale("en"));
+    expect(key("nonrecipe").textContent).toBe("Non-recipe");
+  });
 });

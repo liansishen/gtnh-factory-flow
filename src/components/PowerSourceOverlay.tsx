@@ -1,5 +1,5 @@
 "use client";
-import { I18nText, useT } from "@/lib/i18n/react";
+import { I18nText, useGameName, useT } from "@/lib/i18n/react";
 
 
 import { useEffect, useMemo, useState } from "react";
@@ -177,7 +177,7 @@ export function PowerSourceOverlay() {
                 <option value="all"><I18nText>All types</I18nText></option>
                 {POWER_GROUPS.map((group) => (
                   <option key={group.id} value={group.id}>
-                    {group.name}
+                    {_i18nT(group.name)}
                   </option>
                 ))}
               </select>
@@ -188,7 +188,7 @@ export function PowerSourceOverlay() {
                 aria-label={_i18nT("Unlock tier")}
                 className={[
                   "h-9 shrink-0 border-2 border-[var(--mc-33)] bg-[#17191d] px-1.5 text-sm text-neutral-100 shadow-[inset_2px_2px_0_#30343b,inset_-2px_-2px_0_#050607] outline-none",
-                  compact ? "w-20" : "w-24",
+                  "w-24",
                 ].join(" ")}
               >
                 <option value="all"><I18nText>All tiers</I18nText></option>
@@ -254,7 +254,7 @@ export function PowerSourceOverlay() {
                             {/* The pixel face has one weight, so the half
                                 pixel of shadow is what bold means here. */}
                             <span className="truncate text-[16px] font-black uppercase leading-none text-amber-100 [text-shadow:0.5px_0_0_currentColor]">
-                              {group.name}
+                              {_i18nT(group.name)}
                             </span>
                             <span className="ml-auto text-[13px] font-black leading-none tabular-nums text-amber-100/60">
                               {groupHits.length}
@@ -317,12 +317,15 @@ function PowerSourceCard({
   hit: PowerSearchHit;
   onPlace: (hit: PowerSearchHit) => void;
 }) {
+  const t = useT();
+  const gameName = useGameName();
   const { source, via } = hit;
   const structureArt = getPowerStructureArt(source.id);
   const icon = getPowerMachineIcon(source.id);
   return (
     <button
       type="button"
+      data-source={source.id}
       onClick={() => onPlace(hit)}
       className="group flex w-full cursor-pointer flex-col border-2 border-[var(--mc-33)] bg-[var(--mc-71)] text-left hover:border-amber-300/70 hover:bg-[var(--mc-85)]"
     >
@@ -365,7 +368,7 @@ function PowerSourceCard({
       <span className="flex min-w-0 flex-col gap-0.5 px-2 py-1">
         <span className="flex items-center gap-1.5">
           <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-[var(--mc-ink)]">
-            {source.name}
+            {gameName(source.name)}
           </span>
           {source.unlock ? <TierBadge tier={source.unlock} /> : null}
         </span>
@@ -378,7 +381,7 @@ function PowerSourceCard({
             ) : (
               <ArrowLeft className="h-3 w-3 shrink-0" aria-hidden />
             )}
-            <I18nText>{via.direction === "takes" ? `Takes ${via.name}` : `Makes ${via.name}`}</I18nText>
+            {t(via.direction === "takes" ? "Takes" : "Makes")} {gameName(via.name)}
           </span>
         ) : null}
       </span>

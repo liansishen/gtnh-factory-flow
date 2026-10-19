@@ -161,13 +161,13 @@ async function powerPinyin(viewport, place = false) {
     const cards = sheet.locator("button.group");
     for (const query of ["ranqiwolun", "rqwl", "ranqi涡轮"]) {
       await input.fill(query);
-      await cards.filter({ has: page.getByText("Gas Turbine", { exact: true }) }).waitFor();
+      await sheet.locator('[data-source="gas-turbine"]').waitFor();
       assert.equal(await cards.count(), 3);
     }
     await input.fill("zzzzzqpyn");
     await page.waitForFunction(() => document.querySelectorAll('section[aria-label] button.group').length === 0);
     await input.fill("benfen");
-    await cards.filter({ has: page.getByText("Universal Chemical Fuel Engine", { exact: true }) }).waitFor();
+    await sheet.locator('[data-source="universal-chemical-fuel-engine"]').waitFor();
     await observe("pinyin-power-fuel-mobile");
     await page.keyboard.press("Escape");
     await sheet.waitFor({ state: "hidden" });
@@ -355,6 +355,8 @@ try {
   await page.getByRole("menuitem", { name: /What's new|更新内容/ }).click();
   await appDialog.waitFor();
   await observe("changelog-desktop-zh");
+  assert.match(await appDialog.innerText(), /菜单与机器设置汉化补全/);
+  await appDialog.getByRole("button", { name: /完整历史/ }).click();
   assert.match(await appDialog.innerText(), /支持中文、英文和拼音搜索/);
   assert.match(await appDialog.innerText(), /在线规划器已迁至新地址/);
   assert.match(await appDialog.innerText(), /中文和手机端提示显示修复/);
