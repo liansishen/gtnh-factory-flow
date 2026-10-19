@@ -92,3 +92,26 @@ it("returns display strings for object-prototype keys", () => {
     expect(typeof translateGameName(name, "zh-CN")).toBe("string");
   }
 });
+
+describe("NBT technical data", () => {
+  it("keeps NBT data verbatim in both languages", () => {
+    const nbt = 'NBT: {Name:"Saccharomyces escherichia"}';
+    expect(resolveGameName(nbt, "zh-CN")).toEqual({ text: nbt, source: "fallback" });
+    expect(resolveGameName(nbt, "en")).toEqual({ text: nbt, source: "fallback" });
+    expect(translateGameName(nbt, "zh-CN")).toBe(nbt);
+  });
+
+  it("keeps NBT data verbatim under formatting codes and leading whitespace", () => {
+    for (const raw of ["§7NBT: {x: 1}", '  NBT: {Name:"Steel Plate"}', "nbt:{}"]) {
+      expect(resolveGameName(raw, "zh-CN")).toEqual({ text: raw, source: "fallback" });
+      expect(resolveGameName(raw, "en")).toEqual({ text: raw, source: "fallback" });
+    }
+  });
+
+  it("never translates an NBT key's value, and still translates a normal name", () => {
+    // "Steel Plate" inside the key would otherwise compose to 钢板.
+    expect(translateGameName('NBT: {Name:"Steel Plate"}', "zh-CN")).toBe('NBT: {Name:"Steel Plate"}');
+    // Only the NBT: label is technical: braces and percents are not a blanket block.
+    expect(translateGameName("Steel Plate", "zh-CN")).toBe("钢板");
+  });
+});

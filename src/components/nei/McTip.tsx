@@ -6,6 +6,7 @@ import "./nei.css";
 import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { getUiScale } from "@/lib/ui-scale";
+import { isNbtTooltipLine } from "@/lib/tooltip-text";
 
 /**
  * Minecraft's tooltip text: the name first in white, then grey lines, the mod's name last in blue italics, the
@@ -120,7 +121,7 @@ export function itemTipLines(item: {
 }): McTipLine[] {
   const lines: McTipLine[] = [{ text: item.name, tone: "name" }];
   for (const line of item.tooltip ?? []) {
-    if (line.trim() && line !== item.name) lines.push({ text: line });
+    if (line.trim() && line !== item.name && !isNbtTooltipLine(line)) lines.push({ text: line });
   }
   for (const line of item.extra ?? []) lines.push({ text: line });
   const colon = item.id.indexOf(":");

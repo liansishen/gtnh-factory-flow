@@ -64,6 +64,57 @@ describe("i18n report walker", () => {
     expect(excluded.some((entry) => entry.reason === "css-class-name" && entry.text === "ms-row")).toBe(true);
   });
 
+  it("reads BarKey tip, tipSub and ariaLabel literals as UI copy", () => {
+    const source = `
+      export function Bar() {
+        return <BarKey id="undo" tip="Undo (Ctrl+Z)" tipSub="Reverses the last change" ariaLabel="Undo" />;
+      }
+    `;
+    const { candidates, excluded } = extractCandidates("src/components/chrome/BoardToolbar.tsx", source);
+    const texts = candidates.map((candidate) => `${candidate.kind}:${candidate.evidence}:${candidate.text}`);
+
+    expect(texts).toEqual([
+      "jsx-attr:verified:Undo (Ctrl+Z)",
+      "jsx-attr:verified:Reverses the last change",
+      "jsx-attr:verified:Undo",
+    ]);
+    expect(excluded.some((entry) => entry.reason === "non-user-attribute" && entry.text === "undo")).toBe(true);
+  });
+
+  it("keeps id and className out of the copy inventory", () => {
+    const { candidates, excluded } = extractCandidates(
+      "src/components/chrome/BoardToolbar.tsx",
+      `<BarKey id="plans" className="mb-key" tip="Plans" />;`,
+    );
+
+    expect(candidates.map((candidate) => candidate.text)).toEqual(["Plans"]);
+    expect(excluded.some((entry) => entry.reason === "css-class-name" && entry.text === "mb-key")).toBe(true);
+    expect(excluded.some((entry) => entry.reason === "non-user-attribute" && entry.text === "plans")).toBe(true);
+  });
+
+  it("reads static strings inside user-facing attribute expressions", () => {
+    const { candidates, excluded } = extractCandidates(
+      "src/components/chrome/ModBar.tsx",
+      `<BarKey id="x" tip={"Plans"} tipSub={planLayout ? "Overview: inputs, outputs and machines" : "Resources"} ariaLabel={label} onClick={() => {}} />;`,
+    );
+
+    expect(candidates.map((candidate) => `${candidate.kind}:${candidate.evidence}:${candidate.text}`)).toEqual([
+      "jsx-attr:verified:Plans",
+      "jsx-attr:verified:Overview: inputs, outputs and machines",
+      "jsx-attr:verified:Resources",
+    ]);
+    expect(candidates.some((candidate) => candidate.text === "label")).toBe(false);
+    expect(excluded.some((entry) => entry.reason === "non-literal-user-attribute")).toBe(true);
+
+    const wrapped = extractCandidates(
+      "src/components/chrome/BoardToolbar.tsx",
+      "<BarKey id=\"x\" tip={(\"Undo\")} tipSub={`Redo`} ariaLabel={`Redo ${count}`} />;",
+    );
+
+    expect(wrapped.candidates.map((candidate) => candidate.text)).toEqual(["Undo", "Redo"]);
+    expect(wrapped.excluded.filter((entry) => entry.reason === "non-literal-user-attribute")).toHaveLength(1);
+  });
+
   it("marks a translate-named call without the i18n import as unbacked", () => {
     const source = `const t = (s: string) => s; export const x = t("Hello");`;
     const { candidates } = extractCandidates("src/lib/thing.ts", source);

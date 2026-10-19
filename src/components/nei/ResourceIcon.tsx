@@ -21,6 +21,7 @@ import {
   trimTrailingDecimalZeros,
 } from "@/lib/model/resources";
 import { isProgrammedCircuitResource } from "@/lib/model/programmed-circuit";
+import { isNbtTooltipLine } from "@/lib/tooltip-text";
 import { MinecraftTooltip } from "./MinecraftTooltip";
 import { getSpriteFitScale, spriteFitStyle } from "./sprite-fit";
 
@@ -441,10 +442,6 @@ function isBeeSpeciesResource(resource: Pick<ResourceAmount, "id">) {
 function isNotConsumedTooltipLine(line: string) {
   const normalized = line.toLowerCase();
   return normalized.includes("not consumed") || normalized.includes("does not get consumed");
-}
-
-function isNbtTooltipLine(line: string) {
-  return line.trim().toLowerCase().startsWith("nbt:");
 }
 
 function IconImage({

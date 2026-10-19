@@ -40,7 +40,10 @@ export interface Extraction {
 /** Props whose string value is read by a person, so they are UI copy. */
 const USER_FACING_ATTRS = new Set([
   "title",
+  "tip",
+  "tipSub",
   "aria-label",
+  "ariaLabel",
   "aria-description",
   "aria-placeholder",
   "placeholder",
@@ -188,6 +191,27 @@ export function extractCandidates(fileName: string, source: string): Extraction 
     }
   };
 
+  /** Static strings a user-facing attribute expression holds: the literal, a parenthesized one, or both branches of a conditional. */
+  const addUserFacingExpression = (expression: ts.Expression): void => {
+    if (ts.isStringLiteral(expression) || ts.isNoSubstitutionTemplateLiteral(expression)) {
+      const text = normalizeJsxText(expression.text);
+      if (text) {
+        add(text, "jsx-attr", "verified", expression);
+      }
+      return;
+    }
+    if (ts.isParenthesizedExpression(expression)) {
+      addUserFacingExpression(expression.expression);
+      return;
+    }
+    if (ts.isConditionalExpression(expression)) {
+      addUserFacingExpression(expression.whenTrue);
+      addUserFacingExpression(expression.whenFalse);
+      return;
+    }
+    excluded.push({ reason: "non-literal-user-attribute", text: "", file: fileName, ...locate(expression) });
+  };
+
   const visit = (node: ts.Node): void => {
     if (dataFile && ts.isPropertyAssignment(node) && dataProperties.has(node.name.getText(sourceFile).replace(/^['"]|['"]$/g, ""))) {
       addData(node.initializer);
@@ -233,6 +257,8 @@ export function extractCandidates(fileName: string, source: string): Extraction 
             ...at,
           });
         }
+      } else if (initializer && USER_FACING_ATTRS.has(name) && ts.isJsxExpression(initializer) && initializer.expression) {
+        addUserFacingExpression(initializer.expression);
       }
     }
 
@@ -538,11 +564,11 @@ export function buildReport(rootDir: string, generatedAt = new Date().toISOStrin
     tool: "tools/i18n-report.ts",
     locale: "zh-CN",
     notes: [
-      "Verified inventory = JSX text and user-facing attributes (title, aria-label, placeholder, alt, label): static strings in UI-facing syntax; runtime integration is verified separately.",
+      "Verified inventory = JSX text and user-facing attributes (title, tip, tipSub, aria-label, ariaLabel, placeholder, alt, label): static strings in UI-facing syntax; runtime integration is verified separately.",
       "Candidate = a string passed to a translate-named call; translatorBacked says whether the file imports the i18n translator. Data messages separately include settings, controls and changelog literals rendered through dynamic fields.",
       "Covered = the shipped translateMessage returns something other than its English input. Fallback is the honest gap.",
       "exact = the shipped translator answered from its merged catalogs; rule = a dynamic rule matched. Message lookup coverage is separate from runtime integration and name-generation quality.",
-      "Excluded (with reasons): identifiers, CSS class names, resource ids, paths, URLs, file names, tests, fixtures, examples, dev-only screens and the language control.",
+      "Excluded (with reasons): identifiers, CSS class names, resource ids, paths, URLs, file names, non-literal attribute expressions, tests, fixtures, examples, dev-only screens and the language control.",
     ],
     source: gitSource(rootDir),
     inventory: {

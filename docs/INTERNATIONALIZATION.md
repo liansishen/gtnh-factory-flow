@@ -58,6 +58,18 @@ object, its graph, the solved books (`lastResult`) and the serialized plan
 byte-for-byte identical, and a plan parsed under either language yields the same
 canonical ids.
 
+### Item tooltips and technical data
+
+`src/lib/tooltip-text.ts` identifies raw `NBT:` metadata. Item-list and recipe
+preview tooltips share the same filtering as `ResourceIcon`: NBT lines are
+hidden in the displayed tooltip while ordinary descriptions and recipe counts
+remain visible. The original resource and recipe arrays retain their NBT for
+export and machine rules such as bacterial culture identification. Name lookup
+also preserves an `NBT:` line verbatim if it reaches a display-name field.
+
+Toolbar tooltip sentences use exact runtime messages. The shared tooltip panel
+limits its width to the scaled viewport and wraps long titles on phones.
+
 ### Chinese, English and pinyin search
 
 `game-search.ts` prepares Chinese aliases for the shipped English search.
@@ -116,7 +128,7 @@ Read-only assets under `src/lib/i18n/`:
 | `messages-planner-zh.json` | planner-specific strings | 240 | authored here |
 | `messages-secondary-zh.json` | per-area additions | 169 | authored here |
 | `messages-inventory-zh.json` | inventory additions | 190 | authored here |
-| `messages-runtime-zh.json` | settings, controls, resource filters, current release notes | 129 | authored here |
+| `messages-runtime-zh.json` | settings, controls, toolbar tooltips, resource filters, current release notes | 150 | authored here |
 | `rules-zh.json` | community dynamic rules | 127 | community source |
 | `rules-planner-zh.json` | planner dynamic rules | 18 | authored here |
 | `rules-runtime-zh.json` | release history count | 1 | authored here |
@@ -166,9 +178,11 @@ application's existing supported line.
 `tools/i18n-report.ts` is the coverage tool. It walks the app's own TypeScript
 with the compiler API and inventories the strings written in UI-facing positions:
 
-- **verified inventory**: JSX text and the user-facing attributes (`title`,
-  `aria-label`, `aria-description`, `aria-placeholder`, `placeholder`, `alt`,
-  `label`). These are strings in UI-facing syntax; the report does not say that
+- **verified inventory**: JSX text and user-facing attributes (`title`, `tip`,
+  `tipSub`, `aria-label`, `ariaLabel`, `aria-description`, `aria-placeholder`,
+  `placeholder`, `alt`, `label`). Attribute expressions contribute static string
+  literals and conditional branches; dynamic expressions are excluded with a
+  reason. These are strings in UI-facing syntax; the report does not say that
   the component rendering one actually calls the translator.
 - **candidates**: strings passed to a translate-named call (`t`, `_i18nT`,
   `translate`, `translateMessage`, `tr`). `translatorBacked` records whether the
@@ -182,6 +196,12 @@ string, not whether a mounted component translates it. Runtime wiring is checked
 by the real browser test `node tools/browser-tests/i18n.mjs` (see AGENTS.md),
 which switches language on the running app and asserts the exported plan is
 unchanged.
+
+The focused regression `node tools/browser-tests/tooltips.mjs` hovers the actual
+English/Chinese toolbar keys on desktop and phone-sized viewports, checks the
+library and legacy route, and verifies hidden NBT remains in exported recipes.
+Set `I18N_EVIDENCE_DIR` and, for a non-default server, `APP_URL`.
+`CHROME_PATH` selects a browser executable; evidence belongs outside the repository.
 
 For each string it runs the shipped `translateMessage` and counts the result as
 covered (an exact entry or a dynamic rule) or fallback (the English source came
@@ -210,12 +230,16 @@ kind.
 
 A snapshot from the last run (regenerate for current numbers):
 
-- verified inventory: 508 of 508 (100%), 0 fallback
+- verified inventory: 548 of 566 (96.8%), 18 fallback
 - translation-call candidates: 386 of 386 (100%), 0 fallback
 - data messages: 200 of 1064 (18.8%), 864 fallback
-- all distinct inventoried strings: 1015 of 1879 (54.0%)
+- all distinct inventoried strings: 1052 of 1934 (54.4%)
 - name engine: 98.5% of 67,824 dataset display names (48,154 dictionary, 18,685
   generated, 985 fallback)
+
+The tooltip attributes and static conditional branches expand the inventory;
+the remaining 18 verified fallback strings are listed with locations in the
+report.
 
 The JSX/attribute and translation-call buckets measure lookup for the static
 strings they contain. The data bucket includes the full changelog history;
@@ -255,8 +279,9 @@ reported separately; 985 dataset names still fall back to English.
 3. Run `npm run i18n:report` and review `docs/i18n-missing.json`. The list is the
    work queue. A clean list means static lookup is complete, not that the app is
    translated at runtime.
-4. Run `npm run test` and the browser test
-   `node tools/browser-tests/i18n.mjs`. `plan-invariants.test.ts` fails if a
+4. Run `npm run test` and both browser tests:
+   `node tools/browser-tests/i18n.mjs` and
+   `node tools/browser-tests/tooltips.mjs`. `plan-invariants.test.ts` fails if a
    locale change ever touches a plan, its ids, its numbers or a player's own
-   text; the browser test switches language on the running app and pins the same
+   text; the browser tests switch language on the running app and pin the same
    invariant end to end.

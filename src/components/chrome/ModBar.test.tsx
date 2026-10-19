@@ -8,6 +8,7 @@ import { OPEN_FEEDBACK_EVENT } from "./chrome-events";
 import { ModBar } from "./ModBar";
 import { useCommunityAuthStore } from "@/store/community-auth-store";
 import { openLibrary, readLibraryTabState } from "@/lib/library/library-tab";
+import { setLocale } from "@/lib/i18n/locale";
 
 const viewport = vi.hoisted(() => ({ compact: false }));
 vi.mock("@/lib/compact-view", () => ({ isCompactViewport: () => viewport.compact, useIsCompactViewport: () => viewport.compact }));
@@ -57,7 +58,7 @@ beforeEach(() => {
   writeWorkspaceView({ averageMachineDraw: true });
   useCommunityAuthStore.setState({ user: undefined, hasHydrated: true });
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); setLocale("en"); });
 
 describe("the mod's top bar", () => {
   it("every key is in the Tab order and Enter or Space presses it", () => {
@@ -258,6 +259,35 @@ describe("the mod's top bar", () => {
       expect(key(id).getAttribute("data-tip-id"), id).toBe(`bar|${id}`);
       expect(JSON.parse(key(id).getAttribute("data-tip")!).title.length).toBeGreaterThan(3);
     }
+  });
+
+  it("switches each top-bar tooltip between full English and Chinese in place", () => {
+    renderBar();
+    const tips: Record<string, [string, string]> = {
+      plans: ["Plans: your plans, the ones shared with you, and Community", "方案库：你的方案、分享给你的方案和社区方案"],
+      share: ["Share this plan: invite people to edit it with you, or send a copy", "分享此方案：邀请他人共同编辑，或发送副本"],
+      account: ["Sign in: your plans are kept in your account, and shared from it", "登录：在账户中保存和分享方案"],
+      feedback: ["Feedback: report a bug, share an idea, or ask for help", "反馈：报告问题、提出建议或寻求帮助"],
+      settings: ["Settings", "设置"],
+      help: ["Help: the tour, and every control", "帮助：操作引导和全部控制说明"],
+    };
+    const originals = Object.fromEntries(Object.keys(tips).map((id) => [id, key(id)]));
+    for (const locale of ["en", "zh-CN", "en"] as const) {
+      act(() => setLocale(locale));
+      for (const [id, labels] of Object.entries(tips)) {
+        expect(key(id), id).toBe(originals[id]);
+        expect(JSON.parse(key(id).getAttribute("data-tip")!).title, id).toBe(labels[locale === "en" ? 0 : 1]);
+      }
+      expect(key("feedback").getAttribute("aria-label")).toBe(locale === "en" ? "Feedback" : "反馈");
+    }
+  });
+
+  it("translates the phone drawer tips as complete messages", () => {
+    viewport.compact = true;
+    renderBar();
+    act(() => setLocale("zh-CN"));
+    expect(JSON.parse(key("drawer-items").getAttribute("data-tip")!).title).toBe("物品：搜索物品并放置配方");
+    expect(JSON.parse(key("drawer-side").getAttribute("data-tip")!).title).toBe("概览：输入、产出和机器");
   });
 });
 

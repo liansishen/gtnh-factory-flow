@@ -31,4 +31,12 @@ describe("the runtime message catalog", () => {
       "完整历史（更早的 1 个版本）",
     );
   });
+
+  it("matches complete tooltip sentences before recipe-count rules", () => {
+    expect(translateMessage("Items: search and place recipes", "zh-CN")).toBe("物品：搜索物品并放置配方");
+    expect(translateMessage("Items: search and place recipes", "en")).toBe("Items: search and place recipes");
+    expect(translateMessage("1,234 recipes", "zh-CN")).toBe("1,234 个配方");
+    expect(translateMessage("1 recipe", "zh-CN")).toBe("1 个配方");
+    expect(translateMessage("3 recipes and more", "zh-CN")).toBe("3 recipes and more");
+  });
 });

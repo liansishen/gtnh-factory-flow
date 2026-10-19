@@ -20,6 +20,7 @@
  * or the assets: lookups are pure, and the derived indexes are cached lazily.
  */
 import type { Locale } from "./locale";
+import { isNbtTooltipLine } from "../tooltip-text";
 import gameDataMeta from "./game-data.meta.json";
 import gameNamesJson from "./game-names.zh-CN.json";
 import gameSearchJson from "./game-search.zh-CN.json";
@@ -198,6 +199,11 @@ export function resolveGameName(name: string, locale: Locale): GameNameResolutio
 function resolveUncached(name: string, locale: Locale): GameNameResolution {
   const cleaned = stripGameFormatting(name);
   if (!cleaned) {
+    return { text: name, source: "fallback" };
+  }
+
+  // Preserve NBT keys and values when technical data reaches a name label.
+  if (isNbtTooltipLine(cleaned)) {
     return { text: name, source: "fallback" };
   }
 

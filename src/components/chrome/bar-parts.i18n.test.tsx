@@ -27,4 +27,18 @@ describe("localized planner navigation", () => {
     expect(screen.getByText("Steel Plate")).toBeTruthy();
     expect(screen.queryByText("钢板")).toBeNull();
   });
+
+  it("translates the title and secondary hint while preserving their tooltip identity", () => {
+    const action = vi.fn();
+    render(<BarKey id="account" label="Account" tip="Account" tipSub="Sign out" onClick={action} />);
+    const key = screen.getByRole("button", { name: "Account" });
+    const read = () => JSON.parse(key.getAttribute("data-tip")!);
+    expect(read()).toEqual({ id: "bar|account", title: "Account", sub: "Sign out" });
+    act(() => setLocale("zh-CN"));
+    expect(read()).toEqual({ id: "bar|account", title: "账户", sub: "退出登录" });
+    fireEvent.click(key);
+    expect(action).toHaveBeenCalledTimes(1);
+    act(() => setLocale("en"));
+    expect(read()).toEqual({ id: "bar|account", title: "Account", sub: "Sign out" });
+  });
 });

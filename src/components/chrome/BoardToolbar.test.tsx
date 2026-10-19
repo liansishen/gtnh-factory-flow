@@ -6,6 +6,7 @@ import { useDesignStore } from "@/store/design-store";
 import { writeWorkspaceView } from "@/lib/workspace-view";
 import { BoardToolbar } from "./BoardToolbar";
 import { registerBoardCommands } from "./board-commands";
+import { setLocale } from "@/lib/i18n/locale";
 
 vi.mock("@/lib/compact-view", () => ({ isCompactViewport: () => false, useIsCompactViewport: () => false }));
 
@@ -27,7 +28,7 @@ beforeEach(() => {
   useDesignStore.setState({ designs: [], publicViews: [], activeDesignId: undefined });
   writeWorkspaceView({ averageMachineDraw: true });
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); setLocale("en"); });
 
 describe("the board's toolbar", () => {
   it("has the keys in the mod's order, in its words", () => {
@@ -39,6 +40,28 @@ describe("the board's toolbar", () => {
     expect(key("power").textContent).toBe("EU/t");
     expect(document.querySelector('[data-mb="peak"]')).toBeNull();
     expect(key("nonrecipe").textContent).toBe("Non-recipe");
+  });
+
+  it("translates every board key's tooltip and restores the original wording", () => {
+    renderStrip();
+    const tips: Record<string, [string, string]> = {
+      nonrecipe: ["Non-recipe machines: generators, turbines, boilers, reactors", "非配方机器：发电机、涡轮机、锅炉和反应堆"],
+      undo: ["Undo (Ctrl+Z)", "撤销（Ctrl+Z）"],
+      redo: ["Redo (Ctrl+Shift+Z or Ctrl+Y)", "重做（Ctrl+Shift+Z 或 Ctrl+Y）"],
+      arrange: ["Auto-arrange the plan (press again to stop)", "自动整理方案（再次点击可停止）"],
+      fit: ["Zoom to fit the whole plan", "缩放以显示整个方案"],
+      rate: ["Rate unit: per tick, second, minute or hour", "速率单位：每 tick、每秒、每分钟或每小时"],
+      power: ["Show power as EU/t, or as amps at each machine's tier", "以 EU/t 或各机器等级对应的安培数显示电力"],
+      annotate: ["Add a sticky note, box or arrow, or change the background", "添加便签、方框或箭头，或更改背景"],
+    };
+    const originals = Object.fromEntries(Object.keys(tips).map((id) => [id, key(id)]));
+    for (const locale of ["en", "zh-CN", "en"] as const) {
+      act(() => setLocale(locale));
+      for (const [id, labels] of Object.entries(tips)) {
+        expect(key(id), id).toBe(originals[id]);
+        expect(JSON.parse(key(id).getAttribute("data-tip")!).title, id).toBe(labels[locale === "en" ? 0 : 1]);
+      }
+    }
   });
 
   it("every key is in the Tab order (a disabled one is not) and Enter or Space presses it", () => {

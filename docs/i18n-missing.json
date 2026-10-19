@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-19T05:05:46.057Z",
+  "generatedAt": "2026-10-19T07:15:31.666Z",
   "locale": "zh-CN",
-  "count": 864,
+  "count": 882,
   "entries": [
     {
       "text": "\"Compact into pocket\" moved to the bottom of the board on a phone, where a thumb can reach it, rather than competing for the top line with everything else.",
@@ -1576,6 +1576,18 @@
       ]
     },
     {
+      "text": "Arrow",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/flow/clean/note/AnnotationMenu.tsx",
+          "line": 95,
+          "column": 43
+        }
+      ]
+    },
+    {
       "text": "Ask for several items at once, on either side, with any, all or only.",
       "kind": "data-message",
       "evidence": "candidate",
@@ -1644,6 +1656,18 @@
           "file": "src/lib/changelog.ts",
           "line": 1082,
           "column": 7
+        }
+      ]
+    },
+    {
+      "text": "Average power",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/flow/clean/rail/OverviewRail.tsx",
+          "line": 550,
+          "column": 44
         }
       ]
     },
@@ -1900,6 +1924,18 @@
       ]
     },
     {
+      "text": "Box",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/flow/clean/note/AnnotationMenu.tsx",
+          "line": 95,
+          "column": 53
+        }
+      ]
+    },
+    {
       "text": "Box select got real: drag, then copy, cut, paste, delete and undo the whole selection at once.",
       "kind": "data-message",
       "evidence": "candidate",
@@ -1944,6 +1980,18 @@
           "file": "src/lib/changelog.ts",
           "line": 1472,
           "column": 7
+        }
+      ]
+    },
+    {
+      "text": "Bronze",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/MachineShoppingList.tsx",
+          "line": 210,
+          "column": 25
         }
       ]
     },
@@ -2472,6 +2520,42 @@
           "file": "src/lib/changelog.ts",
           "line": 1860,
           "column": 15
+        }
+      ]
+    },
+    {
+      "text": "Delete arrow",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/flow/clean/note/AnnotationMenu.tsx",
+          "line": 111,
+          "column": 24
+        }
+      ]
+    },
+    {
+      "text": "Delete box",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/flow/clean/note/AnnotationMenu.tsx",
+          "line": 111,
+          "column": 86
+        }
+      ]
+    },
+    {
+      "text": "Delete zone",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/flow/clean/note/AnnotationMenu.tsx",
+          "line": 111,
+          "column": 70
         }
       ]
     },
@@ -3232,6 +3316,18 @@
       ]
     },
     {
+      "text": "Every taker is covered: the machines are sized to what is asked.",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/flow/RecipeNode.tsx",
+          "line": 3500,
+          "column": 17
+        }
+      ]
+    },
+    {
       "text": "Every tooltip, help card and tour step is shorter and plainer.",
       "kind": "data-message",
       "evidence": "candidate",
@@ -3576,6 +3672,18 @@
           "file": "src/lib/changelog.ts",
           "line": 1062,
           "column": 7
+        }
+      ]
+    },
+    {
+      "text": "Free: nothing is spent",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/nei/lookup-card.tsx",
+          "line": 333,
+          "column": 33
         }
       ]
     },
@@ -4300,6 +4408,18 @@
       ]
     },
     {
+      "text": "It waits on this task",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/tasks/TaskBox.tsx",
+          "line": 1328,
+          "column": 15
+        }
+      ]
+    },
+    {
       "text": "It works out the answer as if the rest of the board was not there, so anything piped in from outside now shows up under Need.",
       "kind": "data-message",
       "evidence": "candidate",
@@ -4752,6 +4872,18 @@
           "file": "src/lib/changelog.ts",
           "line": 1938,
           "column": 15
+        }
+      ]
+    },
+    {
+      "text": "Made and used within this scope, with no net flow.",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/pool/ProductionGroups.tsx",
+          "line": 275,
+          "column": 51
         }
       ]
     },
@@ -5572,6 +5704,18 @@
       ]
     },
     {
+      "text": "overview",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/FactoryPlannerApp.tsx",
+          "line": 655,
+          "column": 31
+        }
+      ]
+    },
+    {
       "text": "Paint a card and every part of it takes the colour: the name bar, the item boxes, the plugs, the usage and machine boxes, the dropdowns and the little block beside them, the machine tabs on top, the close and copy buttons. Bits kept getting left behind on the old dark grey, and each fix found a new one.",
       "kind": "data-message",
       "evidence": "candidate",
@@ -5640,6 +5784,18 @@
           "file": "src/lib/changelog.ts",
           "line": 1372,
           "column": 7
+        }
+      ]
+    },
+    {
+      "text": "Peak power",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/flow/clean/rail/OverviewRail.tsx",
+          "line": 550,
+          "column": 29
         }
       ]
     },
@@ -6444,6 +6600,42 @@
           "file": "src/lib/changelog.ts",
           "line": 124,
           "column": 15
+        }
+      ]
+    },
+    {
+      "text": "Resize the items list",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/FactoryPlannerApp.tsx",
+          "line": 597,
+          "column": 22
+        }
+      ]
+    },
+    {
+      "text": "Resize the overview",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/FactoryPlannerApp.tsx",
+          "line": 597,
+          "column": 48
+        }
+      ]
+    },
+    {
+      "text": "resources",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/FactoryPlannerApp.tsx",
+          "line": 655,
+          "column": 44
         }
       ]
     },
@@ -9544,6 +9736,18 @@
       ]
     },
     {
+      "text": "This task waits on it",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/tasks/TaskBox.tsx",
+          "line": 1290,
+          "column": 15
+        }
+      ]
+    },
+    {
       "text": "Those came from rounding, not from anything wrong with your plan, and they got bigger the bigger your rates were. They are gone at every scale now.",
       "kind": "data-message",
       "evidence": "candidate",
@@ -9576,6 +9780,18 @@
           "file": "src/lib/changelog.ts",
           "line": 1051,
           "column": 7
+        }
+      ]
+    },
+    {
+      "text": "Total",
+      "kind": "jsx-attr",
+      "evidence": "verified",
+      "locations": [
+        {
+          "file": "src/components/MachineShoppingList.tsx",
+          "line": 150,
+          "column": 39
         }
       ]
     },

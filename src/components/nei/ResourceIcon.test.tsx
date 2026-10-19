@@ -219,4 +219,28 @@ describe("ResourceIcon", () => {
       "/nei/thaumcraft/aspects/_unknown.png",
     );
   });
+
+  it("hides an NBT line from the icon's tooltip, keeping the description", async () => {
+    render(
+      <ResourceIcon
+        resource={{
+          kind: "item",
+          id: "bartworks:biolabparts",
+          amount: 1,
+          displayName: "Biolab Parts",
+          iconPath: "/textures/rendered/biolab_parts.png",
+          tooltip: ['NBT: {Name:"Saccharomyces escherichia"}', "A fermented starter"],
+        }}
+      />,
+    );
+
+    fireEvent.mouseMove(screen.getByAltText("Biolab Parts").parentElement as HTMLElement, {
+      clientX: 120,
+      clientY: 80,
+      buttons: 0,
+    });
+
+    expect(await screen.findByText("A fermented starter")).toBeTruthy();
+    expect(screen.queryByText(/NBT:/)).toBeNull();
+  });
 });
