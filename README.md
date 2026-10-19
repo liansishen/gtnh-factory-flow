@@ -3,11 +3,10 @@
 This fork adds native Simplified Chinese / English selection, game-name presentation and Chinese, English and pinyin search. Choose **Language / 语言** in Settings; the preference stays on this device. Search supports full pinyin (`gangban`), initials (`gb`), mixed syllables (`gangb`) and Chinese/pinyin combinations (`钢ban`, `gang板`) in either interface language. Canonical recipes, plans and solver inputs retain their original identity.
 
 - Fork: [liansishen/gtnh-factory-flow](https://github.com/liansishen/gtnh-factory-flow)
-- Hosted fork: [gtnhplanner.hepdd.com](https://gtnhplanner.hepdd.com)
 - Upstream baseline: `jackwrichards/gtnh-factory-flow@04fbd841540ec7a0c109623c04fba84e300cf217`
 - [Internationalization and coverage](docs/INTERNATIONALIZATION.md)
 - [Server and local-dataset operation](docs/LOCAL-RUNNING.md)
-- [TX deployment and operations](docs/TX-DEPLOYMENT.md)
+- [Previous TX deployment (removed)](docs/TX-DEPLOYMENT.md)
 
 A production-chain planner for GregTech: New Horizons, live at
 [gtnhplanner.com](https://gtnhplanner.com).

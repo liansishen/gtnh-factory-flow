@@ -1,10 +1,15 @@
-# TX deployment
+# Previous TX deployment
 
-The fork is served at https://gtnhplanner.hepdd.com. The application runs on TX as
-`gtnh-factory-flow.service`, listening on `127.0.0.1:3180`; nginx terminates TLS
-with the existing `*.hepdd.com` certificate.
+The TX deployment at `gtnhplanner.hepdd.com` was removed on 2026-10-19 at the
+owner's request because of its memory use. The systemd service, nginx site,
+release archives, runtime files, dataset, caches, environment file, dedicated
+nginx logs and service account were deleted. The shared wildcard certificate
+and other sites remain in use.
 
-## Files
+The configuration templates in `deploy/tx/` and the instructions below are kept
+as historical setup notes. Deploying again requires explicit authorization.
+
+## Former files
 
 - `/opt/gtnh-factory-flow/releases/<commit>/`: Next.js standalone runtime, static
   assets, third-party notices and `deployment.json` with the deployed revision.
