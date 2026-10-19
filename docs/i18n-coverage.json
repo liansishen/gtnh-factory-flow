@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T08:15:28.312Z",
+  "generatedAt": "2026-10-19T14:12:24.930Z",
   "tool": "tools/i18n-report.ts",
   "locale": "zh-CN",
   "notes": [
@@ -10,7 +10,7 @@
     "Excluded (with reasons): identifiers, CSS class names, resource ids, paths, URLs, file names, non-literal attribute expressions, tests, fixtures, examples, dev-only screens and the language control."
   ],
   "source": {
-    "commit": "ee017ea3d7112da0dd5a3e6ed16fe806c97192c4",
+    "commit": "3ef1134211262016a507df809c1a1a34e8c6d546",
     "dirty": true
   },
   "inventory": {
@@ -10748,8 +10748,8 @@
       "gtnhVersion": "2.9.0-RC-2",
       "resourceCount": 67824,
       "measured": {
-        "dictionary": 48154,
-        "generated": 18685,
+        "dictionary": 48156,
+        "generated": 18683,
         "fallback": 985
       },
       "percent": 98.5,
@@ -10765,8 +10765,8 @@
           "fallback": 13
         },
         "item": {
-          "dictionary": 47479,
-          "generated": 17884,
+          "dictionary": 47481,
+          "generated": 17882,
           "fallback": 972
         }
       }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useSyncExternalStore, type ReactNode } from "react";
-import { translateGameName } from "./game-names";
+import { translateGameLabel } from "./game-labels";
 import {
   applyDocumentLang,
   getLocale,
@@ -56,8 +56,7 @@ export function I18nText({ children, game = false }: I18nTextProps) {
 
 function translateNode(node: ReactNode, locale: Locale, game: boolean): ReactNode {
   if (typeof node === "string") {
-    const message = translateMessage(node, locale);
-    return game && message === node ? translateGameName(node, locale) : message;
+    return game ? translateGameLabel(node, locale) : translateMessage(node, locale);
   }
   if (Array.isArray(node)) {
     return node.map((child, index) => (
@@ -90,8 +89,5 @@ export function LocaleRestore() {
 /** A localized label for a canonical resource or machine. */
 export function useGameName(): (source: string) => string {
   const locale = useLocale();
-  return useCallback((source: string) => {
-    const message = translateMessage(source, locale);
-    return message === source ? translateGameName(source, locale) : message;
-  }, [locale]);
+  return useCallback((source: string) => translateGameLabel(source, locale), [locale]);
 }

@@ -15,6 +15,12 @@ describe("game name translation", () => {
     expect(resolveGameName("Steel Plate", "zh-CN").source).toBe("dictionary");
   });
 
+  it.each(["LV", "MV", "HV"])("keeps the canonical JackHammer voltage tier %s", tier => {
+    const name = `JackHammer (${tier})`;
+    expect(resolveGameName(name, "zh-CN")).toEqual({ text: `气锤(${tier})`, source: "dictionary" });
+    expect(chineseNameCandidates(`气锤(${tier})`)).toContain(name);
+  });
+
   it("translates a Chinese name back to its canonical English one", () => {
     expect(translateGameName("钢板", "en")).toBe("Steel Plate");
     expect(translateGameName("研磨", "en")).toBe("Macerator");

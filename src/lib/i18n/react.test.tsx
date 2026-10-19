@@ -3,13 +3,16 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { LOCALE_STORAGE_KEY, setLocale } from "./locale";
-import { I18nText, LocaleRestore, useLocale, useT } from "./react";
+import { I18nText, LocaleRestore, useGameName, useLocale, useT } from "./react";
 
 const gameName = vi.hoisted(() =>
   vi.fn((name: string, locale: string) => (locale === "zh-CN" ? `游戏:${name}` : name)),
 );
 
-vi.mock("./game-names", () => ({ translateGameName: gameName }));
+vi.mock("./game-names", () => ({
+  translateGameName: gameName,
+  hasChinese: (value: string) => /[\u4e00-\u9fff]/.test(value),
+}));
 
 beforeAll(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -75,6 +78,20 @@ describe("I18nText", () => {
     expect(screen.getByTestId("host").textContent).toBe("游戏:Steel Plate");
   });
 
+  it("consults game names when a UI rule only rewrites voltage parentheses", () => {
+    setLocale("zh-CN");
+    render(<div data-testid="host"><I18nText game>Wrench (LV)</I18nText></div>);
+    expect(gameName).toHaveBeenCalledWith("Wrench (LV)", "zh-CN");
+    expect(screen.getByTestId("host").textContent).toBe("游戏:Wrench (LV)");
+  });
+
+  it("keeps translated UI messages and counts on mixed game-label surfaces", () => {
+    setLocale("zh-CN");
+    render(<div data-testid="host"><I18nText game>{["Power", "3 recipes"]}</I18nText></div>);
+    expect(screen.getByTestId("host").textContent).toBe("发电3 个配方");
+    expect(gameName).not.toHaveBeenCalled();
+  });
+
   it("does not consult the game dictionary for UI copy", () => {
     setLocale("zh-CN");
     render(
@@ -106,6 +123,24 @@ describe("useT and useLocale", () => {
     expect(probe.getAttribute("title")).toBe("关闭");
     expect(probe.getAttribute("data-locale")).toBe("zh-CN");
   });
+});
+
+function GameLabelProbe() {
+  const name = useGameName();
+  return <span data-testid="game-label" aria-label={name("File (MV)")}>{name("File (MV)")}</span>;
+}
+
+it("uses the same game-name precedence for text and accessible labels across locale switches", () => {
+  setLocale("en");
+  render(<GameLabelProbe />);
+  const label = screen.getByTestId("game-label");
+  expect(label.textContent).toBe("File (MV)");
+  act(() => setLocale("zh-CN"));
+  expect(label.textContent).toBe("游戏:File (MV)");
+  expect(label.getAttribute("aria-label")).toBe("游戏:File (MV)");
+  act(() => setLocale("en"));
+  expect(label.textContent).toBe("File (MV)");
+  expect(label.getAttribute("aria-label")).toBe("File (MV)");
 });
 
 describe("switching the language", () => {

@@ -14,15 +14,16 @@
  *   3. `fallback`   - nothing matched, so the input is returned untouched.
  *      A miss is always the original string, never a half-translated one.
  *
- * The dictionaries are read-only assets copied from the community translation
- * project `gtnh-planner-zh`; their provenance and quality are recorded in
- * `game-data.meta.json` (`getGameDataMeta`). Nothing here mutates the dataset
- * or the assets: lookups are pure, and the derived indexes are cached lazily.
+ * Community dictionaries are read-only assets from `gtnh-planner-zh`; their
+ * provenance is recorded in `game-data.meta.json`. Fork-maintained corrections
+ * live in a separate override asset. Lookups never mutate the dataset or assets;
+ * derived indexes are cached lazily.
  */
 import type { Locale } from "./locale";
 import { isNbtTooltipLine } from "../tooltip-text";
 import gameDataMeta from "./game-data.meta.json";
 import gameNamesJson from "./game-names.zh-CN.json";
+import gameNameOverrides from "./game-name-overrides.zh-CN.json";
 import gameSearchJson from "./game-search.zh-CN.json";
 import gameWordsJson from "./game-words.zh-CN.json";
 
@@ -74,7 +75,7 @@ export interface GameDataMeta {
   attribution: { dictionary: string; license: string; note: string };
 }
 
-const names: Record<string, string> = Object.assign(Object.create(null), gameNamesJson);
+const names: Record<string, string> = Object.assign(Object.create(null), gameNamesJson, gameNameOverrides);
 const wordsAsset = gameWordsJson as GameWordsAsset;
 const words: Record<string, string> = Object.assign(Object.create(null), wordsAsset.words);
 const materials: Record<string, string> = Object.assign(Object.create(null), wordsAsset.materials);
