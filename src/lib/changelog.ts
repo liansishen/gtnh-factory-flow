@@ -40,6 +40,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "4.3.3",
+    date: "2026-10-19",
+    headline: "Chinese names for tiered tools and machines",
+    notes: [
+      "Voltage-tier tools, machine casings and components now show their Chinese names consistently.",
+      "JackHammer names now keep the correct LV, MV and HV tiers in display and search.",
+    ],
+  },
+  {
     version: "4.3.2",
     date: "2026-10-19",
     headline: "Clearer tooltips in Chinese and on phones",

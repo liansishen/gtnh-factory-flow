@@ -152,5 +152,8 @@
   "Clearer tooltips in Chinese and on phones": "中文和手机端提示显示修复",
   "Toolbar and drawer tooltips now follow your language.": "工具栏和抽屉按钮的提示现会随界面语言切换。",
   "Item tooltips hide raw NBT metadata while recipes and exported plans keep it intact.": "物品提示会隐藏原始 NBT 技术数据，配方和导出的方案仍保留完整数据。",
-  "Long tooltip titles wrap within the phone screen.": "较长的提示标题会在手机屏幕内自动换行。"
+  "Long tooltip titles wrap within the phone screen.": "较长的提示标题会在手机屏幕内自动换行。",
+  "Chinese names for tiered tools and machines": "带电压等级的工具与机器名称汉化修复",
+  "Voltage-tier tools, machine casings and components now show their Chinese names consistently.": "带电压等级的工具、机器外壳和组件现会完整显示中文名称。",
+  "JackHammer names now keep the correct LV, MV and HV tiers in display and search.": "气锤名称在显示和搜索中现会保留正确的 LV、MV、HV 等级。"
 }
