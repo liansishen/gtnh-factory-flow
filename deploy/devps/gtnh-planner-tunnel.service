@@ -1,0 +1,27 @@
+[Unit]
+Description=GTNH Planner encrypted tunnel to DE
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=gtnh-tunnel
+Group=gtnh-tunnel
+ExecStart=/usr/bin/ssh -NT -L 127.0.0.1:13180:127.0.0.1:3180 -i /etc/gtnh-planner-tunnel/id_ed25519 -o UserKnownHostsFile=/etc/gtnh-planner-tunnel/known_hosts -o StrictHostKeyChecking=yes -o BatchMode=yes -o IdentitiesOnly=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ConnectTimeout=10 gtnh-tunnel@45.82.122.51
+Restart=always
+RestartSec=5
+TimeoutStopSec=15
+UMask=0077
+MemoryMax=64M
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target

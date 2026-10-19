@@ -40,6 +40,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "4.3.1",
+    date: "2026-10-19",
+    headline: "The hosted planner has a new address",
+    notes: [
+      "The hosted planner is now at plan.playgtnh.dpdns.org.",
+      "Move saved plans between sites by exporting and importing a plan file.",
+      "Compressed recipe data and solver files reduce download sizes.",
+    ],
+  },
+  {
     version: "4.3.0",
     date: "2026-10-19",
     headline: "Search in Chinese, English or pinyin",

@@ -356,6 +356,8 @@ try {
   await appDialog.waitFor();
   await observe("changelog-desktop-zh");
   assert.match(await appDialog.innerText(), /支持中文、英文和拼音搜索/);
+  assert.match(await appDialog.innerText(), /在线规划器已迁至新地址/);
+  assert.match(await appDialog.innerText(), /plan\.playgtnh\.dpdns\.org/);
   const notices = appDialog.getByRole("link", { name: "翻译来源与许可", exact: true });
   assert.equal(await notices.getAttribute("href"), "/third-party-notices.txt");
   const credits = await context.request.get(new URL("/third-party-notices.txt", base).toString());

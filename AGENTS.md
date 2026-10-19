@@ -77,7 +77,7 @@ Scratch harnesses are `*.local.test.ts` (excluded from the suite); run one with
 
 ## Production
 
-The fork's TX deployment was removed at the owner's request. Historical setup notes are in `docs/TX-DEPLOYMENT.md`; deploying again requires explicit authorization. The notes below describe the upstream service.
+The fork runs on DE behind DeVPS at `https://plan.playgtnh.dpdns.org`; see `docs/DE-DEPLOYMENT.md`. The removed TX setup is recorded in `docs/TX-DEPLOYMENT.md`. Further deploys require explicit authorization. The notes below describe the upstream service.
 
 - One DigitalOcean droplet: Caddy -> Next.js :3000, systemd unit `gtnh-flow`, releases in
   `/opt/releases`, datasets in `/opt/shared/gtnh-datasets`, behind Cloudflare. Diagnose with

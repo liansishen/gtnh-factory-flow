@@ -1,0 +1,13 @@
+[Unit]
+Description=GTNH Planner HTTP and HTTPS firewall rules
+After=fw-base.service
+Requires=fw-base.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/gtnh-planner-firewall apply
+ExecStop=/usr/local/sbin/gtnh-planner-firewall remove
+
+[Install]
+WantedBy=multi-user.target

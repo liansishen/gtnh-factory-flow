@@ -22,12 +22,10 @@ describe("the changelog in Chinese", () => {
     render(<ChangelogDialog onClose={vi.fn()} />);
     expect(screen.getByText("所有改动，最新的在最前。")).toBeTruthy();
     expect(screen.getByText("选择缩小视图的起点")).toBeTruthy();
-    expect(screen.getByText("最多：机器数量代表你拥有的数量")).toBeTruthy();
+    expect(screen.getByText("在线规划器已迁至新地址")).toBeTruthy();
     expect(screen.getByText("支持中文、英文和拼音搜索")).toBeTruthy();
     expect(screen.getByRole("link", { name: "翻译来源与许可" }).getAttribute("href")).toBe("/third-party-notices.txt");
-    expect(
-      screen.getByText("机器数量现在默认为“最多”。机器会按产线允许的上限运行，绝不超过。"),
-    ).toBeTruthy();
+    expect(screen.getByText("在线规划器现已迁至 plan.playgtnh.dpdns.org。")).toBeTruthy();
   });
 
   it("translates the Full history count through the dynamic rule", () => {
@@ -42,5 +40,7 @@ describe("the changelog in Chinese", () => {
     fireEvent.click(screen.getByRole("button", { name: /完整历史/ }));
     expect(screen.getByText("Reports from the mod are checked")).toBeTruthy();
     expect(screen.getByText("第 4 版：网页上的游戏内规划器，以及可共同编辑的方案")).toBeTruthy();
+    expect(screen.getByText("最多：机器数量代表你拥有的数量")).toBeTruthy();
+    expect(screen.getByText("机器数量现在默认为“最多”。机器会按产线允许的上限运行，绝不超过。")).toBeTruthy();
   });
 });

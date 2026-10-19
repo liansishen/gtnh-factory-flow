@@ -1,0 +1,47 @@
+[Unit]
+Description=GTNH Factory Flow
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=gtnh-flow
+Group=gtnh-flow
+WorkingDirectory=/opt/gtnh-factory-flow/current
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3180
+Environment=NEXT_TELEMETRY_DISABLED=1
+Environment=GTNH_PREWARM_ON_STARTUP=0
+Environment=GTNH_MAX_LOADED_RECIPE_SHARDS=8
+Environment=GTNH_MAX_HYDRATED_RECIPE_SUMMARIES=8000
+Environment=NODE_OPTIONS=--max-old-space-size=2048
+EnvironmentFile=/etc/gtnh-factory-flow/environment
+ExecStart=/opt/gtnh-factory-flow/node/bin/node /opt/gtnh-factory-flow/current/server.js
+# Warm the API bundle; instrumentation keeps a separate module cache.
+ExecStartPost=/usr/bin/curl --retry 8 --retry-connrefused --retry-delay 1 --max-time 120 --fail --silent --show-error --output /dev/null "http://127.0.0.1:3180/api/datasets/local-2.9.0-rc-2/resources?query=gangban&limit=1"
+ExecStartPost=/usr/bin/curl --max-time 120 --fail --silent --show-error --output /dev/null "http://127.0.0.1:3180/api/datasets/local-2.9.0-rc-2/recipes?query=gangban&limit=1"
+TimeoutStartSec=180
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0027
+Nice=5
+MemoryHigh=2304M
+MemoryMax=2560M
+MemorySwapMax=0
+LimitCORE=0
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ReadWritePaths=/opt/gtnh-factory-flow/shared/cache
+
+[Install]
+WantedBy=multi-user.target
