@@ -13,6 +13,11 @@ DE runs the app and the RC-2 query dataset. DeVPS runs nginx, the tunnel and
 certificate renewal. Installed textures are served through DE. Missing textures
 are fetched from `gtnhplanner.com` and cached on DeVPS, capped at 512 MB;
 uncached missing textures need that upstream site.
+
+The bundled power-source icon map still references `local-2.9.0-beta-2`.
+Keep both the RC-2 and beta-2 texture paths enabled in nginx while that map is
+shipped; the query dataset remains RC-2.
+
 Resource and recipe searches use this fork's Chinese, English and pinyin code
 on DE. Keep `GTNH_DATASET_BACKEND_URL` unset.
 
