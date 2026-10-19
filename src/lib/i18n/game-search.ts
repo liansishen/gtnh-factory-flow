@@ -41,6 +41,7 @@ import {
   splitGameEnglishTokens,
   stripGameFormatting,
 } from "./game-names";
+import { isReservedSearchToken, matchesPinyinNameFilter } from "./pinyin-search";
 
 export type BilingualQueryKind = "exact" | "expanded" | "tokens" | "candidates" | "none";
 
@@ -235,6 +236,12 @@ export function planBilingualQuery(raw: string): BilingualQueryPlan | undefined 
   }
 
   const segmented = segment(chinese);
+  const mixed = /[\p{Script=Han}][a-z]|[a-z][\p{Script=Han}]/iu.test(chinese);
+  const han = chinese.replace(/[^\p{Script=Han}]/gu, "");
+  const translatedHan = segmented.parts.map(part => part.chinese).join("").replace(/[^\p{Script=Han}]/gu, "");
+  if (mixed && !getChineseNameIndex().has(chinese) && translatedHan !== han) {
+    return { kind: "none", chinese, english: "", alternatives: [], candidates: [], unresolved: true };
+  }
   if (segmented.tokens.length > 0) {
     const english = segmented.tokens.join(" ");
     return {
@@ -362,7 +369,13 @@ export function matchesGameNameFilter(query: string, englishName: string): boole
   if (haystack.includes(needle)) {
     return true;
   }
-  return forms.some((form) => haystack.includes(form));
+  const normalized = normalizeGameQuery(query);
+  const latin = normalized.match(/[a-z][a-z0-9]*/gi) ?? [];
+  const technical = latin.length > 0 && latin.every(isReservedSearchToken);
+  if (!technical && /[\p{Script=Han}][a-z]|[a-z][\p{Script=Han}]/iu.test(normalized)) {
+    return Boolean(forms[0] && haystack.includes(forms[0])) || matchesPinyinNameFilter(query, englishName);
+  }
+  return forms.some((form) => haystack.includes(form)) || matchesPinyinNameFilter(query, englishName);
 }
 
 interface FilterNeedles {

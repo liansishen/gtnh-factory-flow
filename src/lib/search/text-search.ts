@@ -34,6 +34,8 @@ export interface SearchQuery {
   text: string;
   terms: SearchTerm[];
   corrections: SearchCorrection[];
+  /** Alternate display-name phrases; their weights keep the typed name first. */
+  nameAliases?: ReadonlyMap<string, number>;
 }
 
 /**
@@ -65,6 +67,8 @@ const CONTAINS_PRECISION = 0.5;
 const NAME_EQUALS_BONUS = 8;
 const NAME_STARTS_BONUS = 4;
 const NAME_CONTAINS_BONUS = 1.5;
+// A phonetic name plus its variant stays below a literal name substring.
+const NAME_ALIAS_BONUS = 0.1;
 
 /** Below this a word is too short for a typo guess to mean anything. */
 export const MIN_CORRECTABLE_LENGTH = 4;
@@ -294,6 +298,7 @@ export function matchSearchEntry(
       score += NAME_CONTAINS_BONUS;
     }
   }
+  if (name) score += NAME_ALIAS_BONUS * (query.nameAliases?.get(name) ?? 0);
 
   return score;
 }
@@ -322,6 +327,7 @@ export function matchSearchTokens(
 }
 
 function scoreSearchTerm(term: SearchTerm, entry: SearchEntryFields): number {
+  if (term.variants.length >= 16) return scoreIndexedTerm(term, entry);
   let best = 0;
   for (const variant of term.variants) {
     if (variant.weight <= best) {
@@ -331,6 +337,94 @@ function scoreSearchTerm(term: SearchTerm, entry: SearchEntryFields): number {
     const precision = scoreVariant(variant, entry);
     if (precision > 0) {
       best = Math.max(best, precision * variant.weight);
+    }
+  }
+  return best;
+}
+
+interface VariantTokenNode {
+  children: Map<string, VariantTokenNode>;
+  token?: string;
+}
+interface VariantTermIndex {
+  root: VariantTokenNode;
+  byAnchor: Map<string, SearchTermVariant[]>;
+  wordMatches: Map<string, readonly (readonly [string, number])[]>;
+}
+const variantTermIndexes = new WeakMap<SearchTerm, VariantTermIndex>();
+
+function indexTermVariants(term: SearchTerm): VariantTermIndex {
+  const cached = variantTermIndexes.get(term);
+  if (cached) return cached;
+  const frequency = new Map<string, number>();
+  for (const variant of term.variants) {
+    for (const token of new Set(variant.tokens)) frequency.set(token, (frequency.get(token) ?? 0) + 1);
+  }
+  const root: VariantTokenNode = { children: new Map() };
+  for (const token of frequency.keys()) {
+    let node = root;
+    for (const char of token.split("")) {
+      let child = node.children.get(char);
+      if (!child) {
+        child = { children: new Map() };
+        node.children.set(char, child);
+      }
+      node = child;
+    }
+    node.token = token;
+  }
+  const byAnchor = new Map<string, SearchTermVariant[]>();
+  for (const variant of term.variants) {
+    const anchor = [...variant.tokens].sort((a, b) => frequency.get(a)! - frequency.get(b)! || b.length - a.length)[0];
+    if (!anchor) continue;
+    const variants = byAnchor.get(anchor);
+    if (variants) variants.push(variant);
+    else byAnchor.set(anchor, [variant]);
+  }
+  const index: VariantTermIndex = { root, byAnchor, wordMatches: new Map() };
+  variantTermIndexes.set(term, index);
+  return index;
+}
+
+/** Broad phonetic terms only score variants whose least-shared word occurs in the entry. */
+function scoreIndexedTerm(term: SearchTerm, entry: SearchEntryFields): number {
+  const { root, byAnchor, wordMatches } = indexTermVariants(term);
+  const hits = new Map<string, number>();
+  const collect = (tokens: string[] | undefined, weight: number) => {
+    for (const value of tokens ?? []) {
+      let matches = wordMatches.get(value);
+      if (!matches) {
+        const found = new Map<string, number>();
+        for (let start = 0; start < value.length; start++) {
+          let node: VariantTokenNode | undefined = root;
+          for (let end = start; end < value.length; end++) {
+            node = node.children.get(value[end]);
+            if (!node) break;
+            if (node.token) {
+              const precision = start === 0 ? (end === value.length - 1 ? EXACT_PRECISION : PREFIX_PRECISION) : CONTAINS_PRECISION;
+              found.set(node.token, Math.max(found.get(node.token) ?? 0, precision));
+            }
+          }
+        }
+        matches = [...found];
+        if (wordMatches.size < 16_384) wordMatches.set(value, matches);
+      }
+      for (const [token, precision] of matches) hits.set(token, Math.max(hits.get(token) ?? 0, precision * weight));
+    }
+  };
+  collect(entry.name, FIELD_WEIGHT.name);
+  collect(entry.id, FIELD_WEIGHT.id);
+  collect(entry.text, FIELD_WEIGHT.text);
+  let best = 0;
+  for (const token of hits.keys()) {
+    for (const variant of byAnchor.get(token) ?? []) {
+      if (variant.weight <= best) continue;
+      let weakest = Number.POSITIVE_INFINITY;
+      for (const word of variant.tokens) {
+        weakest = Math.min(weakest, hits.get(word) ?? 0);
+        if (weakest === 0) break;
+      }
+      best = Math.max(best, weakest * variant.weight);
     }
   }
   return best;

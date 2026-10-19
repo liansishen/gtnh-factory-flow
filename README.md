@@ -1,6 +1,6 @@
 # GTNH Factory Flow
 
-This fork adds native Simplified Chinese / English selection, game-name presentation and bilingual search. Choose **Language / 语言** in Settings; the preference stays on this device. Canonical recipes, plans and solver inputs retain their original identity.
+This fork adds native Simplified Chinese / English selection, game-name presentation and Chinese, English and pinyin search. Choose **Language / 语言** in Settings; the preference stays on this device. Search supports full pinyin (`gangban`), initials (`gb`), mixed syllables (`gangb`) and Chinese/pinyin combinations (`钢ban`, `gang板`) in either interface language. Canonical recipes, plans and solver inputs retain their original identity.
 
 - Fork: [liansishen/gtnh-factory-flow](https://github.com/liansishen/gtnh-factory-flow)
 - Upstream baseline: `jackwrichards/gtnh-factory-flow@04fbd841540ec7a0c109623c04fba84e300cf217`
@@ -26,7 +26,7 @@ npm run typecheck
 npm run test
 ```
 
-Install a dataset for native bilingual server search:
+Install a dataset for native Chinese, English and pinyin server search:
 
 ```bash
 npm run datasets:download -- --version local-2.9.0-rc-2
@@ -35,8 +35,8 @@ npm run dev
 
 Datasets and their `datasets.manifest.json` live under the gitignored
 `public/datasets/gtnh/`. A remote dataset backend can be selected with
-`GTNH_DATASET_BACKEND_URL`; its query API must implement bilingual search for
-Chinese queries to work. See [local-running instructions](docs/LOCAL-RUNNING.md).
+`GTNH_DATASET_BACKEND_URL`; its query API must implement Chinese and pinyin search
+for those queries to work. See [local-running instructions](docs/LOCAL-RUNNING.md).
 Accounts and Community require Supabase or the optional local database.
 
 ## How it fits together

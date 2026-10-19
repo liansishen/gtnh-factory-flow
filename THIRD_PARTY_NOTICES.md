@@ -17,3 +17,9 @@ English language keys and name patterns used to align terminology originate from
 The initial assets were adapted from the local `gtnh-planner-zh` project's dictionaries. Input hashes, source dataset alignment and generated asset hashes are recorded in `src/lib/i18n/game-data.meta.json`. `tools/i18n-game-data.mjs` performs the adaptation. Dictionary lookup matches and algorithmically composed names have separate quality categories; lookup precision does not imply manual certification.
 
 GTNH, Minecraft, individual mod names, recipe exports and rendered item art remain subject to their owners' rights. Dataset downloads are separate from the repository and keep their original canonical identifiers and English source labels.
+
+## pinyin-pro
+
+Phonetic search uses [pinyin-pro](https://github.com/zh-lx/pinyin-pro), version 3.29.5.
+Copyright (c) 2022-present zh-lx. MIT license; the complete notice is retained in
+[docs/licenses/pinyin-pro-MIT.txt](docs/licenses/pinyin-pro-MIT.txt).

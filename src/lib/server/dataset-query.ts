@@ -59,6 +59,7 @@ import {
   type TextSearchIndex,
 } from "@/lib/search";
 import { bilingualSearch } from "@/lib/i18n/game-search";
+import { buildPinyinSearchIndex, withPinyinSearch, type PinyinSearchIndex } from "@/lib/i18n/pinyin-search";
 
 type TierFilter = "all" | Exclude<MachineTier, "DEMO">;
 type SearchableResource = Pick<
@@ -92,6 +93,7 @@ interface LoadedRecipeIndex {
   shards: RecipeIndexShard[];
   indexes?: QueryIndexes;
   resourceIndexes?: ResourceQueryIndexes;
+  pinyinIndex?: PinyinSearchIndex;
   resourcesByKey?: Map<string, DatasetResource | DatasetResourceIndexEntry>;
   choiceAlternativesByKey?: Map<string, ResourceAlternative[]>;
   recipeMapIconCandidates?: RecipeMapIconCandidate[];
@@ -648,7 +650,8 @@ async function searchDatasetResources(
 ) {
   const indexes = ensureResourceIndexes(catalog);
   const bilingual = bilingualSearch(request.query);
-  if (bilingual?.unresolved) {
+  const parsed = withPinyinSearch(parseSearchQuery(bilingual?.text ?? request.query), () => ensurePinyinIndex(catalog), request.query);
+  if (bilingual?.unresolved && parsed.terms.length === 0) {
     // An unknown Chinese word resolved to nothing. Falling through would parse
     // an empty query, which is the "list everything" browse; answer with none.
     return {
@@ -657,7 +660,6 @@ async function searchDatasetResources(
       resolved: { query: parseSearchQuery(""), phase: "exact" as const },
     };
   }
-  const queryText = bilingual ? bilingual.text : request.query;
   const sourceKeys = request.source
     ? await getPassiveSourceResourceKeys(catalog, request.source)
     : undefined;
@@ -709,7 +711,7 @@ async function searchDatasetResources(
     return matches;
   };
 
-  let resolved = resolveSearchPhases(parseSearchQuery(queryText), indexes.vocabulary, run);
+  let resolved = resolveSearchPhases(parsed, indexes.vocabulary, run);
   if (bilingual && resolved.results.length === 0) {
     // Whole-name alternatives can find a distinct alias after every search
     // phase misses. Token-subset alternatives add nothing after partial matching.
@@ -910,6 +912,7 @@ export async function queryDatasetRecipes(versionId: string, request: DatasetRec
     request.query,
     () => ensureResourceIndexes(recipeCatalog).vocabulary,
     (query, options) => scoreRecipeCandidates(indexes.searchIndex, candidates, query, options),
+    () => ensurePinyinIndex(recipeCatalog),
   );
   const searchScores = resolved.searchScores;
   const matchingAll: RankedRecipe[] = [];
@@ -1117,13 +1120,14 @@ function resolveRecipeSearch(
   rawQuery: string,
   getVocabulary: () => SearchVocabulary | undefined,
   run: (query: SearchQuery, options: { partial?: boolean }) => RankedRecipe[],
+  getPinyinIndex: () => PinyinSearchIndex,
 ): {
   query: SearchQuery;
   phase: SearchPhase;
   searchScores: Map<number, number> | undefined;
 } {
   const bilingual = bilingualSearch(rawQuery);
-  const parsed = parseSearchQuery(bilingual ? bilingual.text : rawQuery);
+  const parsed = withPinyinSearch(parseSearchQuery(bilingual?.text ?? rawQuery), getPinyinIndex, rawQuery);
   if (parsed.terms.length === 0) {
     // An unknown Chinese word must not fall through to "no filter", which lists
     // every recipe in scope; an empty score map means nothing matched.
@@ -1238,7 +1242,7 @@ async function queryDatasetRecipesFromLookup(
   // A Chinese query becomes English before the tokenizer sees it; an unresolved
   // one keeps no terms, so it answers nothing rather than every recipe.
   const bilingual = bilingualSearch(request.query);
-  const parsedQuery = parseSearchQuery(bilingual ? bilingual.text : request.query);
+  const parsedQuery = withPinyinSearch(parseSearchQuery(bilingual?.text ?? request.query), () => ensurePinyinIndex(catalog), request.query);
   const clauses = normalizedRecipeQueryClauses(request);
 
   if (clauses.length === 0 && parsedQuery.terms.length === 0) {
@@ -1271,6 +1275,7 @@ async function queryDatasetRecipesFromLookup(
         ? scoreRecipeCandidates(search.index, flattenRecipeIndexes(scopedByMap), query, options)
         : scoreAllRecipes(search.index, search.entryCount, query, options);
     },
+    () => ensurePinyinIndex(catalog),
   );
   const searchScores = resolved.searchScores;
   // A pure text search has no resource to group by, so the maps come out of what
@@ -1696,6 +1701,7 @@ async function prewarmDatasetVersionOnce(
   const catalog = await loadCatalog(versionId);
   getCatalogResourcesByKey(catalog);
   ensureResourceIndexes(catalog);
+  ensurePinyinIndex(catalog);
 
   if (catalog.version.recipeLookupIndexPath) {
     const lookup = await loadRecipeLookupIndex(catalog.version);
@@ -2800,6 +2806,12 @@ function ensureIndexes(catalog: LoadedRecipeIndex): QueryIndexes {
   return catalog.indexes;
 }
 
+function ensurePinyinIndex(catalog: LoadedRecipeIndex): PinyinSearchIndex {
+  return catalog.pinyinIndex ??= buildPinyinSearchIndex([
+    ...catalog.resourceIndex.map(resource => resource.displayName ?? ""),
+    ...catalog.recipeMaps,
+  ]);
+}
 function ensureResourceIndexes(catalog: LoadedRecipeIndex): ResourceQueryIndexes {
   if (catalog.resourceIndexes) {
     return catalog.resourceIndexes;

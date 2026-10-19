@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-18T19:46:33.796Z",
+  "generatedAt": "2026-10-19T03:15:10.683Z",
   "tool": "tools/i18n-report.ts",
   "locale": "zh-CN",
   "notes": [
@@ -10,7 +10,7 @@
     "Excluded (with reasons): identifiers, CSS class names, resource ids, paths, URLs, file names, tests, fixtures, examples, dev-only screens and the language control."
   ],
   "source": {
-    "commit": "94769135e66584cf17cf72758ec5feada79b718d",
+    "commit": "be32db8ed6879e3f669e817b18cd80be7d497e0d",
     "dirty": true
   },
   "inventory": {

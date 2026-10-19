@@ -58,7 +58,7 @@ object, its graph, the solved books (`lastResult`) and the serialized plan
 byte-for-byte identical, and a plan parsed under either language yields the same
 canonical ids.
 
-### Bilingual search
+### Chinese, English and pinyin search
 
 `game-search.ts` prepares Chinese aliases for the shipped English search.
 Full-width punctuation and letters are normalized on both dictionary keys and
@@ -71,6 +71,40 @@ Game-name labels are presentation only. Search and export retain the canonical
 resource IDs and English source labels. Tests sweep the dictionary's reverse
 index for unique-name round trips and exercise real server query functions
 against compressed dataset-shaped fixtures.
+
+`pinyin-search.ts` adds phonetic aliases through the same query scorer and candidate
+index. It supports full pinyin (`gangban`), spaced syllables (`gang ban`), initials
+(`gb`), mixed syllables (`gangb`, `gban`) and Chinese/pinyin combinations (`钢ban`,
+`gang板`). Matching covers polyphonic readings and GTNH's rare-element glyphs.
+Chinese translations and existing alternate Chinese search names supply the
+readings; names with English fallback remain searchable by their English labels.
+Search works in either interface language.
+
+English name matches keep their original weight. Literal English prefixes and
+substrings rank ahead of phonetic aliases. Among phonetic matches, complete-name
+readings rank ahead of partial or abbreviated readings.
+Complete English names, existing English tokens of at least three letters,
+registered IDs, voltage tiers, common mod/machine abbreviations and energy units
+keep their existing search interpretation. Short pinyin initials can match several
+names; a longer query narrows the results.
+
+The server builds a two-character phonetic candidate index once per dataset cache
+and prewarms it with the resource index. Repeated queries use a bounded cache.
+Canvas-only resources rebuild their index when the resource list changes. Shared
+local name filters cache compiled names; the generator picker initializes its
+index on demand. The same matching supports resource search, recipe-name search,
+canvas resource filters, overview name filters and generator/fuel searches.
+
+Large alias sets use a compiled token matcher with bounded word caches. Candidate
+narrowing uses a required rare trigram for ordinary phonetic unions; very broad
+unions scan the scoped entries through that matcher. This keeps all valid results
+and avoids repeated large posting-list intersections. Very short queries such as
+`li` can cover thousands of resource names and still take several seconds over
+the complete recipe corpus; full names or longer initials narrow that work.
+
+The remote dataset backend owns server-side search. Chinese and pinyin resource
+and recipe queries require a backend with this implementation or a local dataset;
+see `docs/LOCAL-RUNNING.md`.
 
 ## The dictionaries
 

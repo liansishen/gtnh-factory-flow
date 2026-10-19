@@ -43,10 +43,10 @@ local app uses the live dataset as-is. Good for UI work; no dataset files land
 on this machine.
 
 The backend owns resource/recipe query behavior in this mode. Use a backend
-running this fork for native Chinese search. The stock upstream backend's
-English search remains available through the proxy; its Chinese behavior
+running this fork for native Chinese and pinyin search. The stock upstream backend's
+English search remains available through the proxy; its Chinese and pinyin behavior
 depends on the backend's implementation. Installing data locally runs this
-fork's bilingual query code.
+fork's Chinese, English and pinyin query code.
 
 ### A dataset on disk
 
@@ -126,8 +126,9 @@ node tools/browser-tests/i18n.mjs
 
 `CHROME_PATH` is optional when Playwright's matching Chromium is installed.
 The test uses a fresh browser profile, blocks cross-origin browser requests,
-checks English/Chinese search, language persistence, a real recipe and drawer,
-plan export equality and import, settings, help, library and desktop/mobile
+checks English/Chinese/pinyin resource search, recipe-name and canvas/overview
+filters, generator/fuel search and placement, language persistence, a real recipe
+and drawer, plan export equality and import, settings, help, library and desktop/mobile
 layouts. Cloud-account and live-collaboration flows need their own configured
 backend and remain outside this signed-out test.
 

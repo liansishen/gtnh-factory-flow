@@ -1,5 +1,6 @@
 "use client";
 import { bilingualSearch } from "@/lib/i18n/game-search";
+import { buildPinyinSearchIndex, withPinyinSearch, type PinyinSearchIndex } from "@/lib/i18n/pinyin-search";
 import { useT, I18nText, useGameName } from "@/lib/i18n/react";
 
 
@@ -610,16 +611,25 @@ function useBoardResources(enabled: boolean): IndexedResource[] {
   }, [enabled, nodes, recipes, storages]);
 }
 
+const boardPinyinIndexes = new WeakMap<IndexedResource[], PinyinSearchIndex>();
 /**
  * The board's resource subset uses the server's English matcher and phases.
- * Chinese aliases are planned before matching this smaller resource set.
+ * Chinese and pinyin aliases are planned before matching this smaller resource set.
  */
 export function queryBoardResourceResults(
   resources: IndexedResource[],
   request: { query: string; mod: string; sort: ResourceSortMode; offset: number; limit: number },
 ) {
   const bilingual = bilingualSearch(request.query);
-  if (bilingual?.unresolved) return { resources: [], total: 0, mods: [], outcome: EXACT_SEARCH };
+  const parsed = withPinyinSearch(parseSearchQuery(bilingual?.text ?? request.query), () => {
+    let index = boardPinyinIndexes.get(resources);
+    if (!index) {
+      index = buildPinyinSearchIndex(resources.map(resource => resource.displayName ?? ""));
+      boardPinyinIndexes.set(resources, index);
+    }
+    return index;
+  }, request.query);
+  if (bilingual?.unresolved && parsed.terms.length === 0) return { resources: [], total: 0, mods: [], outcome: EXACT_SEARCH };
   const fields = resources.map((resource) => ({
     nameText: (resource.displayName ?? resource.id).toLowerCase(),
     name: splitSearchTokens(resource.displayName ?? ""),
@@ -631,7 +641,7 @@ export function queryBoardResourceResults(
   const modCounts = new Map<string, number>();
 
   const resolved = resolveSearchPhases(
-    parseSearchQuery(bilingual?.text ?? request.query),
+    parsed,
     vocabulary,
     (query, options) => {
       modCounts.clear();
@@ -695,22 +705,15 @@ function useBoardResourceResults(
   },
 ) {
   const resources = useBoardResources(enabled);
+  const { query, mod, sort, offset, limit } = request;
 
   return useMemo(() => {
     if (!enabled) {
       return { resources: [], total: 0, mods: [], outcome: EXACT_SEARCH };
     }
 
-    return queryBoardResourceResults(resources, request);
-  }, [
-    enabled,
-    request.limit,
-    request.mod,
-    request.offset,
-    request.query,
-    request.sort,
-    resources,
-  ]);
+    return queryBoardResourceResults(resources, { query, mod, sort, offset, limit });
+  }, [enabled, resources, query, mod, sort, offset, limit]);
 }
 
 

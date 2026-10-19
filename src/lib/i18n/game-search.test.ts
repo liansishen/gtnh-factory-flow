@@ -142,3 +142,25 @@ describe("punctuated and ambiguous Chinese names in an in-page filter", () => {
     expect(matchesGameNameFilter("不存在的词", "Hint 1 dot")).toBe(false);
   });
 });
+
+describe("pinyin local-filter precision", () => {
+  it("requires the full inline mixed reading", () => {
+    expect(matchesGameNameFilter("钢ban", "Steel Plate")).toBe(true);
+    expect(matchesGameNameFilter("钢ban", "Steel Ingot")).toBe(false);
+    expect(matchesGameNameFilter("钢plate", "Steel Plate")).toBe(true);
+    expect(matchesGameNameFilter("钢plate", "Steel Ingot")).toBe(false);
+    expect(matchesGameNameFilter("ben酚", "Phenol")).toBe(true);
+    expect(matchesGameNameFilter("ben酚", "Benzene")).toBe(false);
+    expect(planBilingualQuery("ben酚")?.unresolved).toBe(true);
+    expect(matchesGameNameFilter("gangban", "Steel Plate gregtech:gt.metaitem.01@17305")).toBe(true);
+    expect(matchesGameNameFilter("gb", "Steel Plate gregtech:gt.metaitem.01@17305")).toBe(true);
+    expect(matchesGameNameFilter("HV研磨机", "Basic Macerator")).toBe(true);
+    expect(matchesGameNameFilter("gt钢板", "Steel Plate")).toBe(true);
+    expect(matchesGameNameFilter("钢板gt", "Steel Plate")).toBe(true);
+  });
+  it("preserves the existing whole-form English substring rule", () => {
+    expect(matchesGameNameFilter("steel plate", "Steel Small Plate")).toBe(false);
+    expect(matchesGameNameFilter("small steel", "Steel Small Plate")).toBe(false);
+    expect(matchesGameNameFilter("double gangban", "Double Steel Plate")).toBe(true);
+  });
+});

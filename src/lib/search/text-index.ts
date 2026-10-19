@@ -101,7 +101,15 @@ export function queryTextSearchIndex(
   query: SearchQuery,
   options: { partial?: boolean } = {},
 ): number[] | undefined {
-  const indexableTerms = searchQueryIndexableTerms(query);
+  // Broad phonetic unions use the compiled scorer once per entry, avoiding thousands of posting intersections.
+  if (query.nameAliases?.size && query.terms.some(term => term.variants.length > 512)) return undefined;
+  // Short alias words are verified by the scorer; longer words can still narrow their candidates.
+  const indexableTerms = query.nameAliases?.size
+    ? query.terms.map(term => term.variants.map(variant => {
+      const long = variant.tokens.filter(token => token.length >= MIN_INDEXABLE_LENGTH);
+      return long.length ? long : variant.tokens;
+    }))
+    : searchQueryIndexableTerms(query);
   if (indexableTerms.length === 0) {
     return undefined;
   }
@@ -112,17 +120,18 @@ export function queryTextSearchIndex(
   }
 
   let candidates: number[] | undefined;
+  const tokenCache = new Map<string, number[]>();
   for (const variants of indexableTerms) {
     // Any spelling of the word will do, so the term's candidates are the union
     // over its spellings; every word has to appear, so terms intersect.
-    let termCandidates: number[] = [];
+    const termEntries = new Set<number>();
     for (const tokens of variants) {
-      const variantCandidates = intersectTokenCandidates(index, tokens);
-      termCandidates =
-        termCandidates.length === 0
-          ? variantCandidates
-          : unionOrderedIndexes(termCandidates, variantCandidates);
+      const variantCandidates = variants.length >= 16
+        ? queryBroadVariantCandidates(index, tokens, tokenCache)
+        : intersectTokenCandidates(index, tokens, tokenCache);
+      for (const entry of variantCandidates) termEntries.add(entry);
     }
+    const termCandidates = [...termEntries].sort((left, right) => left - right);
 
     if (options.partial) {
       candidates = candidates ? unionOrderedIndexes(candidates, termCandidates) : termCandidates;
@@ -144,10 +153,28 @@ export function queryTextSearchIndex(
   return candidates;
 }
 
-function intersectTokenCandidates(index: TextSearchIndex, tokens: string[]): number[] {
+/** The rarest required trigram is a safe superset; the scorer verifies every word. */
+function queryBroadVariantCandidates(index: TextSearchIndex, tokens: string[], cache: Map<string, number[]>): number[] {
+  let rarest: number[] | undefined;
+  for (const token of tokens) {
+    for (const trigram of getTokenTrigrams(token)) {
+      const entries = index.trigramToEntries.get(trigram);
+      if (!entries?.length) return [];
+      if (!rarest || entries.length < rarest.length) rarest = entries;
+    }
+  }
+  return rarest ?? intersectTokenCandidates(index, tokens, cache);
+}
+
+
+function intersectTokenCandidates(index: TextSearchIndex, tokens: string[], cache: Map<string, number[]>): number[] {
   let candidates: number[] | undefined;
   for (const token of tokens) {
-    const tokenCandidates = queryTokenCandidates(index, token);
+    let tokenCandidates = cache.get(token);
+    if (!tokenCandidates) {
+      tokenCandidates = queryTokenCandidates(index, token);
+      cache.set(token, tokenCandidates);
+    }
     if (tokenCandidates.length === 0) {
       return [];
     }
@@ -159,7 +186,26 @@ function intersectTokenCandidates(index: TextSearchIndex, tokens: string[]): num
   return candidates ?? [];
 }
 
+const shortTokenCandidates = new WeakMap<TextSearchIndex, Map<string, number[]>>();
+function queryShortTokenCandidates(index: TextSearchIndex, token: string): number[] {
+  let cache = shortTokenCandidates.get(index);
+  if (!cache) {
+    cache = new Map();
+    shortTokenCandidates.set(index, cache);
+  }
+  const cached = cache.get(token);
+  if (cached) return cached;
+  const candidates: number[] = [];
+  index.tokensByEntry.forEach((tokens, entry) => {
+    if (tokens?.some(value => value.includes(token))) candidates.push(entry);
+  });
+  if (cache.size >= 128) cache.delete(cache.keys().next().value!);
+  cache.set(token, candidates);
+  return candidates;
+}
+
 function queryTokenCandidates(index: TextSearchIndex, token: string): number[] {
+  if (token.length < MIN_INDEXABLE_LENGTH) return queryShortTokenCandidates(index, token);
   let candidates: number[] | undefined;
 
   for (const trigram of getTokenTrigrams(token)) {

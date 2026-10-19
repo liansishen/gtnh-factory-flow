@@ -54,4 +54,13 @@ describe("MinecraftSelect's filter", () => {
     fireEvent.change(input, { target: { value: "不存在的词" } });
     expect(screen.queryAllByRole("option")).toHaveLength(0);
   });
+  it.each(["gangban", "gang ban", "gb", "gangb", "钢ban", "gang板"])("filters by %s and selects the canonical option key", query => {
+    let selected: string | undefined;
+    render(<MinecraftSelect value="ingot" options={options} onSelect={key => { selected = key; }} searchable ariaLabel="Resource" />);
+    fireEvent.click(screen.getByRole("button", { name: "Resource" }));
+    fireEvent.change(screen.getByPlaceholderText("Filter..."), { target: { value: query } });
+    expect(shown()).toEqual(["Steel Plate"]);
+    fireEvent.click(screen.getByRole("option", { name: "Steel Plate" }));
+    expect(selected).toBe("plate");
+  });
 });

@@ -28,6 +28,7 @@ const dataset = "local-2.9.0-rc-2";
 const canonical = "gregtech:gt.metaitem.01@17305";
 const userName = "Steel Plate 我的工厂";
 const appDialog = page.locator('[role="dialog"]:not([data-tour="offer"])');
+const resourceResults = page.getByRole("listbox", { name: /^(Resource results|资源搜索结果)$/ });
 
 async function observe(label) {
   const dimensions = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, font: getComputedStyle(document.body).fontFamily }));
@@ -46,6 +47,11 @@ async function locale(target) {
   await observe(`settings-${target}-${await page.viewportSize().width}`);
   await page.keyboard.press("Escape");
 }
+async function drawer(id, open) {
+  const key = page.locator(`[data-mb="${id}"]`);
+  if ((await key.getAttribute("data-open") !== null) !== open) await key.click();
+  await page.waitForFunction(({ id, open }) => document.querySelector(`[data-mb="${id}"]`).hasAttribute("data-open") === open, { id, open });
+}
 async function exportPlan() {
   await page.locator('[data-mb="share"]').click();
   const downloading = page.waitForEvent("download");
@@ -58,8 +64,12 @@ async function exportPlan() {
 }
 async function search(query) {
   const input = page.getByRole("textbox", { name: /Search items and fluids|搜索物品和流体/ });
-  await input.fill(query);
-  await page.getByRole("option", { name: /^(Steel Plate|钢板)$/ }).first().waitFor({ state: "visible", timeout: 120000 });
+  if (await input.inputValue() !== query) {
+    await input.fill("zzzzzqpyn");
+    await page.getByText(/^(No matching resource\.|没有匹配的资源。)$/, { exact: true }).waitFor({ timeout: 120000 });
+    await input.fill(query);
+  }
+  await resourceResults.getByRole("option", { name: /^(Steel Plate|钢板)$/ }).first().waitFor({ state: "visible", timeout: 120000 });
 }
 async function queryResources(query, extra = {}) {
   const url = new URL(`/api/datasets/${dataset}/resources`, base);
@@ -103,6 +113,105 @@ async function emptySearchStates(viewport) {
   await search("钢板");
 }
 
+async function recipePinyin(viewport) {
+  await page.getByRole("button", { name: /^(Filter recipes by name|按名称筛选配方)$/ }).click();
+  const input = page.getByRole("textbox", { name: /^(Filter recipes by name|按名称筛选配方)$/ });
+  await input.fill("zzzzzqpyn");
+  await page.waitForFunction(() => document.querySelectorAll('[data-recipe=""]').length === 0);
+  await input.fill("gangban");
+  await page.locator('[data-recipe=""]').first().waitFor({ state: "visible", timeout: 120000 });
+  await observe(`pinyin-recipe-filter-${viewport}`);
+  await page.getByRole("button", { name: /^(Filter recipes by name|按名称筛选配方)$/ }).click();
+  await page.locator('[data-recipe=""]').first().waitFor({ state: "visible", timeout: 120000 });
+}
+async function boardAndOverviewPinyin(viewport = "desktop") {
+  if (viewport === "mobile") await drawer("drawer-items", true);
+  await page.getByRole("button", { name: "显示与排序", exact: true }).click();
+  await page.getByRole("menu", { name: "显示与排序", exact: true }).getByRole("menuitem", { name: "在此画布上", exact: true }).click();
+  const input = page.getByRole("textbox", { name: "搜索物品和流体", exact: true });
+  await input.fill("zzzzzqpyn");
+  await page.getByText("画布上还没有放置任何东西。", { exact: true }).waitFor();
+  await input.fill("gangban");
+  await resourceResults.getByRole("option", { name: "钢板", exact: true }).waitFor();
+  await observe(`pinyin-board-subset-${viewport}`);
+  await page.getByRole("button", { name: "显示与排序", exact: true }).click();
+  await page.getByRole("menu", { name: "显示与排序", exact: true }).getByRole("menuitem", { name: /^全部资源/ }).click();
+  if (viewport === "mobile") await drawer("drawer-side", true);
+  const overview = page.locator('input.rail-filter');
+  await overview.click();
+  await overview.fill("zzzzzqpyn");
+  await page.waitForFunction(() => document.querySelectorAll('[data-resource-row]').length === 0);
+  await overview.fill("gangban");
+  await page.locator(`[data-resource-row="item:${canonical}"]`).first().waitFor();
+  assert.equal(await page.locator('[data-resource-row="item:gregtech:gt.metaitem.01@11305"]').count(), 0);
+  await observe(`pinyin-overview-filter-${viewport}`);
+  await overview.fill("");
+  if (viewport === "mobile") await drawer("drawer-side", false);
+}
+async function powerPinyin(viewport, place = false) {
+  for (const id of ["drawer-items", "drawer-side"]) {
+    const key = page.locator(`[data-mb="${id}"][data-open]`);
+    if (await key.isVisible()) await key.click();
+  }
+  await page.locator('[data-mb="nonrecipe"]').click();
+  if (viewport === "mobile") {
+    const sheet = page.getByRole("region", { name: /^(Power sources|电力来源)$/ });
+    await sheet.waitFor();
+    const input = sheet.getByRole("textbox");
+    const cards = sheet.locator("button.group");
+    for (const query of ["ranqiwolun", "rqwl", "ranqi涡轮"]) {
+      await input.fill(query);
+      await sheet.getByRole("button", { name: /^Gas Turbine\b/ }).waitFor();
+      assert.equal(await cards.count(), 3);
+    }
+    await input.fill("zzzzzqpyn");
+    await page.waitForFunction(() => document.querySelectorAll('section[aria-label] button.group').length === 0);
+    await input.fill("benfen");
+    await sheet.getByRole("button", { name: /^Universal Chemical Fuel Engine\b/ }).waitFor();
+    await observe("pinyin-power-fuel-mobile");
+    await page.keyboard.press("Escape");
+    await sheet.waitFor({ state: "hidden" });
+    return;
+  }
+  const dialog = page.locator('[data-mod-power-picker]');
+  await dialog.waitFor();
+  const input = dialog.getByRole("textbox");
+  for (const query of ["ranqiwolun", "rqwl", "ranqi涡轮"]) {
+    await input.fill(query);
+    await dialog.locator('[data-source="gas-turbine"]').waitFor();
+    if (query === "ranqi涡轮") assert.deepEqual(await dialog.locator('[data-source]').evaluateAll(nodes => nodes.map(node => node.dataset.source)), ["gas-turbine", "large-gas-turbine", "xl-turbo-gas-turbine"]);
+  }
+  await input.fill("zzzzzqpyn");
+  await page.waitForFunction(() => document.querySelectorAll('[data-mod-power-picker] [data-source]').length === 0);
+  await input.fill("benfen");
+  const source = dialog.locator('[data-source="universal-chemical-fuel-engine"]');
+  await source.waitFor();
+  await input.fill("ben酚");
+  await source.waitFor();
+  await observe(`pinyin-power-fuel-${viewport}`);
+  if (place) {
+    await source.click();
+    await dialog.waitFor({ state: "hidden" });
+    const exported = await exportPlan();
+    const recipe = exported.recipes.find(recipe => recipe.power?.sourceId === "universal-chemical-fuel-engine");
+    assert.ok(recipe, "pinyin fuel search must place the canonical power recipe");
+    const node = exported.nodes.find(node => node.recipeId === recipe.id);
+    assert.equal(node?.machineConfigTiers?.fuel, "Phenol");
+    await page.locator(`.react-flow__node[data-id="${node.id}"] [data-glyph="gear"]`).click();
+    await page.locator('[data-cc-sheet] .cs-row').filter({ has: page.locator('.cs-label', { hasText: /^(Fuel|燃料)$/ }) }).locator('.cs-well').click();
+    const filter = page.locator('input.cm-filter').last();
+    await filter.fill("zzzzzqpyn");
+    await page.locator('.cm-empty').waitFor();
+    await filter.fill("xiaojiben");
+    const fuelOption = page.getByRole("menuitem").filter({ hasText: /^(Nitrobenzene|硝基苯)$/ });
+    await fuelOption.waitFor();
+    await observe(`pinyin-fuel-options-${viewport}`);
+    await fuelOption.click();
+    await filter.waitFor({ state: "hidden" });
+    await page.keyboard.press("Escape");
+    assert.equal((await exportPlan()).nodes.find(entry => entry.id === node.id)?.machineConfigTiers?.fuel, "Nitrobenzene");
+  } else await page.keyboard.press("Escape");
+}
 try {
   const root = await page.goto(base, { waitUntil: "load", timeout: 120000 });
   assert.equal(root.status(), 200);
@@ -128,6 +237,21 @@ try {
   assert.equal(second.total, zh.total);
   assert.equal(second.resources[0].id, zh.resources[1].id);
   observations.push({ label: "api-identities", zh: zh.resources.map(item => item.id), en: en.resources.map(item => item.id), total: zh.total });
+  const pinyinReadings = ["gangban", "gang ban", "gb", "gangb", "gban", "钢ban", "gang板", "gt gangban"];
+  for (const query of pinyinReadings) {
+    const result = await queryResources(query);
+    assert.ok(result.resources.some(item => item.id === canonical), query);
+    if (query === "gangban") assert.equal(result.resources[0].id, canonical);
+  }
+  assert.equal((await queryResources("zzzzzqpyn")).total, 0);
+  const phenol = await queryResources("ben酚");
+  assert.equal(phenol.resources[0].displayName, "Phenol");
+  assert.ok(phenol.resources.every(resource => resource.displayName !== "Benzene"));
+  assert.equal((await queryResources("ben龘")).total, 0);
+  for (const prefix of ["gang", "ban", "dan"]) {
+    const result = await queryResources(prefix);
+    assert.ok(result.resources[0].displayName.toLowerCase().startsWith(prefix), `${prefix}: literal English prefix ranks first`);
+  }
 
   const emptySearchResponse = page.waitForResponse(response => {
     const url = new URL(response.url());
@@ -139,12 +263,15 @@ try {
   await emptySearchStates("desktop");
   await search("Steel Plate");
   await search("gt 钢板");
+  for (const query of pinyinReadings) await search(query);
+  await observe("pinyin-desktop-zh");
   await search("钢板");
-  await page.getByRole("option", { name: "钢板", exact: true }).first().click();
+  await resourceResults.getByRole("option", { name: "钢板", exact: true }).first().click();
   await page.locator('[data-recipe=""]').first().waitFor({ state: "visible", timeout: 120000 });
   assert.match(await page.locator("body").innerText(), /不消耗/);
   assert.match(await page.locator("body").innerText(), /所有等级/);
   await observe("recipe-desktop-zh");
+  await recipePinyin("desktop");
   const add = page.locator('[data-recipe=""]').first().locator('[data-glyph="plus"]');
   await add.click();
   const closeRecipe = page.getByRole("button", { name: /Close recipe search|关闭配方搜索/ });
@@ -156,10 +283,12 @@ try {
   await machineCount.locator('input').press("Enter");
   await page.waitForFunction(() => document.querySelector('.react-flow__node-recipeNode .cc-count')?.getAttribute("data-set") === "2");
   await search("钢板");
-  await page.getByRole("option", { name: "钢板", exact: true }).first().dragTo(page.locator(".react-flow").first(), { targetPosition: { x: 200, y: 500 } });
+  await resourceResults.getByRole("option", { name: "钢板", exact: true }).first().dragTo(page.locator(".react-flow").first(), { targetPosition: { x: 200, y: 500 } });
   await page.locator('.react-flow__node-storageNode .cd-box').first().waitFor();
   assert.equal(await page.locator('.react-flow__node-storageNode .cd-box').first().getAttribute("data-text"), "设置");
   await observe("pinned-count-and-drawer-desktop-zh");
+  await boardAndOverviewPinyin();
+  await powerPinyin("desktop", true);
   const tab = page.locator('[role="tab"][data-design-id][data-active]').first();
   await tab.focus();
   await page.keyboard.press("F2");
@@ -178,6 +307,8 @@ try {
   assert.doesNotMatch(await page.locator("body").innerText(), /\bSet\b|Nothing to calculate yet/);
   await locale("en");
   assert.equal(await page.locator('.react-flow__node-storageNode .cd-box').first().getAttribute("data-text"), "Set");
+  await search("gangban");
+  await observe("pinyin-desktop-en");
   const after = await exportPlan();
   await fs.writeFile(path.join(evidence, "export-after.json"), JSON.stringify(after, null, 2));
   assert.deepEqual(after, before, "locale switching must not alter exported canonical plan data");
@@ -264,15 +395,19 @@ try {
   await page.locator('[data-mb="plans"]').click();
   await observe("library-mobile-zh");
   await page.locator('[data-mb="plans"]').click();
-  const items = page.locator('[data-mb="drawer-items"]');
-  if (await items.isVisible()) await items.click();
+  await drawer("drawer-items", true);
   await emptySearchStates("mobile");
+  for (const query of ["gangban", "gang ban", "gb", "钢ban"]) await search(query);
+  await observe("pinyin-mobile-zh");
   await search("钢板");
-  await page.getByRole("option", { name: "钢板", exact: true }).first().click();
+  await resourceResults.getByRole("option", { name: "钢板", exact: true }).first().click();
   await page.locator('[data-recipe=""]').first().waitFor({ timeout: 120000 });
   await observe("recipe-mobile-zh");
+  await recipePinyin("mobile");
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
   await page.getByRole("button", { name: /Close recipe search|关闭配方搜索/ }).click();
+  await boardAndOverviewPinyin("mobile");
+  await powerPinyin("mobile");
   await page.locator('[data-mb="help"]').click();
   await page.getByRole("menuitem", { name: /Controls and shortcuts|操作与快捷键/ }).click();
   await appDialog.waitFor();
@@ -289,7 +424,7 @@ try {
   assert.equal(await page.locator('[role="tab"][data-design-id][data-active] .mt-name').innerText(), userName);
   await observe("legacy-community-redirect-zh");
   assert.deepEqual(errors, [], "real application page errors");
-  observations.push({ label: "passed", pageErrors: errors, blockedExternalRequests: externalRequests, scope: "language switch/reload, bilingual API, empty search, add canonical recipe, pin count, drag resource drawer, rename, export equality, persisted reload, import as new design, library filtering, unconfigured Community, settings, help and latest release notes, mobile scrolling, legacy route redirect, desktop/mobile; all cross-origin browser requests blocked" });
+  observations.push({ label: "passed", pageErrors: errors, blockedExternalRequests: externalRequests, scope: "language switch/reload, Chinese/English/pinyin API and resource search, empty/error states, recipe-name and canvas/overview filters, generator/fuel search and placement, add canonical recipe, pin count, drag resource drawer, rename, export equality, persisted reload, import as new design, library filtering, unconfigured Community, settings, help and latest release notes, mobile scrolling, legacy route redirect, desktop/mobile; all cross-origin browser requests blocked" });
   await fs.writeFile(path.join(evidence, "observations.json"), JSON.stringify(observations, null, 2));
   console.log(JSON.stringify({ result: "PASS", observations: observations.length, pageErrors: errors.length }));
 } catch (error) {

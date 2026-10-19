@@ -15,6 +15,7 @@ const io = vi.hoisted(() => {
   const gz = (value: unknown) => gzipSync(Buffer.from(JSON.stringify(value), "utf8"));
 
   const versionId = "local-2.9.0-rc-2";
+  const fallbackVersionId = "local-2.9.0-rc-2-nolookup";
   const base = "/datasets/gtnh/local-2.9.0-rc-2";
   const shardPath = `${base}/recipes-shards/shard-0000.json.gz`;
   const rendered = `${base}/textures/rendered`;
@@ -155,6 +156,7 @@ const io = vi.hoisted(() => {
     kind: "gregtech_machine",
     category: "gregtech",
     machineType: "Alloy Smelter",
+    recipeMap: "Alloy Smelter",
     minimumTier: "LV",
     durationTicks: 112,
     eut: 30,
@@ -194,6 +196,7 @@ const io = vi.hoisted(() => {
     kind: "gregtech_machine",
     category: "gregtech",
     machineType: "Arc Furnace",
+    recipeMap: "Arc Furnace",
     minimumTier: "LV",
     durationTicks: 70,
     eut: 30,
@@ -254,6 +257,18 @@ const io = vi.hoisted(() => {
         recipeIndexPath: `${base}/recipe-index.json.gz`,
         recipeLookupIndexPath: `${base}/recipe-lookup-index.json.gz`,
         checksumSha256: "a306a680a7bccb28fa2a98fb627787fbc4f6ccd8eb73814e8d9f178cba171b74",
+        sourceInfo,
+      },
+      {
+        id: fallbackVersionId,
+        gtnhVersion: "2.9.0-RC-2",
+        channel: "experimental",
+        publishedAt: "2026-10-16T21:49:22.911Z",
+        manifestPath: "/datasets/gtnh/datasets.manifest.json",
+        recipeDatasetPath: `${base}/recipes.json.gz`,
+        resourceIndexPath: `${base}/resource-index.json.gz`,
+        recipeIndexPath: `${base}/recipe-index.json.gz`,
+        checksumSha256: "b306a680a7bccb28fa2a98fb627787fbc4f6ccd8eb73814e8d9f178cba171b75",
         sourceInfo,
       },
     ],
@@ -344,7 +359,7 @@ const io = vi.hoisted(() => {
     return { mtimeMs: 1, size: manifestText.length, isFile: () => true };
   }
 
-  return { readFile, stat };
+  return { readFile, stat, fallbackVersionId };
 });
 
 vi.mock("node:fs/promises", () => ({
@@ -502,5 +517,204 @@ describe("the real recipe query over an RC-2 fixture", () => {
     expect(first.recipes.map((recipe) => recipe.id)).not.toEqual(
       second.recipes.map((recipe) => recipe.id),
     );
+  });
+});
+
+const FALLBACK_VERSION_ID = io.fallbackVersionId;
+const MACERATOR = "gregtech:gt.blockmachines@301";
+
+// Every reading of 钢板 the shared phonetic index must answer: whole, spaced,
+// initials, prefix/infix fragments, and the two mixed Chinese/pinyin spellings.
+const STEEL_PLATE_PINYIN = ["gangban", "gang ban", "gb", "gangb", "gban", "钢ban", "gang板"];
+
+describe("pinyin queries over the real RC-2 fixture", () => {
+  it("reads every pinyin form of 钢板 as Steel Plate", async () => {
+    for (const reading of STEEL_PLATE_PINYIN) {
+      expect(ids(await resourceQuery(reading)), reading).toContain(STEEL_PLATE);
+    }
+  });
+
+  it("ranks the canonical Steel Plate first for a whole reading", async () => {
+    expect(ids(await resourceQuery("gangban"))[0]).toBe(STEEL_PLATE);
+    expect(ids(await resourceQuery("gang ban"))[0]).toBe(STEEL_PLATE);
+  });
+
+  it("keeps a Latin modifier meaningful beside pinyin", async () => {
+    expect(ids(await resourceQuery("gt gangban"))).toContain(STEEL_PLATE);
+    expect(ids(await resourceQuery("gregtech gangban"))).toContain(STEEL_PLATE);
+  });
+
+  it("answers nothing, not the whole catalog, for unknown pinyin", async () => {
+    const none = await resourceQuery("zzzzzqpyn");
+    expect(none.total).toBe(0);
+    expect(none.resources).toEqual([]);
+
+    // The blank query is still the browse.
+    expect((await resourceQuery("")).total).toBeGreaterThan(0);
+  });
+
+  it("pages a pinyin query like an English one", async () => {
+    const all = await resourceQuery("gangban", { sort: "name" });
+    const first = await resourceQuery("gangban", { sort: "name", limit: 1 });
+    const second = await resourceQuery("gangban", { sort: "name", limit: 1, offset: 1 });
+
+    expect(first.total).toBe(all.total);
+    expect(second.total).toBe(all.total);
+    expect(second.offset).toBe(1);
+    expect(ids(first)).toEqual(all.resources.slice(0, 1).map((resource) => resource.id));
+    expect(ids(second)).toEqual(all.resources.slice(1, 2).map((resource) => resource.id));
+  });
+
+  it("keeps the kind and mod filters on a pinyin query", async () => {
+    const items = await resourceQuery("gangban", { kind: "item" });
+    expect(items.resources.every((resource) => resource.kind === "item")).toBe(true);
+    expect(ids(items)).toContain(STEEL_PLATE);
+
+    const fluids = await resourceQuery("gangban", { kind: "fluid" });
+    expect(ids(fluids)).not.toContain(STEEL_PLATE);
+    expect(fluids.total).toBe(0);
+
+    const gregtech = await resourceQuery("gangban", { mod: "gregtech" });
+    expect(ids(gregtech)).toContain(STEEL_PLATE);
+
+    const ic2 = await resourceQuery("gangban", { mod: "ic2" });
+    expect(ids(ic2)).not.toContain(STEEL_PLATE);
+    expect(ic2.total).toBe(0);
+  });
+});
+
+describe("technical tokens keep their meaning", () => {
+  it("keeps voltage and unit modifiers next to a name", async () => {
+    expect(ids(await resourceQuery("gt 钢板"))).toContain(STEEL_PLATE);
+    expect(ids(await resourceQuery("LV 研磨机"))).toContain(MACERATOR);
+    expect(ids(await resourceQuery("HV 研磨机"))).toContain(MACERATOR);
+    expect(ids(await resourceQuery("512 EU/t 钢板"))).toContain(STEEL_PLATE);
+  });
+
+  it("keeps a registry id searchable as an id", async () => {
+    const byId = await resourceQuery("gregtech:gt.metaitem.01@17305");
+    expect(ids(byId)).toContain(STEEL_PLATE);
+    expect(ids(byId)).not.toContain("gregtech:gt.metaitem.01@11305");
+  });
+
+  it("does not turn an unknown acronym into a pinyin reading", async () => {
+    const ebf = await resourceQuery("ebf");
+    expect(ebf.total).toBe(0);
+    expect(ebf.resources).toEqual([]);
+  });
+});
+
+describe("pinyin queries over the real recipe lookup", () => {
+  it("reads a pinyin name like its English name", async () => {
+    const pinyin = await recipeQuery("gangban");
+    expect(pinyin.total).toBeGreaterThan(0);
+    expect(pinyin.recipes.map((recipe) => recipe.id)).toContain(MAKES_STEEL_PLATE);
+  });
+
+  it("keeps mode, tier, map and clause scope on a pinyin query", async () => {
+    const makes = await queryDatasetRecipes(VERSION_ID, {
+      query: "gangban",
+      resource: { kind: "item", id: STEEL_PLATE },
+      mode: "recipes",
+      maxTier: "all",
+      offset: 0,
+      limit: 24,
+    });
+    const uses = await queryDatasetRecipes(VERSION_ID, {
+      query: "gangban",
+      resource: { kind: "item", id: STEEL_PLATE },
+      mode: "uses",
+      maxTier: "all",
+      offset: 0,
+      limit: 24,
+    });
+    expect(makes.recipes.map((recipe) => recipe.id)).toEqual([MAKES_STEEL_PLATE]);
+    expect(uses.recipes.map((recipe) => recipe.id)).toEqual([USES_STEEL_PLATE]);
+
+    const tiered = await recipeQuery("gangban", { maxTier: "LV" });
+    expect(tiered.recipes.map((recipe) => recipe.id)).toContain(MAKES_STEEL_PLATE);
+    const belowTier = await recipeQuery("gangban", { maxTier: "ULV" });
+    expect(belowTier.total).toBe(0);
+
+    const alloy = await queryDatasetRecipes(VERSION_ID, {
+      query: "gangban",
+      mode: "recipes",
+      recipeMap: "Alloy Smelter",
+      maxTier: "all",
+      offset: 0,
+      limit: 24,
+    });
+    expect(alloy.recipes.map((recipe) => recipe.id)).toEqual([MAKES_STEEL_PLATE]);
+
+    const clause = await queryDatasetRecipes(VERSION_ID, {
+      query: "gangban",
+      mode: "recipes",
+      clauses: [{ role: "makes", kind: "item", id: STEEL_PLATE }],
+      maxTier: "all",
+      offset: 0,
+      limit: 24,
+    });
+    expect(clause.recipes.map((recipe) => recipe.id)).toEqual([MAKES_STEEL_PLATE]);
+  });
+
+  it("answers the same through the non-lookup fallback path", async () => {
+    const pinyin = await queryDatasetRecipes(FALLBACK_VERSION_ID, {
+      query: "gangban",
+      mode: "recipes",
+      maxTier: "all",
+      offset: 0,
+      limit: 24,
+    });
+    const english = await queryDatasetRecipes(FALLBACK_VERSION_ID, {
+      query: "Steel Plate",
+      mode: "recipes",
+      maxTier: "all",
+      offset: 0,
+      limit: 24,
+    });
+    expect(pinyin.total).toBeGreaterThan(0);
+    expect(pinyin.recipes.map((recipe) => recipe.id)).toContain(MAKES_STEEL_PLATE);
+    expect(pinyin.recipes.map((recipe) => recipe.id)).toEqual(
+      english.recipes.map((recipe) => recipe.id),
+    );
+
+    const fallbackMakes = await queryDatasetRecipes(FALLBACK_VERSION_ID, {
+      query: "gangban",
+      resource: { kind: "item", id: STEEL_PLATE },
+      mode: "recipes",
+      maxTier: "all",
+      offset: 0,
+      limit: 24,
+    });
+    expect(fallbackMakes.recipes.map((recipe) => recipe.id)).toEqual([MAKES_STEEL_PLATE]);
+
+    const fallbackBelowTier = await queryDatasetRecipes(FALLBACK_VERSION_ID, {
+      query: "gangban",
+      mode: "recipes",
+      maxTier: "ULV",
+      offset: 0,
+      limit: 24,
+    });
+    expect(fallbackBelowTier.total).toBe(0);
+
+    const fallbackMap = await queryDatasetRecipes(FALLBACK_VERSION_ID, {
+      query: "gangban",
+      mode: "recipes",
+      recipeMap: "Alloy Smelter",
+      maxTier: "all",
+      offset: 0,
+      limit: 24,
+    });
+    expect(fallbackMap.recipes.map((recipe) => recipe.id)).toEqual([MAKES_STEEL_PLATE]);
+
+    const fallbackClause = await queryDatasetRecipes(FALLBACK_VERSION_ID, {
+      query: "gangban",
+      mode: "recipes",
+      clauses: [{ role: "makes", kind: "item", id: STEEL_PLATE }],
+      maxTier: "all",
+      offset: 0,
+      limit: 24,
+    });
+    expect(fallbackClause.recipes.map((recipe) => recipe.id)).toEqual([MAKES_STEEL_PLATE]);
   });
 });
