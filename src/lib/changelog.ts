@@ -40,6 +40,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "4.3.2",
+    date: "2026-10-19",
+    headline: "Clearer tooltips in Chinese and on phones",
+    notes: [
+      "Toolbar and drawer tooltips now follow your language.",
+      "Item tooltips hide raw NBT metadata while recipes and exported plans keep it intact.",
+      "Long tooltip titles wrap within the phone screen.",
+    ],
+  },
+  {
     version: "4.3.1",
     date: "2026-10-19",
     headline: "The hosted planner has a new address",

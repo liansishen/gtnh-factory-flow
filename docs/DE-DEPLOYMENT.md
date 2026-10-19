@@ -136,6 +136,8 @@ curl -fsS https://plan.playgtnh.dpdns.org/api/version
 curl -fsS https://plan.playgtnh.dpdns.org/deployment.json
 APP_URL=https://plan.playgtnh.dpdns.org I18N_EVIDENCE_DIR=/tmp/gtnh-browser-check \
   CHROME_PATH=/path/to/chrome node tools/browser-tests/i18n.mjs
+APP_URL=https://plan.playgtnh.dpdns.org I18N_EVIDENCE_DIR=/tmp/gtnh-tooltip-check \
+  CHROME_PATH=/path/to/chrome node tools/browser-tests/tooltips.mjs
 ```
 
 Verify DNS, redirect, certificate trust, both desktop/mobile browser flows,

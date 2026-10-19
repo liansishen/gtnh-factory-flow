@@ -66,7 +66,7 @@ Scratch harnesses are `*.local.test.ts` (excluded from the suite); run one with
   nothing. The GitHub deploy and dataset workflows are decoys (no runner); never dispatch
   them. The deploy command lives outside the repo (the origin IP is not public).
 - `APP_VERSION` in `src/lib/version.ts` is bumped once per deploy: minor if the release
-  carries features, patch if only fixes. First check https://gtnhplanner.com/api/version:
+  carries features, patch if only fixes. First check https://plan.playgtnh.dpdns.org/api/version:
   behind `version.ts` means the last bump has not shipped, so fold new work into the top
   changelog entry; equal means bump and open a new entry.
 - Every release has an entry in `src/lib/changelog.ts`: concrete bullets about what

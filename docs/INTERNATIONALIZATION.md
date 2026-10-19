@@ -128,7 +128,7 @@ Read-only assets under `src/lib/i18n/`:
 | `messages-planner-zh.json` | planner-specific strings | 240 | authored here |
 | `messages-secondary-zh.json` | per-area additions | 169 | authored here |
 | `messages-inventory-zh.json` | inventory additions | 190 | authored here |
-| `messages-runtime-zh.json` | settings, controls, toolbar tooltips, resource filters, current release notes | 150 | authored here |
+| `messages-runtime-zh.json` | settings, controls, toolbar tooltips, resource filters, current release notes | 154 | authored here |
 | `rules-zh.json` | community dynamic rules | 127 | community source |
 | `rules-planner-zh.json` | planner dynamic rules | 18 | authored here |
 | `rules-runtime-zh.json` | release history count | 1 | authored here |
@@ -232,8 +232,8 @@ A snapshot from the last run (regenerate for current numbers):
 
 - verified inventory: 548 of 566 (96.8%), 18 fallback
 - translation-call candidates: 386 of 386 (100%), 0 fallback
-- data messages: 200 of 1064 (18.8%), 864 fallback
-- all distinct inventoried strings: 1052 of 1934 (54.4%)
+- data messages: 204 of 1068 (19.1%), 864 fallback
+- all distinct inventoried strings: 1056 of 1938 (54.5%)
 - name engine: 98.5% of 67,824 dataset display names (48,154 dictionary, 18,685
   generated, 985 fallback)
 
@@ -251,8 +251,8 @@ reported separately; 985 dataset names still fall back to English.
 ### Known gaps
 
 - Missing UI messages return the English source. The missing JSON lists their
-  locations, including historical changelog entries. The newest five release
-  entries (4.3.1, 4.3.0, 4.2.0, 4.1.0, 4.0.0), settings and the controls list have Chinese copy;
+  locations, including historical changelog entries. The newest six release
+  entries (4.3.2, 4.3.1, 4.3.0, 4.2.0, 4.1.0, 4.0.0), settings and the controls list have Chinese copy;
   the older release history keeps English fallback.
 - Composed names are approximate: the engine matches words and shape patterns,
   not grammar. It refuses registry ids, so a canonical id (`minecraft:stick`,
