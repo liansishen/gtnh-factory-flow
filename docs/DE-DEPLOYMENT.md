@@ -69,7 +69,7 @@ app have separate accounts. DE's application port stays closed to public traffic
 ## DNS and HTTPS
 
 The Cloudflare zone is `playgtnh.dpdns.org`. Only
-`plan.playgtnh.dpdns.org A 88.218.193.209` is needed, with proxying disabled.
+`plan.playgtnh.dpdns.org A 213.145.72.207` is needed, with proxying disabled.
 DNS-only keeps the requested DeVPS route as the public entrance. Other zone
 records and Cloudflare settings are independent of this deployment.
 
