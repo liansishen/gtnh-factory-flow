@@ -45,6 +45,30 @@ dataset in Next.js's separately bundled instrumentation module.
 The management-only `/api/datasets/<version>/prewarm` endpoint is blocked at the
 public ingress. Systemd warms the ordinary resource and recipe query endpoints.
 
+## Account backend (PostgreSQL + PostgREST)
+
+- PostgreSQL 15 from Debian listens only on `127.0.0.1:5432`; database `gtnh`
+  holds the account, library and community tables. Memory settings live in
+  `/etc/postgresql/15/main/conf.d/gtnh-backend.conf`.
+- PostgREST 16.5 listens only on `127.0.0.1:3000` as
+  `gtnh-factory-rest.service`. Its config is
+  `/etc/gtnh-factory-backend/postgrest.conf`; the database password and service
+  JWT are in `/etc/gtnh-factory-backend/secrets.env` (root:gtnh-backend, 0640).
+  Rotating either means updating that file and the app environment together.
+- The app reaches it through its own loopback: `SUPABASE_URL` is
+  `http://127.0.0.1:3180` and `SUPABASE_SERVICE_ROLE_KEY` is in
+  `/etc/gtnh-factory-flow/environment`. `next.config.ts` rewrites `/rest/v1/*`
+  to PostgREST, so no database port is public. Anonymous requests have no table
+  privileges; only the service JWT can read or write.
+- `COMMUNITY_HASH_SALT` signs account sessions and must never change; changing
+  it signs everyone out and breaks existing votes.
+- Backups: `gtnh-backend-backup.timer` writes a compressed `pg_dump` to
+  `/opt/gtnh-factory-backend/backups` daily and keeps 14 days. Restore with
+  `pg_restore` into a new database, then point `db-uri` at it.
+- Storage is not part of this backend yet. Account and library sync work;
+  community posts fall back when a preview upload is unavailable, and board
+  images are unavailable.
+
 ## DeVPS files and service
 
 - `/etc/nginx/conf.d/plan.playgtnh.dpdns.org.conf`: based on the matching file in

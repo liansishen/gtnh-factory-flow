@@ -40,6 +40,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "4.3.0.5",
+    date: "2026-10-21",
+    headline: "Your plans follow your account",
+    notes: [
+      "Create an account from Sign in; your plans are saved to it and open in any browser.",
+      "Plans made in one browser are added to the account when you sign in there.",
+      "The planner still keeps a local copy, so it opens even when the account service is unavailable.",
+    ],
+  },
+  {
     version: "4.3.0.4",
     date: "2026-10-20",
     headline: "Chinese menus and machine settings",

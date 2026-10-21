@@ -160,5 +160,9 @@
   "Non-recipe machines, their filters and previews now follow your language.": "非配方机器及其筛选菜单和预览现会随界面语言切换。",
   "Plan tab menus, the new-plan menu and sharing actions now follow your language.": "方案标签页菜单、新建菜单和分享操作现会随界面语言切换。",
   "Machine settings translate their labels, options and explanations while preserving saved settings.": "机器设置中的标签、选项和说明现已翻译，已保存的设置保持一致。",
-  "The first three version numbers track the upstream release; the fourth counts this fork's releases.": "版本号前三段对应官方版本，第四段记录本分支的发布次数。"
+  "The first three version numbers track the upstream release; the fourth counts this fork's releases.": "版本号前三段对应官方版本，第四段记录本分支的发布次数。",
+  "Your plans follow your account": "方案跟随账号保存",
+  "Create an account from Sign in; your plans are saved to it and open in any browser.": "从登录处创建账号，方案会保存到账号中，并可在任何浏览器打开。",
+  "Plans made in one browser are added to the account when you sign in there.": "在一个浏览器中创建的方案，会在该浏览器登录后加入账号。",
+  "The planner still keeps a local copy, so it opens even when the account service is unavailable.": "规划器仍保留本地副本，账号服务不可用时也能打开。"
 }

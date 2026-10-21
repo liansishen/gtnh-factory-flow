@@ -5,5 +5,5 @@
  * Change UPSTREAM_VERSION only when incorporating a new upstream release.
  */
 export const UPSTREAM_VERSION = "4.3.0";
-export const FORK_REVISION = 4;
+export const FORK_REVISION = 5;
 export const APP_VERSION = `${UPSTREAM_VERSION}.${FORK_REVISION}`;

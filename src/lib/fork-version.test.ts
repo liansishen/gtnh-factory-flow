@@ -16,7 +16,7 @@ describe("fork releases", () => {
     expect(CHANGELOG[0].version).toBe(APP_VERSION);
   });
 
-  it.each(["4.3.1", "4.3.2", "4.3.3", "4.3.0.3"])(
+  it.each(["4.3.1", "4.3.2", "4.3.3", "4.3.0.3", "4.3.0.4"])(
     "shows this release after the read stamp %s",
     (read) => {
       window.localStorage.setItem(NOTES_READ_KEY, read);
@@ -28,10 +28,11 @@ describe("fork releases", () => {
   );
 
   it.each([
-    ["4.3.1", [APP_VERSION, "4.3.3", "4.3.2"]],
-    ["4.3.0.1", [APP_VERSION, "4.3.3", "4.3.2"]],
-    ["4.3.2", [APP_VERSION, "4.3.3"]],
-    ["4.3.3", [APP_VERSION]],
+    ["4.3.1", [APP_VERSION, "4.3.0.4", "4.3.3", "4.3.2"]],
+    ["4.3.0.1", [APP_VERSION, "4.3.0.4", "4.3.3", "4.3.2"]],
+    ["4.3.2", [APP_VERSION, "4.3.0.4", "4.3.3"]],
+    ["4.3.3", [APP_VERSION, "4.3.0.4"]],
+    ["4.3.0.4", [APP_VERSION]],
   ] as const)("preserves intermediate unread releases after %s", (read, expected) => {
     window.localStorage.setItem(NOTES_READ_KEY, read);
     expect(unseenEntries().map((entry) => entry.version)).toEqual(expected);

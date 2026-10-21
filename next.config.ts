@@ -47,6 +47,11 @@ const nextConfig: NextConfig = {
         source: "/_umami/:path*",
         destination: "http://127.0.0.1:8582/umami/:path*",
       },
+      {
+        // The account backend runs on this host; supabase-js appends /rest/v1.
+        source: "/rest/v1/:path*",
+        destination: "http://127.0.0.1:3000/:path*",
+      },
     ];
 
     if (!datasetBackendUrl) {
