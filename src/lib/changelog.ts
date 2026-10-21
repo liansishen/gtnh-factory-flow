@@ -40,6 +40,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "4.3.0.6",
+    date: "2026-10-21",
+    headline: "Official community plans",
+    notes: [
+      "The Community shelf now lists plans shared on the official GTNH Planner site.",
+      "Open any plan as a copy on your board; search, sort and filters work as before.",
+      "Posting, voting and comments stay on the official site; your own plans still sync to your account.",
+    ],
+  },
+  {
     version: "4.3.0.5",
     date: "2026-10-21",
     headline: "Your plans follow your account",

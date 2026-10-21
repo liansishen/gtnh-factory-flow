@@ -1,5 +1,6 @@
 import type { ShareMode } from "@/components/community/SharePlanDialog";
 import { isLiveConfigured } from "@/lib/live/live-config";
+import { OFFICIAL_COMMUNITY_READ_ONLY } from "@/lib/community/official";
 import type { MenuEntry } from "./ChromeMenu";
 
 /**
@@ -13,8 +14,8 @@ export function libraryRows(
   open: (mode: ShareMode) => void,
   options: { disabled?: boolean; taskBoard?: boolean } = {},
 ): MenuEntry[] {
-  // A task board is never posted to the library.
-  if (options.taskBoard) return [];
+  // The official community is read-only here, and a task board is never posted.
+  if (OFFICIAL_COMMUNITY_READ_ONLY || options.taskBoard) return [];
   if (!linked) {
     return [
       isLiveConfigured()

@@ -7,6 +7,7 @@ import {
   isCommunityConfigured,
   makeActorKey,
 } from "@/lib/server/community";
+import { isOfficialCommunity, officialReadOnlyResponse } from "@/lib/server/official-community";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,6 +72,9 @@ async function ensureBucket(): Promise<void> {
 }
 
 export async function POST(request: Request) {
+  if (isOfficialCommunity()) {
+    return officialReadOnlyResponse();
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Image hosting is not configured." }, { status: 503 });
   }

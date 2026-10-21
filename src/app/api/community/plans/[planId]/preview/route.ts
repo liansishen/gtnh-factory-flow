@@ -6,6 +6,12 @@ import {
   getSessionUser,
   isCommunityConfigured,
 } from "@/lib/server/community";
+import {
+  fetchOfficialCommunity,
+  isOfficialCommunity,
+  officialPlanId,
+  officialReadOnlyResponse,
+} from "@/lib/server/official-community";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +53,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ planId: string }> },
 ) {
+  if (isOfficialCommunity()) {
+    return officialReadOnlyResponse();
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }
@@ -121,6 +130,29 @@ export async function POST(
  */
 export async function GET(_request: Request, context: { params: Promise<{ planId: string }> }) {
   const { planId } = await context.params;
+  if (isOfficialCommunity()) {
+    const id = officialPlanId(planId);
+    if (!id) {
+      return NextResponse.json({ error: "No preview." }, { status: 404 });
+    }
+    try {
+      const upstream = await fetchOfficialCommunity(`/api/community/plans/${id}/preview`);
+      if (!upstream.ok) {
+        return new NextResponse(null, { status: upstream.status });
+      }
+      return new NextResponse(await upstream.arrayBuffer(), {
+        headers: {
+          "Content-Type": upstream.headers.get("content-type") ?? "image/png",
+          "Cache-Control": "public, max-age=300",
+        },
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "The official community could not be reached." },
+        { status: 502 },
+      );
+    }
+  }
   const png = await getPlanPreviewPng(planId);
   if (!png) {
     return NextResponse.json({ error: "No preview." }, { status: 404 });

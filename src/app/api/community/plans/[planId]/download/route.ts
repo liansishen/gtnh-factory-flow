@@ -5,12 +5,36 @@ import {
   isAdminRequest,
   isCommunityConfigured,
 } from "@/lib/server/community";
+import {
+  fetchOfficialCommunity,
+  isOfficialCommunity,
+  officialPlanId,
+  proxyOfficialJson,
+} from "@/lib/server/official-community";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** Returns the full plan JSON and counts the download. */
 export async function POST(request: Request, { params }: { params: Promise<{ planId: string }> }) {
+  if (isOfficialCommunity()) {
+    const { planId } = await params;
+    const id = officialPlanId(planId);
+    if (!id) {
+      return NextResponse.json({ error: "Plan not found." }, { status: 404 });
+    }
+    try {
+      const upstream = await fetchOfficialCommunity(`/api/community/plans/${id}/download`, {
+        method: "POST",
+      });
+      return proxyOfficialJson(upstream);
+    } catch {
+      return NextResponse.json(
+        { error: "The official community could not be reached." },
+        { status: 502 },
+      );
+    }
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }

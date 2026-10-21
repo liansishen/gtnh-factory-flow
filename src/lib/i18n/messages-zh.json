@@ -2862,5 +2862,8 @@
   "Recipe index is not loaded yet.": "配方索引尚未加载。",
   "Upper case speed": "大写速度",
   "Machine, fuel, or product...": "机器、燃料或产物…",
-  "Filter items": "筛选物品"
+  "Filter items": "筛选物品",
+  "Official community plans are read-only. Opening one makes a copy on your board; voting and comments are unavailable.": "官方社区方案在此只读。打开会复制到你的画板；点赞和评论不可用。",
+  "Community posting is unavailable": "社群发布在此不可用",
+  "Official community plans are read-only here. Opening one makes a copy on your board; posting, voting and comments happen on the official site.": "官方社区方案在此只读。打开会复制到你的画板；发布、点赞和评论请在官方站点进行。"
 }

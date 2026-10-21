@@ -30,6 +30,13 @@ import {
   type PlanRow,
 } from "@/lib/server/community";
 import { invalidatePlanListCache } from "@/lib/server/plan-list-cache";
+import {
+  fetchOfficialCommunity,
+  isOfficialCommunity,
+  officialPlanId,
+  officialReadOnlyResponse,
+  proxyOfficialJson,
+} from "@/lib/server/official-community";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,6 +47,23 @@ export const dynamic = "force-dynamic";
  * this summary in the background, and background reads are not views.
  */
 export async function GET(request: Request, { params }: { params: Promise<{ planId: string }> }) {
+  if (isOfficialCommunity()) {
+    const { planId } = await params;
+    const id = officialPlanId(planId);
+    if (!id) {
+      return NextResponse.json({ error: "Plan not found." }, { status: 404 });
+    }
+    const countView = new URL(request.url).searchParams.get("countView") === "0" ? "?countView=0" : "";
+    try {
+      const upstream = await fetchOfficialCommunity(`/api/community/plans/${id}${countView}`);
+      return proxyOfficialJson(upstream);
+    } catch {
+      return NextResponse.json(
+        { error: "The official community could not be reached." },
+        { status: 502 },
+      );
+    }
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }
@@ -175,6 +199,9 @@ async function refreshStaleStats(
 
 /** Updates a post in place. Only the signed-in owner may do this. */
 export async function PUT(request: Request, { params }: { params: Promise<{ planId: string }> }) {
+  if (isOfficialCommunity()) {
+    return officialReadOnlyResponse();
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }
@@ -321,6 +348,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ planId: string }> },
 ) {
+  if (isOfficialCommunity()) {
+    return officialReadOnlyResponse();
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }

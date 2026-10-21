@@ -22,6 +22,7 @@ import { serializeFactoryProject } from "@/lib/import-export";
 import { toggleSavedSetup, useSavedSetups } from "@/lib/library/saved-setups";
 import { capturePlanView } from "@/lib/plan-view";
 import { SETUPS_CHANGED_EVENT, type SetupsScope } from "@/lib/setups-tab";
+import { OFFICIAL_COMMUNITY_READ_ONLY } from "@/lib/community/official";
 import { useDesignStore } from "@/store/design-store";
 import { useFactoryStore } from "@/store/factory-store";
 import { LibraryDetail, previewUrlFor } from "./LibraryDetail";
@@ -464,7 +465,7 @@ export function SetupsGrid({
               posted: detailPlan.isMine === true,
               privatePost: detailPlan.isMine === true && !detailPlan.isPublic,
             },
-            commentsPlanId: detailPlan.id,
+            commentsPlanId: OFFICIAL_COMMUNITY_READ_ONLY ? undefined : detailPlan.id,
             onEdit: detailPlan.isMine
               ? async (patch) => {
                   try {
@@ -495,13 +496,17 @@ export function SetupsGrid({
               : undefined,
             actionBusy: busyId === detailPlan.id,
             keys: [
-              {
-                label: detailPlan.myVote === 1 ? "Take back your vote" : "Vote this up",
-                icon: "vote",
-                active: detailPlan.myVote === 1,
-                count: detailPlan.score,
-                onClick: () => void vote(detailPlan),
-              },
+              ...(OFFICIAL_COMMUNITY_READ_ONLY
+                ? []
+                : [
+                    {
+                      label: detailPlan.myVote === 1 ? "Take back your vote" : "Vote this up",
+                      icon: "vote" as const,
+                      active: detailPlan.myVote === 1,
+                      count: detailPlan.score,
+                      onClick: () => void vote(detailPlan),
+                    },
+                  ]),
               {
                 label: "Copy the share link",
                 icon: "link",
@@ -536,7 +541,7 @@ export function SetupsGrid({
               sortOptions={SETUP_SORTS}
               knownTags={knownTags}
               myPosts={
-                scope === "network" && username
+                scope === "network" && username && !OFFICIAL_COMMUNITY_READ_ONLY
                   ? { checked: onlyMine, onChange: setOnlyMine }
                   : undefined
               }
@@ -559,6 +564,14 @@ export function SetupsGrid({
               }
             }}
           >
+            {OFFICIAL_COMMUNITY_READ_ONLY && scope === "network" ? (
+              <p className="mb-2 border border-[var(--mc-33)] bg-[var(--mc-25)] px-2.5 py-2 text-[11px] leading-relaxed text-[var(--mc-ink-muted)]">
+                <I18nText>
+                  Official community plans are read-only. Opening one makes a copy on your board;
+                  voting and comments are unavailable.
+                </I18nText>
+              </p>
+            ) : null}
             {error ? <p className="mb-2 text-[11px] text-red-400"><I18nText>{error}</I18nText></p> : null}
             {needsAccount && !isAuthLoading ? (
               <p className="text-[12px] leading-relaxed text-[var(--mc-ink-muted)]">
@@ -631,7 +644,7 @@ export function SetupsGrid({
                         social={{
                           score: plan.score,
                           myVote: plan.myVote,
-                          onVote: () => void vote(plan),
+                          onVote: OFFICIAL_COMMUNITY_READ_ONLY ? undefined : () => void vote(plan),
                           downloads: plan.downloads,
                           comments: plan.commentCount,
                         }}

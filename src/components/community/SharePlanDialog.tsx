@@ -6,6 +6,7 @@ import { Check, Link2, LoaderCircle } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDialogA11y } from "@/lib/hooks/use-dialog-a11y";
 import { isLiveConfigured } from "@/lib/live/live-config";
+import { OFFICIAL_COMMUNITY_READ_ONLY } from "@/lib/community/official";
 import { normalizeBlueprintTags } from "@/lib/blueprints/types";
 import {
   listCommunityPlans,
@@ -44,7 +45,57 @@ export type ShareMode = "save" | "update" | "new";
  * then the post's face: icon, name, description, tags. Updating a linked post
  * keeps its votes and downloads.
  */
-export function SharePlanDialog({
+export function SharePlanDialog(props: { onClose: () => void; mode?: ShareMode }) {
+  return OFFICIAL_COMMUNITY_READ_ONLY ? (
+    <ReadOnlyShareDialog onClose={props.onClose} />
+  ) : (
+    <CommunityShareDialog {...props} />
+  );
+}
+
+/** Posting is the official site's business; this build only reads its plans. */
+function ReadOnlyShareDialog({ onClose }: { onClose: () => void }) {
+  const _i18nT = useT();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(dialogRef, { onClose });
+
+  return (
+    <div
+      className="fixed inset-0 z-[120] grid place-items-center bg-neutral-950/75 p-4"
+      onClick={onClose}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={_i18nT("Community posting is unavailable")}
+        className="pn-skin w-full max-w-md border border-line-strong bg-surface p-5"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 className="text-lg font-bold leading-snug">
+          <I18nText>Community posting is unavailable</I18nText>
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-fg-muted">
+          <I18nText>
+            Official community plans are read-only here. Opening one makes a copy on your board;
+            posting, voting and comments happen on the official site.
+          </I18nText>
+        </p>
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 items-center rounded border border-line-strong px-4 text-sm font-bold"
+          >
+            <I18nText>Close</I18nText>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CommunityShareDialog({
   onClose,
   mode: askedMode,
 }: {

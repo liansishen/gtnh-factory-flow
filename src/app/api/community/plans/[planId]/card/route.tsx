@@ -5,6 +5,11 @@ import { NextResponse } from "next/server";
 import { PNG } from "pngjs";
 import { GT_TIER_COLORS } from "@/components/flow/tier-colors";
 import { getPlanPreviewPng, getPublicPlanRow } from "@/lib/server/plan-preview";
+import {
+  fetchOfficialCommunity,
+  isOfficialCommunity,
+  officialPlanId,
+} from "@/lib/server/official-community";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -152,6 +157,27 @@ export async function GET(
   { params }: { params: Promise<{ planId: string }> },
 ) {
   const { planId } = await params;
+  if (isOfficialCommunity()) {
+    const id = officialPlanId(planId);
+    const fallback = () => NextResponse.redirect(new URL("/opengraph-image.png", request.url), 302);
+    if (!id) {
+      return fallback();
+    }
+    try {
+      const upstream = await fetchOfficialCommunity(`/api/community/plans/${id}/card`);
+      if (!upstream.ok) {
+        return fallback();
+      }
+      return new NextResponse(await upstream.arrayBuffer(), {
+        headers: {
+          "Content-Type": "image/png",
+          "Cache-Control": "public, max-age=300",
+        },
+      });
+    } catch {
+      return fallback();
+    }
+  }
   const [row, previewPng] = await Promise.all([
     getPublicPlanRow(planId),
     getPlanPreviewPng(planId),

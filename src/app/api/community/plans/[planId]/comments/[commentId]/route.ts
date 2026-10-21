@@ -7,6 +7,7 @@ import {
   recountPlanComments,
 } from "@/lib/server/community";
 import { invalidatePlanListCache } from "@/lib/server/plan-list-cache";
+import { isOfficialCommunity, officialReadOnlyResponse } from "@/lib/server/official-community";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,9 @@ type RouteContext = { params: Promise<{ planId: string; commentId: string }> };
  * tombstone, not a hole, so the thread keeps its shape server-side.
  */
 export async function DELETE(request: Request, context: RouteContext) {
+  if (isOfficialCommunity()) {
+    return officialReadOnlyResponse();
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }

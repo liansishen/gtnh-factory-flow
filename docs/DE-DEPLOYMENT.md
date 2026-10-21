@@ -69,6 +69,21 @@ public ingress. Systemd warms the ordinary resource and recipe query endpoints.
   community posts fall back when a preview upload is unavailable, and board
   images are unavailable.
 
+## Official community (read-only)
+
+- `OFFICIAL_COMMUNITY_URL=https://gtnhplanner.com` makes
+  `/api/community/plans*` proxy the official public list, detail, download,
+  preview, card and comments. Plan ids are UUID-checked and only reads are
+  forwarded; posting, voting and comment writes return 403.
+- The browser build must also set
+  `NEXT_PUBLIC_OFFICIAL_COMMUNITY_READ_ONLY=1`. It hides votes and comments and
+  replaces the posting dialog with a read-only notice. The two flags are a
+  pair; set both or neither.
+- Account sync, cloud plans and live plans continue to use this site's own
+  database. Without the flags, the Community shelf returns to the local hub.
+- The official service is a third-party dependency: if it is unavailable, the
+  shelf shows an error and local plans are unaffected.
+
 ## DeVPS files and service
 
 - `/etc/nginx/conf.d/plan.playgtnh.dpdns.org.conf`: based on the matching file in

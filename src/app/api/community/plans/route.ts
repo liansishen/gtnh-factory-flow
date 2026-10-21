@@ -31,6 +31,13 @@ import {
   type PlanRow,
 } from "@/lib/server/community";
 import { invalidatePlanListCache, readPlanListCache, writePlanListCache } from "@/lib/server/plan-list-cache";
+import {
+  fetchOfficialCommunity,
+  isOfficialCommunity,
+  officialListQuery,
+  officialReadOnlyResponse,
+  proxyOfficialJson,
+} from "@/lib/server/official-community";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,6 +63,28 @@ const SORT_COLUMNS: Record<
 };
 
 export async function GET(request: Request) {
+  if (isOfficialCommunity()) {
+    const url = new URL(request.url);
+    const pageSize = Math.min(
+      60,
+      Math.max(1, Number.parseInt(url.searchParams.get("pageSize") ?? "24", 10) || 24),
+    );
+    // The official service has no account for this browser; Mine stays empty.
+    if (url.searchParams.get("mine") === "1") {
+      return NextResponse.json({ plans: [], total: 0, page: 1, pageSize, gameVersions: [] });
+    }
+    try {
+      const upstream = await fetchOfficialCommunity(
+        `/api/community/plans?${officialListQuery(url)}`,
+      );
+      return proxyOfficialJson(upstream);
+    } catch {
+      return NextResponse.json(
+        { error: "The official community could not be reached." },
+        { status: 502 },
+      );
+    }
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }
@@ -234,6 +263,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (isOfficialCommunity()) {
+    return officialReadOnlyResponse();
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }

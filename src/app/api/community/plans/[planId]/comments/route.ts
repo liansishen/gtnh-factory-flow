@@ -9,6 +9,13 @@ import {
   recountPlanComments,
 } from "@/lib/server/community";
 import { invalidatePlanListCache } from "@/lib/server/plan-list-cache";
+import {
+  fetchOfficialCommunity,
+  isOfficialCommunity,
+  officialPlanId,
+  officialReadOnlyResponse,
+  proxyOfficialJson,
+} from "@/lib/server/official-community";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,6 +63,21 @@ async function loadPlanOwner(planId: string): Promise<{ user_id: string; is_publ
 }
 
 export async function GET(request: Request, context: RouteContext) {
+  if (isOfficialCommunity()) {
+    const id = officialPlanId((await context.params).planId);
+    if (!id) {
+      return NextResponse.json({ error: "Plan not found." }, { status: 404 });
+    }
+    try {
+      const upstream = await fetchOfficialCommunity(`/api/community/plans/${id}/comments`);
+      return proxyOfficialJson(upstream);
+    } catch {
+      return NextResponse.json(
+        { error: "The official community could not be reached." },
+        { status: 502 },
+      );
+    }
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }
@@ -88,6 +110,9 @@ export async function GET(request: Request, context: RouteContext) {
 }
 
 export async function POST(request: Request, context: RouteContext) {
+  if (isOfficialCommunity()) {
+    return officialReadOnlyResponse();
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }

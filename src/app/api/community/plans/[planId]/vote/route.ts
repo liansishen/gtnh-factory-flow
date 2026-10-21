@@ -8,6 +8,7 @@ import {
   makeVoterKey,
 } from "@/lib/server/community";
 import { invalidatePlanListCache } from "@/lib/server/plan-list-cache";
+import { isOfficialCommunity, officialReadOnlyResponse } from "@/lib/server/official-community";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,9 @@ export const dynamic = "force-dynamic";
  * feeds the rate limit.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ planId: string }> }) {
+  if (isOfficialCommunity()) {
+    return officialReadOnlyResponse();
+  }
   if (!isCommunityConfigured()) {
     return NextResponse.json({ error: "Community hub is not configured." }, { status: 503 });
   }
