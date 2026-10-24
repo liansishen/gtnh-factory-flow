@@ -334,7 +334,7 @@ it("gives a shared machine one count and one bar for the card, under its last ro
   });
   expect(container.querySelectorAll(".cc-count").length).toBe(1);
   expect(container.querySelector(".cc-count")!.getAttribute("data-run")).toBe("×4");
-  expect(container.querySelector(".cc-rule")!.textContent).toBe("up to");
+  expect(container.querySelector(".cc-rule")!.textContent).toBe("Up to");
   const foot = container.querySelectorAll<HTMLElement>(".cc-foot");
   expect(foot.length).toBe(1);
   // The second recipe's row names the reason: the bar reads every recipe's rows.
@@ -360,7 +360,7 @@ it("keeps a custom rate card Exactly: its rule word opens no menu", () => {
   };
   const { container } = renderCard(view);
   const rule = container.querySelector(".cc-rule")!;
-  expect(rule.textContent).toBe("exactly");
+  expect(rule.textContent).toBe("Exactly");
   expect(rule.hasAttribute("data-fixed")).toBe(true);
   expect(rule.getAttribute("role")).toBeNull();
   fireEvent.click(rule);
@@ -368,7 +368,7 @@ it("keeps a custom rate card Exactly: its rule word opens no menu", () => {
   expect(container.querySelector(".cc-foot")).toBeNull();
 });
 
-it("counts a crop card's crops with no times sign and says what it counts", () => {
+it("counts a crop card's crops with no times sign, with the rule and the set box as every card", () => {
   const view: SpecialView = {
     ...baseView(),
     kind: "crop",
@@ -378,21 +378,22 @@ it("counts a crop card's crops with no times sign and says what it counts", () =
     tier: undefined,
     sections: [{ section: 0, inputs: [], outputs: [port("output", 1)] }],
     power: undefined,
-    count: countOf("any", undefined, 12, { noTimes: true, anyNote: "crops planted" }),
+    count: countOf("any", undefined, 12, { noTimes: true }),
   };
   const { container } = renderCard(view);
   const count = container.querySelector(".cc-count")!;
   expect(count.getAttribute("data-run")).toBe("12");
-  expect(count.getAttribute("data-set")).toBe("crops planted");
+  expect(count.querySelector(".cc-rule")!.textContent).toBe("Any");
+  expect(count.getAttribute("data-set")).toBe("Set");
   cleanup();
   const upTo = renderCard({
     ...view,
-    count: countOf("upTo", 16, 12, { noTimes: true, anyNote: "crops planted" }),
+    count: countOf("upTo", 16, 12, { noTimes: true }),
   });
   const set = upTo.container.querySelector(".cc-count")!;
   expect(set.getAttribute("data-run")).toBe("12");
   expect(set.getAttribute("data-set")).toBe("16");
-  expect(upTo.container.querySelector(".cc-rule")!.textContent).toBe("up to");
+  expect(upTo.container.querySelector(".cc-rule")!.textContent).toBe("Up to");
 });
 
 it("puts a generator's bar under its warnings", () => {

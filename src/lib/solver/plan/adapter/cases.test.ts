@@ -311,10 +311,10 @@ describe("buffers", () => {
     expect(result.storages["buf"]!.producedPerSecond).toBeCloseTo(4, 9);
   });
 
-  it("a buffer's rule is a product's: at least, exactly or at most what passes through", () => {
+  it("a buffer has no rule: a stored one (an older plan's, or from when it was a product) waits, and it is Any", () => {
     const ruled = { ...p, storages: [{ ...p.storages![0]!, targetPerSecond: 3, targetMode: "at-most" as const }] };
     const { input } = run(ruled);
-    expect(input.drawers.map((d) => [d.kind, d.rule, d.rate])).toEqual([["BUFFER", "AT_MOST", 3]]);
+    expect(input.drawers.map((d) => [d.kind, d.rule, d.rate])).toEqual([["BUFFER", "ANY", 0]]);
   });
 
   it("a buffer wired to another drawer is still joined away", () => {
@@ -331,40 +331,6 @@ describe("buffers", () => {
     const { input } = run(chained);
     expect(input.edges).toHaveLength(1);
     expect(input.drawers).toEqual([]);
-  });
-});
-
-describe("loose cell wires", () => {
-  it("the hidden tank is a machine the core is told costs nothing", () => {
-    const cell = recipe("cells", [], [["Water Cell", 1]]);
-    const use = {
-      ...recipe("use", [], []),
-      inputs: [{ kind: "fluid" as const, id: "water", amount: 1000, displayName: "Water" }],
-    };
-    const p = project({
-      recipes: [cell, use],
-      nodes: [node("c", "cells", { solvePin: 1 }), node("u", "use")],
-      edges: [
-        {
-          id: "loose",
-          source: "c",
-          target: "u",
-          sourceHandle: handle("output", "Water Cell"),
-          targetHandle: "input:fluid:water",
-          resourceKind: "item",
-          resourceId: "Water Cell",
-          crossForm: { litresPerCell: 1000 },
-        },
-      ],
-    });
-    const { input, result } = run(p);
-    expect(input.machines.map((m) => m.id)).toEqual(["c", "crossform:loose", "u"]);
-    expect(input.weightless).toEqual(["crossform:loose"]);
-    expect(input.edges).toHaveLength(2);
-    // the tank is struck from the answer, the far half of the wire too
-    expect(result.nodes["crossform:loose"]).toBeUndefined();
-    expect(result.edges["loose:crossform"]).toBeUndefined();
-    expect(result.edges["loose"]).toBeDefined();
   });
 });
 

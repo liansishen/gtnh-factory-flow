@@ -45,12 +45,7 @@ import {
 } from "./rows";
 import { findUnanchored } from "./unanchored";
 
-/**
- * `SolveInput` plus the one thing the website needs and the mod does not:
- * solve nodes that cost nothing in the solver's machine steps (`portSteps`),
- * the hidden tanks of loose cell wires, so a wire the player drew once counts
- * as one step. Cores that do not know the field ignore it.
- */
+/** The core's `SolveInput`, as the adapter builds it from the board. */
 export type PlanSolveInput = SolveInput;
 
 /** One machine of the model: the solve node, its report and its port rows. */
@@ -119,13 +114,13 @@ function drawerKindAndRule(
 ): { kind: DrawerKind; rule: DrawerRule; rate: number } {
   const kind: DrawerKind =
     role === "source" ? "SOURCE" : role === "trash" ? "TRASH" : role === "buffer" ? "BUFFER" : "PRODUCT";
-  // A byproduct or trash drawer's number is dormant: it asks for nothing. A buffer's rule is on what passes through:
-  // a product's (at least unless it says otherwise).
-  const ruleRole: StorageRole = role === "buffer" ? "product" : role;
-  if (role === "byproduct" || role === "trash" || !hasStorageTarget(storage, ruleRole)) {
+  // A byproduct or trash drawer's number is dormant: it asks for nothing. So is a buffer's: a buffer only passes what
+  // its users take (the website has no rule on it; a stored one, from an older plan or a drawer that was a product,
+  // waits until it is a product again).
+  if (role === "byproduct" || role === "trash" || role === "buffer" || !hasStorageTarget(storage, role)) {
     return { kind, rule: "ANY", rate: 0 };
   }
-  const mode = storageTargetMode(storage, ruleRole);
+  const mode = storageTargetMode(storage, role);
   const rule: DrawerRule =
     mode === "at-least"
       ? "AT_LEAST"
@@ -146,10 +141,10 @@ function drawerKindAndRule(
  * in `compareIds` order, so the answer never depends on the board's order.
  */
 export function buildPlanModel(args: PlanSolveArgs): PlanModel {
-  const { project, nodes, crossForm } = args;
+  const { project, nodes } = args;
   const units = args.units ?? {};
   const recipesById = new Map(project.recipes.map((recipe) => [recipe.id, recipe]));
-  const hidden = new Set<Id>(crossForm.hiddenNodeIds);
+  const hidden = new Set<Id>();
 
   const flat = expandBuffers(project);
   const roles = getStorageRoles({
@@ -469,7 +464,6 @@ export function buildPlanModel(args: PlanSolveArgs): PlanModel {
     spares[key] = split;
   }
 
-  const weightless = [...hidden].filter((id) => machines.has(id)).sort(compareIds);
   const input: PlanSolveInput = {
     mode: "AUTO",
     machines: machineIns,
@@ -478,7 +472,6 @@ export function buildPlanModel(args: PlanSolveArgs): PlanModel {
     drawers: drawerIns,
     extentPins: {},
     spares,
-    ...(weightless.length > 0 ? { weightless } : {}),
   };
 
   const model: PlanModel = {

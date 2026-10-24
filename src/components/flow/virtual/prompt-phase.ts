@@ -1,5 +1,5 @@
 /**
- * Every pulsing prompt on the board ("(set count)", "Set rate") blinks off ONE clock: a timer flips
+ * Every pulsing prompt on the board (a count's "Set" box, "Set rate") blinks off ONE clock: a timer flips
  * `data-cc-blink` on the root element twice a second and the prompts' colour follows it in CSS
  * (clean.css, drawer.css, interaction.css). A CSS animation per prompt kept the page drawing at 60 frames a second
  * and restyling every frame for as long as one prompt was on the board (131 recalcs in a 2 s idle at 200 cards);
@@ -16,9 +16,12 @@ const PULSES = new Set(["cc-accept", "cc-glow"]);
 export const BLINK_ATTRIBUTE = "data-cc-blink";
 /** One whole blink (gold then grey), as `--cc-prompt` says in clean.css. */
 export const BLINK_MS = 1000;
-/** Everything that blinks off the clock: the prompts, and the outline of a card in a dead loop or a clog lock. */
+/**
+ * Everything that blinks off the clock: the prompts, the outline of a card in a dead loop or a clog lock, and that
+ * ring's notice (its cards may be off screen, unmounted).
+ */
 const PROMPTS =
-  ".cc-count[data-prompt], .cc-prb[data-prompt], .cd-box[data-prompt], .cc-card[data-loop]";
+  ".cc-count[data-prompt], .cc-prb[data-prompt], .cd-box[data-prompt], .cc-card[data-loop], .rail-notice[data-alarm]";
 
 let frame = 0;
 let clock: ReturnType<typeof setTimeout> | undefined;

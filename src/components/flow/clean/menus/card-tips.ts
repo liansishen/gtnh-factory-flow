@@ -192,6 +192,8 @@ export function countRowsTip(
     notes.push({ text: count.title, tone: "muted" });
   } else {
     rows.push({ label: "Calculated", value: times(count.text) });
+    // What the number counts (a crop card's are crops).
+    notes.push({ text: count.title, tone: "muted" });
     const whole = Math.ceil(count.value - 1e-9);
     if (count.value > 0 && whole !== count.value) {
       rows.push({ label: "Whole machines", value: `×${whole}` });
@@ -234,7 +236,11 @@ export function ruleTip(view: Pick<CleanCardView, "nodeId" | "count">): TipSpec 
             ? count.ruleFixed
               ? "A custom rate always runs at its dial."
               : "Always this many. A gap comes in or goes out forced."
-            : "As many as the plan lets it run. Never more.",
+            : count.rule === "any"
+              ? "The plan decides how many."
+              : count.pinned
+                ? "As many as the plan lets it run. Never more."
+                : "Set how many you have. Until then the plan picks.",
         tone: "muted",
       },
     ],
@@ -264,6 +270,21 @@ export function footTip(nodeId: string, foot: CleanFootView): TipSpec {
           ? "Running flat out"
           : `All ${n(f.capacity)} running`
         : `${n(f.running)} of ${n(f.capacity)} running`;
+  // A ring: what it is short of or backs up with, and that the ring stops itself.
+  if (f.loop) {
+    const dead = f.loop === "dead";
+    if (f.resource)
+      rows.push({ label: dead ? "Short of" : "Backs up", value: f.resource, tone: "warn" });
+    for (const name of f.tied)
+      rows.push({ label: dead ? "Also short of" : "Also backs up", value: name, tone: "warn" });
+    notes.push({
+      text: dead
+        ? "This loop starves itself to a stop. Bring this input in from outside."
+        : "This loop clogs itself to a stop. A drawer for this output frees it.",
+      tone: "muted",
+    });
+    return { id: `${nodeId}|foot`, title, rows, notes };
+  }
   switch (f.reason) {
     case "FULL":
       notes.push({ text: "Nothing around it would use more.", tone: "muted" });

@@ -306,6 +306,19 @@ describe("shared machines (pools)", () => {
   });
 });
 
+describe("dust is judged per network", () => {
+  it("billions of EU a second leave a 0.03/s item flow standing", () => {
+    // A Mk-III naquadah reactor's EU beside a trickle of plates: dust over the whole point zeroed the wire while its
+    // compressor kept running, and the answer failed its own conservation check.
+    const reactor = machine("reactor", "reactor", [], [port(0, "eu", 8_369_680_000), port(1, "dust", 0.03)], 1);
+    const press = machine("press", "press", [port(1, "dust", 0.03)], [port(2, "plate", 0.01)]);
+    const s = solved(input([reactor, press], [edge("dust", "reactor", 1, "press", 0)]));
+    expect(s.edgeFlowsPerSecond["dust"]).toBeCloseTo(0.03, 9);
+    expect(s.machineCounts["press"]).toBeCloseTo(1, 9);
+    expect(s.unneeded).toEqual([]);
+  });
+});
+
 describe("failures and diagnoses", () => {
   const groupedLine = (pinLathe: boolean): SolveInput => {
     const assembler = machine("assembler", "assembler", [port(1, "gear")], [port(2, "kit")], 0, { 0: 3 });

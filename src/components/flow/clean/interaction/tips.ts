@@ -80,6 +80,15 @@ export function openBoxTip(p: CleanPortView, pinned: boolean): TipSpec {
 
 export function forcedTip(p: CleanPortView): TipSpec {
   const input = p.side === "input";
+  // A spill into a buffer: more than the buffer's users take. Nothing else can take it, so no choice to offer.
+  if (p.spillTo !== undefined) {
+    return {
+      id: `${p.nodeId}|forced|${p.handleId}`,
+      title: `Forced output: ${p.name}`,
+      rows: [{ label: "Ships out here", value: p.forced ? rate(p.forced.number, p.forced.unit) : "" }],
+      notes: [{ text: "The buffer's users take less than this makes. The extra is forced out here.", tone: "muted" }],
+    };
+  }
   return {
     id: `${p.nodeId}|forced|${p.handleId}`,
     title: `Forced ${input ? "input" : "output"}: ${p.name}`,
@@ -162,7 +171,7 @@ export function countTip(view: CleanCardView): TipSpec {
       { label: count.pinned ? "Pinned" : "Calculated", value: count.text.replace(/^×/, "x") },
       ...(!count.pinned && count.value > 0 ? [{ label: "Whole machines", value: String(Math.ceil(count.value - 0.000001)) }] : []),
     ],
-    notes: count.note === "(set count)" ? [{ text: "No rate or pinned count in the plan needs this machine yet.", tone: "muted" }] : [],
+    notes: count.prompt ? [{ text: "No rate or pinned count in the plan needs this machine yet.", tone: "muted" }] : [],
     actions: [
       { input: "left", label: count.pinned ? "Change or unpin" : "Pin count" },
       { input: "wheel", label: "+1 / -1" },

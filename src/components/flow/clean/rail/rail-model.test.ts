@@ -53,6 +53,7 @@ describe("the rail's totals", () => {
     // The compressor runs 6 pinned; the cutter and the sawmill sit at zero and are listed all the same.
     expect(rail.machines.map((m) => m.nodeId).sort()).toEqual(["comp", "cutter", "saw"]);
     expect(rail.machines.find((m) => m.nodeId === "comp")).toMatchObject({ pinned: true, pin: 6 });
+    // No count set: Any, as the card says it.
     expect(rail.machines.find((m) => m.nodeId === "saw")).toMatchObject({
       rule: "any",
       pinned: false,

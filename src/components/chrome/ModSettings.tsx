@@ -154,7 +154,7 @@ export function ModSettings({ onClose }: { onClose: () => void }) {
           label: "Font",
           about: "Sets the font of the planner.",
           kind: "button",
-          names: [APP_FONTS.find((option) => option.id === font)?.label ?? "Minecraft"],
+          names: [APP_FONTS.find((option) => option.id === font)?.label ?? "Inter"],
           at: 0,
           to: (_, anchor) => anchor && setMenu({ anchor: chromeAnchorOf(anchor) }),
         },

@@ -44,7 +44,7 @@
   font-weight: 400;
   letter-spacing: 0;
   color: var(--pn-ink);
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
 }
 .pn {
   box-sizing: border-box;
@@ -407,7 +407,7 @@ textarea.pn-field {
   font-family: var(--app-font);
   border-radius: 0;
   letter-spacing: 0;
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
 }
 .rs-mod [class*="font-semibold"],
 .rs-mod [class*="font-bold"],

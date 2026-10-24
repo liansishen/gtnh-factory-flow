@@ -49,8 +49,26 @@ export function currentFontEpoch(): number {
   return fontEpoch;
 }
 
+/**
+ * The app's faces arrive after the page is drawn (next/font swaps each in once it loads), and a width measured before
+ * then is the fallback's. When a face of the app's font lands, every width so far is dropped and measured again, so
+ * chips and names are laid out in the face that is drawn. Once per face, never per frame.
+ */
+let watchingLoads = false;
+function watchFontLoads(): void {
+  if (watchingLoads || typeof document === "undefined" || !document.fonts?.addEventListener) return;
+  watchingLoads = true;
+  document.fonts.addEventListener("loadingdone", (event) => {
+    if (widths.size === 0) return;
+    const face = family();
+    const loaded = (event as FontFaceSetLoadEvent).fontfaces ?? [];
+    if (loaded.some((each) => face.includes(each.family.replace(/["']/g, "")))) resetMeasuredFont();
+  });
+}
+
 function family(): string {
   if (appFamily) return appFamily;
+  watchFontLoads();
   let value = "ui-sans-serif, system-ui, sans-serif";
   try {
     if (typeof document !== "undefined") {
@@ -64,12 +82,12 @@ function family(): string {
   return value;
 }
 
-/** The clean card's face: the app's, which is Monocraft unless the font setting says otherwise. */
+/** The clean card's face: the app's, which is Inter unless the font setting says otherwise. */
 function cleanFace(): string {
   return family();
 }
 
-/** Width in CSS px of `text` at `size` px and `weight`, in the clean card's Monocraft. */
+/** Width in CSS px of `text` at `size` px and `weight`, in the clean card's face. */
 export function measureClean(text: string, size: number, weight = 400): number {
   const key = `c|${weight}|${size}|${text}`;
   const cached = widths.get(key);
@@ -84,6 +102,31 @@ export function measureClean(text: string, size: number, weight = 400): number {
   }
   widths.set(key, width);
   return width;
+}
+
+/**
+ * A port row's words as clean.css and drawer.css draw them (.cc-num and .cd-num with the unit in their ::after,
+ * .cc-pname and .cd-name, small with data-small), pinned to the stylesheets by text-measure.test.ts. Measured in
+ * whatever face is drawn, a fit check against them never lets a word run past its box. Letter spacing follows every
+ * character, the last one too, and the unit's box keeps its gap when it is empty.
+ */
+export const ROW_TYPE = {
+  figure: { size: 14, spacing: -0.8 },
+  unit: { size: 9, spacing: -0.6, gap: 1 },
+  name: { size: 9, spacing: -0.6 },
+  smallName: { size: 7, spacing: -0.45 },
+} as const;
+
+function drawnWidth(text: string, type: { size: number; spacing: number }): number {
+  return text ? measureClean(text, type.size) + type.spacing * [...text].length : 0;
+}
+
+export function measureRowFigure(number: string, unit: string): number {
+  return drawnWidth(number, ROW_TYPE.figure) + ROW_TYPE.unit.gap + drawnWidth(unit, ROW_TYPE.unit);
+}
+
+export function measureRowName(name: string, small: boolean): number {
+  return drawnWidth(name, small ? ROW_TYPE.smallName : ROW_TYPE.name);
 }
 
 /** Width in CSS px of `text` at `size` px and `weight`, in the app's font. */

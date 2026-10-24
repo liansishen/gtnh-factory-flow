@@ -29,6 +29,7 @@ import {
   everyCountUpTo,
   exactConsumer,
   exactProducer,
+  fedRing,
   FIXTURES,
   nothingTakes,
   onlyUpTo,
@@ -362,6 +363,8 @@ describe("Up to: a buffer of any rule banks what its takers do not take", () => 
     expect(s.machineCounts["m"]).toBeCloseTo(2, 9);
     expect(s.machineCounts["t"]).toBeCloseTo(1, 9);
     expect(s.drawers.banked).toEqual({ buf: expect.closeTo(1, 9) });
+    // The same, at the maker's port: what the board shows as the maker's forced row.
+    expect(s.drawers.spills).toEqual({ buf: [{ port: ref("m", 0, false), ratePerSecond: expect.closeTo(1, 9) }] });
     expect(s.drawers.rates["buf"]).toBeCloseTo(1, 9);
     expect(s.drawers.ports["buf"]).toEqual([
       { port: ref("m", 0, false), ratePerSecond: expect.closeTo(1, 9) },
@@ -456,6 +459,15 @@ describe("Up to: rings that blame each other (dead loops and clog locks)", () =>
     expect(s.upToLoops).toEqual([
       { kind: "CLOG_LOCK", nodes: ["a", "b"], ports: [ref("a", 0, false), ref("b", 0, false)] },
     ]);
+  });
+
+  it("a recycling ring fed from outside runs, so it is no dead loop: the feed holds it back", () => {
+    const s = solved(fedRing(0.25)).solution;
+    for (const id of ["r0", "r1"]) {
+      expect(readoutOf(s, id).reason).toBe("STARVED");
+      expect(readoutOf(s, id).reached).toBeCloseTo(0.5, 6);
+    }
+    expect("upToLoops" in s).toBe(false);
   });
 
   it("a starved chain is no ring: no `upToLoops`", () => {

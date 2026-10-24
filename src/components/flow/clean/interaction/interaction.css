@@ -20,7 +20,7 @@
   font-family: var(--cc-font);
   font-size: 14px;
   line-height: 21px;
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
   pointer-events: none;
   box-shadow:
     0 0 0 1px #111317,
@@ -182,7 +182,7 @@
 }
 .cc-prb[data-set]::after {
   content: attr(data-unit);
-  margin-left: 2px;
+  margin-left: 1px;
   color: #8a8e97;
 }
 .cc-prb[data-prompt] {

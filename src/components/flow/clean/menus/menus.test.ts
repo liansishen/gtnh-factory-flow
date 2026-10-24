@@ -81,10 +81,10 @@ const view = (count: Partial<CleanCardView["count"]>): CleanCardView =>
       value: 0.001,
       pinned: false,
       rule: "any",
-      ruleWord: "",
+      ruleWord: "Any",
       ruleFixed: false,
       setText: "",
-      note: "",
+      box: "Set",
       prompt: false,
       zero: false,
       title: "",
@@ -105,9 +105,10 @@ it("count tip carries the mod's rows, and what runs against what is set", () => 
     view({
       pinned: true,
       rule: "upTo",
-      ruleWord: "up to",
+      ruleWord: "Up to",
       set: 24,
       setText: "24",
+      box: "24",
       text: "×18",
       value: 18,
       title: "As many as it can.",
@@ -129,9 +130,10 @@ it("count tip carries the mod's rows, and what runs against what is set", () => 
     view({
       pinned: true,
       rule: "exact",
-      ruleWord: "exactly",
+      ruleWord: "Exactly",
       set: 3,
       setText: "3",
+      box: "3",
       text: "×3",
       value: 3,
     }),
@@ -141,7 +143,11 @@ it("count tip carries the mod's rows, and what runs against what is set", () => 
   expect(exact.rows?.map((r) => r.label)).toEqual(["Running", "Exactly"]);
 });
 
-it("rule tip: what the rule does, and no menu on a custom rate card", () => {
+it("rule tip: what the rule does, Any's too, and no menu on a custom rate card", () => {
+  const any = ruleTip(view({}));
+  expect(any.title).toBe("Any");
+  expect(any.notes?.map((n) => n.text)).toEqual(["The plan decides how many."]);
+  expect(any.actions?.map((a) => a.label)).toEqual(["Any, Up to, Exactly"]);
   expect(ruleTip(view({ pinned: true, rule: "upTo" })).actions?.map((a) => a.label)).toEqual([
     "Any, Up to, Exactly",
   ]);
@@ -186,6 +192,28 @@ it("bar tip: usage, the reason in full and where to act", () => {
   expect(forced.title).toBe("Exactly 24 running");
   expect(forced.rows).toEqual([{ label: "Forced in", value: "720 L/s Oxygen", tone: "warn" }]);
   expect(footTip("n", facts({ reason: "UNUSED", running: 0 })).title).toBe("None running");
+  const dead = footTip(
+    "n",
+    facts({ reason: "STARVED", loop: "dead", running: 0, resource: "Oxygen" }),
+  );
+  expect(dead.rows?.map((r) => `${r.label}: ${r.value}`)).toEqual([
+    "Usage: 0%",
+    "Short of: Oxygen",
+  ]);
+  expect(dead.notes?.[0]?.text).toBe(
+    "This loop starves itself to a stop. Bring this input in from outside.",
+  );
+  const clog = footTip(
+    "n",
+    facts({ reason: "UNUSED", loop: "clog", running: 0, resource: "Hydrogen" }),
+  );
+  expect(clog.rows?.map((r) => `${r.label}: ${r.value}`)).toEqual([
+    "Usage: 0%",
+    "Backs up: Hydrogen",
+  ]);
+  expect(clog.notes?.[0]?.text).toBe(
+    "This loop clogs itself to a stop. A drawer for this output frees it.",
+  );
 });
 
 it("strip chip tip: Set to, coil need, pinned note, gestures", () => {

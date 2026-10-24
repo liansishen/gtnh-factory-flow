@@ -14,7 +14,7 @@ import { fixedQuantity, gatesThatMayHelp } from "./probes";
 import { pushUpTo } from "./push";
 import { levels, measureLevel, settleDrawers, settleTrades, type Trades } from "./trade";
 import type { Alternative, Alternatives, ChoiceKey, External, Note, PortRef, Rank } from "./types";
-import { NUMERICS, scaleOf } from "./validate";
+import { dustScales, NUMERICS } from "./validate";
 
 /** Cap on gate swaps tried (times effort percent / 100). */
 export const MAX_ALT_SWAPS = 1024;
@@ -156,10 +156,10 @@ function asAlternative(
   opened: number,
   rank: Rank,
 ): Alternative {
-  const dust = NUMERICS.dust * scaleOf(externals);
+  const scales = dustScales(ctx.model, null, null, externals).ports;
   const flows: External[] = [];
   for (const p of ctx.model.gates[opened]!.ports) {
-    if (externals[p]! <= dust) continue;
+    if (externals[p]! <= NUMERICS.dust * scales[p]!) continue;
     flows.push({ port: ctx.refOf(p), ratePerSecond: externals[p]! });
   }
   return {

@@ -16,6 +16,7 @@ import type {
   PlanShortfall,
   PlanSide,
   PlanSolveExtras,
+  PlanSpill,
   PlanTerminal,
   PlanUpTo,
   PlanUpToLoop,
@@ -151,6 +152,19 @@ export function readAnswer(model: PlanModel, answer: Answer): PlanReading {
       perSecond: e.perSecond,
     }));
 
+  // What a maker puts into a buffer beyond what its takers take: the maker's forced row, totalled on the buffer.
+  const spills: PlanSpill[] = Object.entries(solution.drawers?.spills ?? {}).flatMap(([drawerId, list]) =>
+    external(list, "out")
+      .filter((e) => e.perSecond > DUST)
+      .map((e) => ({
+        nodeId: e.node,
+        portKey: e.portKey,
+        resourceKey: e.resourceKey,
+        perSecond: e.perSecond,
+        drawerId,
+      })),
+  );
+
   // An unwired port with a drawer on it is that drawer's, not a free terminal.
   const terminals: PlanTerminal[] = [
     ...external(solution.terminalInputs, "in"),
@@ -204,6 +218,7 @@ export function readAnswer(model: PlanModel, answer: Answer): PlanReading {
       ...(loops.length > 0 ? { loops } : {}),
       ...(shortfalls.length > 0 ? { shortfalls } : {}),
       forced,
+      ...(spills.length > 0 ? { spills } : {}),
       leftovers,
       unneeded,
       unanchored: model.unanchored,

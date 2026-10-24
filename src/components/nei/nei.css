@@ -13,7 +13,7 @@
   --nei-art: 28px;
   --nei-key: 28px;
   font-family: var(--app-font);
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
 }
 
 /* Minecraft's text: white with its shadow a quarter as bright, one GUI pixel down and right. */
@@ -252,7 +252,7 @@
   font-family: var(--app-font);
   font-size: 14px;
   line-height: 17px;
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
   clip-path: polygon(
     2px 0,
     calc(100% - 2px) 0,

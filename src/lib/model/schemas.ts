@@ -421,7 +421,7 @@ export const factoryNodeSchema = z.object({
       }),
     )
     .optional(),
-  // The machine count the player set: Up to by default, Exactly with solvePinExact; absent = the solver's choice.
+  // The machine count the player set: Up to by default, Exactly with solvePinExact; absent = Any, the solver's choice.
   solvePin: z.number().nonnegative().optional(),
   solvePinExact: z.boolean().optional(),
   // Plan mode's port-rate pins by canonical handle id, units per second.
@@ -554,7 +554,7 @@ export const factoryEdgeSchema = z.object({
   ratioWeight: z.number().nonnegative().optional(),
   ratioInputWeight: z.number().nonnegative().optional(),
   waypoints: z.array(z.object({ x: z.number(), y: z.number() })).optional(),
-  // A loose cell wire's Canner ratio; see FactoryEdge.crossForm.
+  // An older build's loose cell wire, turned into a fluid tank on landing; see FactoryEdge.crossForm.
   crossForm: z.object({ litresPerCell: z.number().positive() }).optional(),
   gtnhplanner: gtnhplannerDataSchema.optional(),
 });
@@ -754,7 +754,6 @@ export const factoryProjectSchema = z.object({
     .object({
       freeInputs: z.boolean().optional(),
       freeOutputs: z.boolean().optional(),
-      looseCellWires: z.boolean().optional(),
     })
     .optional(),
   // Legacy sketch mode, dropped on load.

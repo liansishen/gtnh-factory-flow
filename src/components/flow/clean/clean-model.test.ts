@@ -15,11 +15,13 @@ import {
   cardCountState,
   circuitNumber,
   frameTone,
+  parseCountText,
   pinActions,
   pinPatch,
   reasonStripes,
   stateFrameTone,
   wheelCount,
+  wheelDraft,
   withReasonPorts,
   type CleanPortView,
 } from "./clean-model";
@@ -83,7 +85,9 @@ const ports = {
 
 describe("the count", () => {
   it("reads Any, Up to and Exactly through the pin rule", () => {
-    expect(cardCountState(result(3), node(), plan()).rule).toBe("any");
+    // No count: Any, nothing pinned.
+    const fresh = cardCountState(result(3), node(), plan());
+    expect([fresh.rule, fresh.pinned]).toEqual(["any", false]);
     expect(cardCountState(result(3), node(4), plan()).rule).toBe("upTo");
     expect(cardCountState(result(3), node(4, true), plan()).rule).toBe("exact");
     // A custom rate card's set count is always Exactly.
@@ -98,27 +102,43 @@ describe("the count", () => {
     expect(state.value).toBe(18.2);
     const view = buildCountView(state);
     expect(view.text).toBe("×18.2");
-    expect(view.ruleWord).toBe("up to");
+    expect(view.ruleWord).toBe("Up to");
     expect(view.setText).toBe("24");
-    expect(view.note).toBe("");
+    expect(view.box).toBe("24");
     // A read-out left over from before the card went Exactly is not this card's.
     expect(cardCountState(result(24), node(24, true), plan(upTo)).value).toBe(24);
   });
 
-  it("prints Exactly's words, Any's prompt or nothing, and a crop's own line", () => {
+  it("always says the rule and fills the set box: the count, or Set with none, asking while nothing sets it", () => {
     const exact = buildCountView(cardCountState(result(24), node(24, true), plan()));
-    expect([exact.text, exact.ruleWord, exact.setText]).toEqual(["×24", "exactly", "24"]);
-    const unset = buildCountView(
+    expect([exact.text, exact.ruleWord, exact.setText, exact.box]).toEqual([
+      "×24",
+      "Exactly",
+      "24",
+      "24",
+    ]);
+    // A new card: Any with the Set box asking while nothing sets this part of the plan.
+    const fresh = buildCountView(
       cardCountState(result(0), node(), plan(undefined, { unanchored: ["n"] })),
     );
-    expect([unset.ruleWord, unset.note, unset.prompt]).toEqual(["", "(set count)", true]);
+    expect([fresh.ruleWord, fresh.box, fresh.prompt]).toEqual(["Any", "Set", true]);
+    expect(fresh.title).toBe("How many of this machine the plan needs.");
     const any = buildCountView(cardCountState(result(1.2), node(), plan()));
-    expect([any.text, any.note, any.prompt]).toEqual(["×1.2", "", false]);
-    const crop = buildCountView(cardCountState(result(12), node(), plan()), {
-      noTimes: true,
-      anyNote: "crops planted",
-    });
-    expect([crop.text, crop.note]).toEqual(["12", "crops planted"]);
+    expect([any.text, any.ruleWord, any.setText, any.box, any.prompt]).toEqual([
+      "×1.2",
+      "Any",
+      "",
+      "Set",
+      false,
+    ]);
+    const crop = buildCountView(cardCountState(result(12), node(), plan()), { noTimes: true });
+    expect([crop.text, crop.ruleWord, crop.box]).toEqual(["12", "Any", "Set"]);
+    // A custom rate card has no Up to: with no count it is Any.
+    const rate = buildCountView(
+      cardCountState(result(1), node(), plan(), { machineType: "Custom Rate" }),
+      { ruleFixed: true },
+    );
+    expect(rate.ruleWord).toBe("Any");
     // An idle Up to card is not asked for a count: it says UNUSED in its bar.
     const idle = buildCountView(
       cardCountState(
@@ -138,17 +158,40 @@ describe("the count", () => {
     expect(wheelCount({ rule: "exact", set: 2.5, value: 2.5 }, -1)).toBe(2);
     expect(wheelCount({ rule: "upTo", set: 1, value: 1 }, -1)).toBeUndefined();
   });
+
+  it("reads a typed count: a number, zero or nothing for Any, anything else sets nothing", () => {
+    expect(parseCountText("24")).toBe(24);
+    expect(parseCountText(" ×2.5 ")).toBe(2.5);
+    expect(parseCountText("x3")).toBe(3);
+    expect(parseCountText("")).toBe(0);
+    expect(parseCountText("0")).toBe(0);
+    expect(parseCountText("-2")).toBeUndefined();
+    expect(parseCountText("lots")).toBeUndefined();
+  });
+
+  it("steps the number in an open box on the wheel, from what is typed", () => {
+    // What is typed, rounded, then by one: the box shows the step, nothing is set yet.
+    expect(wheelDraft("24", { value: 18.2 }, 1)).toBe("25");
+    expect(wheelDraft("3", { value: 18.2 }, -1)).toBe("2");
+    expect(wheelDraft("2.6", { value: 1 }, 1)).toBe("4");
+    // Below one is an empty box: Any once set.
+    expect(wheelDraft("1", { value: 1 }, -1)).toBe("");
+    // An empty box starts where the wheel starts an Any card: what runs, rounded up.
+    expect(wheelDraft("", { value: 18.2 }, 1)).toBe("19");
+    expect(wheelDraft("", { value: 18.2 }, -1)).toBe("19");
+    expect(wheelDraft("", { value: 0 }, 1)).toBe("1");
+  });
 });
 
 describe("writing a count", () => {
-  it("goes through withPinRule: Any clears both fields, Up to clears the flag, Exactly sets it", () => {
-    expect(pinPatch(node(4, true), "any", 4)).toEqual({
-      solvePin: undefined,
-      solvePinExact: undefined,
-    });
-    expect(pinPatch(node(4, true), "upTo", 6)).toEqual({ solvePin: 6, solvePinExact: undefined });
-    expect(pinPatch(node(), "exact", 3)).toEqual({ solvePin: 3, solvePinExact: true });
-    expect(pinPatch(node(4), "upTo", 0)).toEqual({ solvePin: undefined, solvePinExact: undefined });
+  it("goes through withPinRule: Any clears the count, Up to clears the flag, Exactly sets it", () => {
+    const none = { solvePin: undefined, solvePinExact: undefined };
+    expect(pinPatch(node(4, true), "any", 4)).toEqual(none);
+    expect(pinPatch(node(4, true), "upTo", 6)).toEqual({ ...none, solvePin: 6 });
+    expect(pinPatch(node(), "exact", 3)).toEqual({ ...none, solvePin: 3, solvePinExact: true });
+    // A cleared count is Any.
+    expect(pinPatch(node(4), "upTo", 0)).toEqual(none);
+    expect(pinPatch(node(4, true), "exact", undefined)).toEqual(none);
   });
 
   it("keeps the rule on a typed or stepped count, starts Up to from Any, and takes the rule menu's pick", () => {
@@ -179,6 +222,34 @@ describe("writing a count", () => {
       { solvePin: 4, solvePinExact: undefined },
       { solvePin: undefined, solvePinExact: undefined },
     ]);
+  });
+
+  it("starts a new card on Any, clears a count back to Any, and types Up to again after Exactly", () => {
+    const writes: Array<Pick<FactoryNode, "solvePin" | "solvePinExact">> = [];
+    const update = (_id: string, patch: (typeof writes)[number]) => void writes.push(patch);
+    const locked = () => false;
+    const fresh = buildCountView(cardCountState(result(18.2), node(), plan()));
+    const onFresh = pinActions(node(), fresh, update, locked);
+    // Any is what it already reads: nothing to write.
+    onFresh.setRule("any");
+    expect(writes).toEqual([]);
+    onFresh.setCount(7);
+    expect(writes).toStrictEqual([{ solvePin: 7, solvePinExact: undefined }]);
+    writes.length = 0;
+    const exact = buildCountView(cardCountState(result(4), node(4, true), plan()));
+    const onExact = pinActions(node(4, true), exact, update, locked);
+    // Picking Any or clearing the count (the middle button, an empty box) is Any.
+    onExact.setRule("any");
+    onExact.setCount(0);
+    expect(writes).toStrictEqual([
+      { solvePin: undefined, solvePinExact: undefined },
+      { solvePin: undefined, solvePinExact: undefined },
+    ]);
+    writes.length = 0;
+    // Back on Any, the next count typed is Up to, not Exactly.
+    const cleared = buildCountView(cardCountState(result(4), node(), plan()));
+    pinActions(node(), cleared, update, locked).setCount(5);
+    expect(writes).toStrictEqual([{ solvePin: 5, solvePinExact: undefined }]);
   });
 
   it("keeps a custom rate card Exactly and writes nothing while locked", () => {
@@ -259,6 +330,32 @@ describe("the bar along the foot", () => {
       "LIMITED",
       "the plan holds it back",
     ]);
+  });
+
+  it("says DEAD LOOP or CLOG LOCK in the ring's tone on a card in a ring", () => {
+    const dead = buildFootView(
+      upToCount,
+      { capacity: 24, reached: 0, reason: "STARVED", resourceKey: "item:Oxygen" },
+      ports,
+      undefined,
+      "dead",
+    )!;
+    expect([dead.tone, dead.word, dead.say, dead.facts.loop]).toEqual([
+      "starved",
+      "DEAD LOOP",
+      "short of Oxygen",
+      "dead",
+    ]);
+    // A clog lock's cards stand still (UNUSED), but the bar says what backs up, in CLOGGED's purple, not UNUSED's grey.
+    const clog = buildFootView(
+      upToCount,
+      { capacity: 24, reached: 0, reason: "UNUSED", resourceKey: "item:Sulfuric Acid" },
+      ports,
+      undefined,
+      "clog",
+    )!;
+    expect([clog.tone, clog.word, clog.facts.loop]).toEqual(["clogged", "CLOG LOCK", "clog"]);
+    expect(clog.say).toMatch(/Sulfuric Acid|an output backs up/);
   });
 
   it("runs a bottleneck's bar on, striped, to what the line wants", () => {

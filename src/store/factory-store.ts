@@ -11,7 +11,7 @@ import { dissolveProductionGroup, productionGroupDescendants } from "@/lib/model
 import type { ProductionGroup, PoolResourceRule } from "@/lib/model/types";
 
 import { normalizeFullFarms } from "@/lib/model/full-farms";
-import { isEecRecipe } from "@/lib/machines/extreme-entity-crusher";
+import { ownsItsRecipe } from "@/lib/model/owns-recipe";
 
 import { carryMachineVoltage, normalizeProjectHatchInputs } from "@/lib/solver/hatch-input";
 
@@ -38,9 +38,11 @@ import {
   splitSectionHandleId,
 } from "@/lib/model/shared-machine";
 import {
+  convertCellWiresWithNotice,
   normalizeLoadedProjectWithNotice,
   type LoadOptions,
 } from "@/lib/model/project-normalize";
+import { convertLooseCellWires, hasLooseCellWires } from "@/lib/model/cell-wires";
 import type { PlanConversionNotice } from "@/lib/solver/plan/to-plan";
 import { planClipboard } from "@/lib/solver/plan/convert";
 import { playBoardSound, quietBoardSoundsFor, suppressBoardSound } from "@/lib/board-sounds";
@@ -475,19 +477,6 @@ interface FactoryStore {
     source: { nodeId: string; handleId?: string },
     resource: Pick<ResourceAmount, "kind" | "id" | "displayName">,
   ) => void;
-  /**
-   * A loose cell wire: a filled cell landing
-   * straight on its fluid's input, or a fluid landing straight on its cell's
-   * input. The edge carries the SOURCE's own resource, the far form's input
-   * handle as its target, and the Canner ratio the gesture fetched; the
-   * solver bridges the two forms through a hidden free Tank.
-   */
-  connectCrossFormEdge: (
-    source: { nodeId: string; handleId: string },
-    target: { nodeId: string; handleId: string },
-    resource: Pick<ResourceAmount, "kind" | "id" | "displayName">,
-    litresPerCell: number,
-  ) => void;
   /** Swaps the node onto another recipe (crop pick), resetting per-recipe state. */
   setNodeRecipe: (nodeId: string, recipe: Recipe) => void;
   deleteNode: (nodeId: string) => void;
@@ -512,6 +501,11 @@ interface FactoryStore {
   ) => void;
   /** Drains only: flip between pulling the feeder flat out and catching the extra. */
   setStorageDrainMode: (storageId: string, drainMode: StorageDrainMode) => void;
+  /**
+   * An input drawer becomes an output one, or an output one an input: its wires come off (a card that made the
+   * resource seldom uses it too) and its rate goes (a supply's rate is not a demand's). One undo step. Not a buffer.
+   */
+  flipStorageSide: (storageId: string) => void;
   /** Shared Solve/Pool rate on a source or product; undefined clears it. */
   setStorageTarget: (storageId: string, targetPerSecond: number | undefined) => void;
   setStorageTargetMode: (storageId: string, mode: TargetMode) => void;
@@ -1235,7 +1229,13 @@ export const useFactoryStore = create<FactoryStore>(withViewerGuard((set, get, w
     quietly(() =>
       write((state) => {
         const landed = applyOps(state.project as unknown as Record<string, unknown>, ops) as unknown as FactoryProject;
-        const opened = landed.planMode ? undefined : normalizeLoadedProjectWithNotice(landed);
+        // A plan in the one mode can still carry an older build's loose cell wires: only those convert (to tanks),
+        // never the rest of the funnel, which would move the game's own things.
+        const opened = landed.planMode
+          ? hasLooseCellWires(landed)
+            ? convertCellWiresWithNotice(landed)
+            : undefined
+          : normalizeLoadedProjectWithNotice(landed);
         // Tests that keep the old modes get the plan back unconverted: nothing to send then.
         const project = opened?.project.planMode ? opened.project : landed;
         if (project !== landed) {
@@ -1452,20 +1452,25 @@ export const useFactoryStore = create<FactoryStore>(withViewerGuard((set, get, w
         mode,
         seedNonce: state.recipeBrowserSeedNonce,
       });
+      // A machine pin holds while the search stays open: a browse made inside
+      // it (an item from the items column, a slot's "find what makes it")
+      // still asks only that machine, and the pick still joins its card. The
+      // stencil's unpin key and closing the search are what lift it.
+      const pin = state.recipeBrowserResource ? state.recipeBrowserMachinePin : undefined;
       return {
         recipeBrowserResource: resource,
         recipeBrowserMode: mode,
         // A plain browse is not a refactor: the stencil seeds from this one
-        // resource and an add places a new card.
+        // resource and an add places a new card (or joins the pinned one).
         recipeBrowserSeed: undefined,
         recipeBrowserRefactorNodeId: undefined,
-        recipeBrowserMachinePin: undefined,
+        recipeBrowserMachinePin: pin,
         recipeBrowserBack: repeat
           ? state.recipeBrowserBack
           : pushBrowserPage(state.recipeBrowserBack, leaving),
         recipeBrowserForward: repeat ? state.recipeBrowserForward : [],
         recipeResourceHistory,
-        selectedNodeId: resource.anchorNodeId,
+        selectedNodeId: resource.anchorNodeId ?? pin?.nodeId,
       };
     });
 
@@ -1897,17 +1902,8 @@ export const useFactoryStore = create<FactoryStore>(withViewerGuard((set, get, w
         return state;
       }
       const primary = state.project.recipes.find((entry) => entry.id === node.recipeId);
-      // Generators, crop farms and custom rate cards own their recipe and
-      // run nothing else; the same goes for the pick. So does an EEC: its
-      // controller holds one spawner.
-      const ownsRecipe = (entry: Recipe | undefined) =>
-        !entry ||
-        isPowerRecipe(entry) ||
-        isCropFarmRecipe(entry) ||
-        isCustomRateRecipe(entry) ||
-        isFluidTankRecipe(entry) ||
-        isEecRecipe(entry);
-      if (ownsRecipe(primary) || ownsRecipe(recipe)) {
+      // A card that owns its recipe runs nothing else; the same goes for the pick.
+      if (!primary || ownsItsRecipe(primary) || ownsItsRecipe(recipe)) {
         return state;
       }
       const lookup = (id: string) =>
@@ -2744,6 +2740,25 @@ export const useFactoryStore = create<FactoryStore>(withViewerGuard((set, get, w
         project,
         lastResult: solveBooks(project),
       });
+    });
+  },
+  flipStorageSide: (storageId) => {
+    set((state) => {
+      if (state.isReadOnly) return state;
+      const storage = (state.project.storages ?? []).find((entry) => entry.id === storageId);
+      const role = getStorageRoles(state.project).get(storageId);
+      if (!storage || role === "buffer") return state;
+      // Unwired, the declared side is the drawer's role (storageRoleFor), and it keeps the drawer from being an orphan.
+      const toSource = role !== "source";
+      const { targetPerSecond: _rate, targetMode: _mode, drainMode: _drain, ...rest } = storage;
+      const project = touchProject({
+        ...state.project,
+        edges: state.project.edges.filter((edge) => edge.source !== storageId && edge.target !== storageId),
+        storages: (state.project.storages ?? []).map((entry) =>
+          entry.id === storageId ? { ...rest, poolSide: toSource ? "source" : "drain" } : entry,
+        ),
+      });
+      return withProjectHistory(state, { project, lastResult: solveBooks(project) });
     });
   },
   setStorageTarget: (storageId, targetPerSecond) => {
@@ -3615,9 +3630,11 @@ export const useFactoryStore = create<FactoryStore>(withViewerGuard((set, get, w
   pasteBoardItems: (clipboard, offset) => {
     const pastedIds: string[] = [];
     set((state) => {
-      // Plan mode has no buffers, ratios, pool sides or groups: what an older
-      // board copied is converted on the way in, like a plan that arrives.
-      const payload = state.project.planMode ? planClipboard(clipboard) : clipboard;
+      // Plan mode has no buffers, ratios, pool sides or groups, and cells meet
+      // fluids only in a tank: what an older board copied (or a blueprint it
+      // saved) is converted on the way in, like a plan that arrives.
+      const cells = convertLooseCellWires(clipboard).project;
+      const payload = state.project.planMode ? planClipboard(cells) : cells;
       const shift = (position: { x: number; y: number }) =>
         snapPositionToGrid({ x: position.x + offset.x, y: position.y + offset.y });
       const payloadRecipesById = new Map(payload.recipes.map((recipe) => [recipe.id, recipe]));
@@ -4625,35 +4642,6 @@ export const useFactoryStore = create<FactoryStore>(withViewerGuard((set, get, w
       }
 
       const finalProject = touchProject(removedAny ? pruneOrphanStorages(project) : project);
-      return withProjectHistory(state, {
-        project: finalProject,
-        lastResult: solveBooks(finalProject),
-      });
-    });
-  },
-  connectCrossFormEdge: (source, target, resource, litresPerCell) => {
-    set((state) => {
-      if (!(litresPerCell > 0)) {
-        return state;
-      }
-      const edge: FactoryEdge = {
-        id: createId("edge"),
-        source: source.nodeId,
-        target: target.nodeId,
-        sourceHandle: source.handleId,
-        targetHandle: target.handleId,
-        resourceKind: resource.kind,
-        resourceId: resource.id,
-        label: resource.displayName,
-        crossForm: { litresPerCell },
-      };
-      if (findDuplicateEdge(state.project.edges, edge)) {
-        return state;
-      }
-      const finalProject = touchProject({
-        ...state.project,
-        edges: [...state.project.edges, edge],
-      });
       return withProjectHistory(state, {
         project: finalProject,
         lastResult: solveBooks(finalProject),
@@ -5906,36 +5894,6 @@ function isFactoryEdgeStillValid(project: FactoryProject, edge: FactoryEdge): bo
 
   if ((!sourceNode && !sourceStorage) || (!targetNode && !targetStorage)) {
     return false;
-  }
-
-  // A conversion wire is valid in the forms at its two ends, including a
-  // tank or drawer at either end. Check it before the same-kind storage
-  // branches: any node edit runs this sweep over the entire board.
-  if (edge.crossForm) {
-    const target = parseResourceHandleId(edge.targetHandle);
-    if (
-      !Number.isFinite(edge.crossForm.litresPerCell) ||
-      edge.crossForm.litresPerCell <= 0 ||
-      target?.side !== "input" ||
-      !((edge.resourceKind === "fluid" && target.kind === "item") ||
-        (edge.resourceKind === "item" && target.kind === "fluid"))
-    ) {
-      return false;
-    }
-    const sourceMatches = sourceStorage
-      ? sourceStorage.kind === edge.resourceKind && sourceStorage.resourceId === edge.resourceId
-      : sourceNode && sourceRecipe &&
-        applyRecipeInputOverrides(sourceRecipe, sourceNode).outputs.some((output) =>
-          resourceMatchesInput({ kind: edge.resourceKind, id: edge.resourceId }, output),
-        );
-    const targetMatches = targetStorage
-      ? targetStorage.kind === target.kind && targetStorage.resourceId === target.resourceId
-      : targetNode && targetRecipe &&
-        applyRecipeInputOverrides(targetRecipe, targetNode).inputs.some((input) =>
-          isRecipeInputConsumed(input) &&
-          resourceMatchesInput({ kind: target.kind, id: target.resourceId }, input),
-        );
-    return Boolean(sourceMatches && targetMatches);
   }
 
   // Trash cans have no recipe slots to match: a line into one stays valid as

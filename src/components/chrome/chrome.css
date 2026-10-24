@@ -33,7 +33,7 @@
   font-weight: 400;
   letter-spacing: 0;
   text-shadow: none;
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
   color: var(--mc-ink);
 }
 

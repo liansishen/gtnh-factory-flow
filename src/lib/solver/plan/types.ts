@@ -127,11 +127,6 @@ export interface SolveInput {
   extentPins: Record<Id, number>;
   /** Stored leftover splits: leftover key -> bearer key -> share. */
   spares: Record<string, Record<string, number>>;
-  /**
-   * Machines that are no step of their own in `portSteps` (the hidden tank of a loose cell wire: the player drew one
-   * wire, so it counts as one). Website-only; the Java has no such field. Absent = none.
-   */
-  weightless?: Id[];
 }
 
 // ---------------------------------------------------------------------------
@@ -219,6 +214,11 @@ export interface DrawerReadout {
    * Up to pool or no such buffer.
    */
   banked?: Record<Id, number>;
+  /**
+   * The same, per maker port: what each port feeding a banking buffer puts beyond what its takers take. The board
+   * shows it at the maker, as a forced row, and totals it on the buffer. Present exactly when `banked` is.
+   */
+  spills?: Record<Id, External[]>;
 }
 
 /**
@@ -392,6 +392,20 @@ export interface PlanForced {
   decision?: PortKey;
 }
 
+/**
+ * What a maker puts into a buffer beyond what the buffer's takers take (`DrawerReadout.spills`): forced out at the
+ * maker's port, as the board draws it, and counted on the buffer it feeds.
+ */
+export interface PlanSpill {
+  nodeId: Id;
+  portKey: PortKey;
+  /** `kind:id` of the port's row. */
+  resourceKey: string;
+  perSecond: number;
+  /** The buffer the port feeds. */
+  drawerId: Id;
+}
+
 /** One place a leftover can be borne at: an open gate named by a port of it. */
 export interface PlanBearer {
   portKey: PortKey;
@@ -499,6 +513,8 @@ export interface PlanSolveExtras {
   /** Drawers the answer falls short of, with what holds each back. Absent when none. */
   shortfalls?: PlanShortfall[];
   forced: PlanForced[];
+  /** Makers' spills into buffers, each at its port. Absent when none. */
+  spills?: PlanSpill[];
   leftovers: PlanLeftover[];
   /** Unpinned machines the answer leaves at zero (nothing pinned feeds or needs them). */
   unneeded: Id[];

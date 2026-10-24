@@ -17,8 +17,13 @@ import { parseFactoryProjectJson } from "@/lib/import-export";
 import { withoutRuntimeTables } from "@/lib/import-export/plan-code";
 import { useCommunityAuthStore } from "@/store/community-auth-store";
 import { useDesignStore } from "@/store/design-store";
+import { useFactoryStore } from "@/store/factory-store";
 import { isDesignOpenLive, markDesignFresh } from "@/store/live-edit-gate";
 import { isLiveConfigured } from "@/lib/live/live-config";
+import { moveDetachedBase, readDetachedBase } from "@/lib/live/live-pending-store";
+import { liveShape } from "@/lib/live/live-shape";
+import { applyOps, diffPlans, type LivePlan } from "@/lib/live/ops";
+import type { FactoryProject } from "@/lib/model/types";
 import { forgetRemoteLibrary, noteRemoteLibrary } from "./cloud-library";
 import {
   deleteRemoteDesign,
@@ -101,7 +106,16 @@ export const useLibrarySyncStore = create<LibrarySyncStatus>(() => ({ state: "of
 
 const PUSH_DEBOUNCE_MS = 5000;
 const PUSH_MAX_WAIT_MS = 30000;
-const POLL_MS = 30000;
+/**
+ * Every visible tab asks for its library this often, and the database is
+ * small: at 30 s the polls alone were most of its traffic. Shared plans do
+ * not wait on this; the live service announces them.
+ */
+const POLL_MS = 120_000;
+/** After failed runs the poll waits 2, 4, then 8 times as long. */
+const POLL_BACKOFF_MAX = 8;
+/** Focusing the tab syncs at once, but not again within this. */
+const FOCUS_SYNC_GAP_MS = 30_000;
 
 /* ------------------------------------------------------------------ */
 /* The pure part. */
@@ -236,6 +250,8 @@ export function libraryChangeSignature(
 
 let running: Promise<void> | undefined;
 let runAgain = false;
+let lastRunAt = 0;
+let failedRuns = 0;
 let pushTimer: number | undefined;
 /** The latest moment a queued push may still wait until. */
 let pushDeadline: number | undefined;
@@ -320,6 +336,7 @@ function flushScheduledSync() {
 }
 
 async function runOnce(): Promise<void> {
+  lastRunAt = Date.now();
   setStatus({ state: "syncing" });
   try {
     await drainDeletions();
@@ -358,9 +375,11 @@ async function runOnce(): Promise<void> {
       refused: undefined,
       lastSyncedAt: new Date().toISOString(),
     });
+    failedRuns = 0;
   } catch (error) {
     // A repaired schema, restored connection or renewed session must recover
     // without requiring the player to reload a page holding unsaved work.
+    failedRuns += 1;
     setStatus({
       state: "error",
       refused: undefined,
@@ -460,10 +479,12 @@ async function applyDesignAction(action: DesignAction): Promise<boolean> {
       const { design, plan } = await fetchRemoteDesignPlan(action.id);
       const project = parseFactoryProjectJson(JSON.stringify(plan));
       const existing = await readDesign(action.id);
+      const kept = await keepEditsMadeAwayFromRoom(action.id, existing?.project, project);
       await writeDesign({
         ...existing,
         ...remoteMetaToSummary(design),
-        project: { ...project, name: design.name },
+        ...(kept ? { updatedAt: new Date().toISOString() } : {}),
+        project: { ...(kept ?? project), name: design.name },
       });
       if (action.id === store.activeDesignId) {
         await store.reloadActiveDesign();
@@ -543,6 +564,7 @@ async function applyDesignAction(action: DesignAction): Promise<boolean> {
           // rewrites half as much of the account's row.
           ...(sendPlan ? { plan: withoutRuntimeTables(record.project) } : {}),
         });
+      let sentPlan = withPlan;
       try {
         try {
           result = await push(withPlan);
@@ -551,6 +573,7 @@ async function applyDesignAction(action: DesignAction): Promise<boolean> {
             throw error;
           }
           // Open live on another device: not ours to push, the rest still goes.
+          sentPlan = false;
           result = await push(false);
         }
       } catch (error) {
@@ -568,6 +591,10 @@ async function applyDesignAction(action: DesignAction): Promise<boolean> {
         runAgain = true;
         return false;
       }
+      if (sentPlan) {
+        // The account holds this plan now: edits made away from a live room count from here.
+        await moveDetachedBase(record.id, liveShape(record.project)).catch(() => undefined);
+      }
       // Re-read before stamping: autosave may have written since.
       const fresh = await readDesign(record.id);
       if (fresh) {
@@ -579,6 +606,28 @@ async function applyDesignAction(action: DesignAction): Promise<boolean> {
       return true;
     }
   }
+}
+
+/**
+ * A pull of a plan this device edited while no live room was open for it (`keepDetachedBase`): what this person
+ * changed since that base goes on top of the account's plan instead of being overwritten by it. The result is newer
+ * than the account's copy, so the next run pushes it; the base moves to the account's plan. Undefined: nothing kept.
+ */
+async function keepEditsMadeAwayFromRoom(
+  designId: string,
+  stored: FactoryProject | undefined,
+  pulled: FactoryProject,
+): Promise<FactoryProject | undefined> {
+  const base = await readDetachedBase(designId).catch(() => undefined);
+  if (!base) {
+    return undefined;
+  }
+  // The canvas is ahead of the stored record by autosave's wait.
+  const local =
+    useDesignStore.getState().activeDesignId === designId ? useFactoryStore.getState().project : stored;
+  await moveDetachedBase(designId, liveShape(pulled)).catch(() => undefined);
+  const mine = local ? diffPlans(base, liveShape(local)) : [];
+  return mine.length > 0 ? (applyOps(pulled as unknown as LivePlan, mine) as unknown as FactoryProject) : undefined;
 }
 
 function toSummaryOf(record: DesignSummary & { project?: unknown }): DesignSummary {
@@ -648,7 +697,8 @@ export function startLibrarySync(): () => void {
     // A tab in the background has nothing to show; coming back into view
     // syncs at once (below), so it skips the poll meanwhile.
     pollTimer = window.setInterval(() => {
-      if (document.visibilityState !== "hidden") {
+      const wait = POLL_MS * Math.min(POLL_BACKOFF_MAX, 2 ** failedRuns) - POLL_MS / 10;
+      if (document.visibilityState !== "hidden" && Date.now() - lastRunAt >= wait) {
         void syncLibraryNow();
       }
     }, POLL_MS);
@@ -693,7 +743,9 @@ export function startLibrarySync(): () => void {
 
   const onVisible = () => {
     if (document.visibilityState === "visible") {
-      void syncLibraryNow();
+      if (Date.now() - lastRunAt >= FOCUS_SYNC_GAP_MS) {
+        void syncLibraryNow();
+      }
     } else if (pushTimer !== undefined) {
       // Leaving the tab: send what is waiting rather than hold it back.
       flushScheduledSync();

@@ -65,8 +65,11 @@ The board has its own notes in `flow/CLAUDE.md`, the Pool worksheet in `pool/CLA
   re-docking wires whose resource survives; if none would survive, it lands beside instead.
 - The tier ceiling also filters generator cards by their `unlock` chip, client side
   (`powerUnlockWithinTier`); a source with no chip is never filtered.
-- A machine pin (`recipeBrowserMachinePin`) scopes the maps to one machine and adds a
-  recipe section to an existing card (`addRecipeToNode`).
+- A machine pin (`recipeBrowserMachinePin`, a card's "Add another recipe") scopes the maps to one machine and adds the
+  pick as a section of that card (`addRecipeToNode`). It sits on the stencil with its unpin key (`clearMachinePin`; the
+  stencil's conditions stay); a browse inside the open search keeps it, closing drops it. With an empty stencil and no
+  name typed nothing is asked: the machine is the one tab and the page asks for an item on Takes or Makes. Exam:
+  `RecipeBrowser.pin.test.tsx`.
 ## Inspector and panels
 
 - Right resource column 234 shell px, left items panel 256 (classic boards and the phone's drawers; fixed).
@@ -114,6 +117,9 @@ The board has its own notes in `flow/CLAUDE.md`, the Pool worksheet in `pool/CLA
 - Build heavy hover content lazily (pass a thunk).
 - Rendered item textures keep the art in the middle half of the image; draw them at 2x
   the box.
+- The font is a setting (`src/lib/app-font.ts`), Inter by default. The pixel font's hard
+  text shadow and unsmoothed edges are `--pixel-text-shadow` / `--pixel-font-smoothing`,
+  set only under it (globals.css); never hard-code them on a component.
 - `DesignTabs` effects that grab refs must depend on `isHydrated`.
 - Sounds are the in-game planner's own files played by its rules (`src/lib/sound/`, its
   `CLAUDE.md` has what plays where). Firefox flushes audio at the end of a task, so the

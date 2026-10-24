@@ -729,6 +729,7 @@ export function SpecialCard({ model, recipe, node }: SpecialCardProps) {
       {menu ? (
         <CardActionsMenu
           anchor={{ left: menu.x, top: menu.top, bottom: menu.bottom }}
+          nodeId={node.id}
           onClose={() => setMenu(undefined)}
           onClone={() => cloneWithSound(duplicateNode, node.id)}
           onDelete={() => deleteNode(node.id)}

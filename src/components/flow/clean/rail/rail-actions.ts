@@ -1,6 +1,6 @@
 import { RECIPE_NODE_WIDTH } from "@/lib/board-grid";
 import { openLibrary } from "@/lib/library/library-tab";
-import type { FactoryProject } from "@/lib/model/types";
+import type { FactoryNode, FactoryProject } from "@/lib/model/types";
 import { nextPinRule, pinRuleOf, withPinRule } from "@/lib/model/pin-rule";
 import type { TargetMode } from "@/lib/model/storage-target";
 import { useFactoryStore } from "@/store/factory-store";
@@ -149,28 +149,42 @@ export function setLineRate(line: RailLine, source: boolean, perSecond: number):
 // ---------------------------------------------------------------------------
 
 /**
- * Sets a machine's count, or (0 or less) lets the plan decide how many. The rule stays as it is; a card on Any
- * becomes Up to, as on the card.
+ * Sets a machine's count, or (0 or less) clears it: Any, while the plan decides how many. The rule stays as it is; a
+ * card on Any becomes Up to, as on the card.
  */
 export function pinCount(nodeId: string, count: number): void {
   if (locked()) return;
   const node = state().project.nodes.find((n) => n.id === nodeId);
   if (!node) return;
   const rule = pinRuleOf(node);
-  if (!(count > 0)) {
-    const { solvePin, solvePinExact } = withPinRule(node, "any", undefined);
-    state().updateNode(nodeId, { solvePin, solvePinExact });
-    return;
-  }
-  const next = withPinRule(node, rule === "any" ? "upTo" : rule, count);
+  // Already so: nothing to write (an open box sets as it goes, then once more as it is let go of).
+  const pinned = (node.solvePin ?? 0) > 0;
+  if (count > 0 ? pinned && node.solvePin === count : !pinned) return;
+  const next = withPinRule(node, rule === "any" ? "upTo" : rule, count > 0 ? count : undefined);
   state().updateNode(nodeId, {
     solvePin: next.solvePin,
     solvePinExact: next.solvePinExact,
-    portRates: undefined,
+    ...(count > 0 ? { portRates: undefined } : {}),
   });
 }
 
-/** Steps a machine's count rule (Any, Up to, Exactly); `count` is what a card on Any is set to. */
+/** A machine's count fields as they are, for `restorePin`. */
+export type PinSnapshot = Pick<FactoryNode, "solvePin" | "solvePinExact">;
+
+export function pinSnapshot(nodeId: string): PinSnapshot | undefined {
+  const node = state().project.nodes.find((n) => n.id === nodeId);
+  return node ? { solvePin: node.solvePin, solvePinExact: node.solvePinExact } : undefined;
+}
+
+/** Puts a machine's count back as `pinSnapshot` took it (Escape on a box that set as it went). */
+export function restorePin(nodeId: string, snapshot: PinSnapshot | undefined): void {
+  if (locked() || !snapshot) return;
+  state().updateNode(nodeId, snapshot);
+}
+
+/**
+ * Steps a machine's count rule (Any, Up to, Exactly); `count` is what a card with no count is set to.
+ */
 export function stepPinRule(nodeId: string, count: number): void {
   if (locked()) return;
   const node = state().project.nodes.find((n) => n.id === nodeId);

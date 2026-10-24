@@ -23,8 +23,17 @@
 ## Supabase (community.ts, resource-popularity.ts)
 
 The instance is small and has gone down under load. Rules:
-- Every request goes through `fetchWithDbTimeout` (20 s) and aborts with a plain
-  AbortError; postgrest-js retries other failures three more times.
+- Every request goes through `fetchWithDbTimeout` (20 s). A timeout answers 504 rather than
+  rejecting (postgrest-js retries a rejected GET three more times), and any 5xx that is not
+  JSON (Cloudflare's 522 page comes as text/plain) becomes the same plain JSON error, so no
+  route shows a player that page; so do PostgREST's own connection errors (PGRST000-003).
+  Exam: `community-db-fetch.test.ts`.
+- The instance is Nano (Free plan): disk throughput falls to 5 MB/s once its Disk IO budget
+  is spent, and the budget refills only while demand stays under that. After 5 failures in a
+  row the client's breaker answers at once for 15 s without sending (`fetchFromDb`).
+- A failed account lookup throws, never reads as signed out (`loadSessionUser`); accounts are
+  cached a minute. A library answer fails whole when a sharing read fails: the client
+  removes every shared copy the answer leaves out.
 - Nothing a page needs to render may await a community sweep. `getResourcePopularity`
   answers at once with the last good map (sweep every 6 h, retry after 30 min on failure).
 - The design PUT refuses what it can without the database (size, JSON, name, stamps)
@@ -77,3 +86,10 @@ The instance is small and has gone down under load. Rules:
   `LIVE_INTERNAL_TOKEN`). A failed notice loses nothing: the service checks membership on every join.
 - Account search is limited in memory (`memory-rate.ts`): a share box asks on every keystroke.
 - Exam: `app/api/library/cloud-plans.test.ts` (against the local database).
+
+## Community abuse limits (community.ts, app/api/community)
+
+- A vote needs an account, once per plan (`community_votes_one_per_account`). Never key a limit on the client's
+  device id: `checkRateLimits` takes account, address (`addressKey`) and site (`SITE_KEY`) limits together.
+- Uploads: 10 an hour and 30 a day per account, 10 an hour per address, 120 an hour site-wide. Sign-ups: 5 an hour
+  and 10 a day per address, 60 an hour site-wide. Exam: `app/api/community/community-abuse.test.ts`.

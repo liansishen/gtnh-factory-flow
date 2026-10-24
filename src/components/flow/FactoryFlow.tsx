@@ -107,7 +107,6 @@ import {
   makeResourceKey,
   resourceMatchesInput,
 } from "@/lib/model";
-import { getCrossFormCellMatch } from "@/lib/model/resources";
 import { fetchLitresPerCell } from "@/lib/datasets/cell-ratio";
 import { BoardContextMenu, type BoardMenuTarget } from "./BoardContextMenu";
 import { listPoolCellPairs } from "@/lib/solver/pool-mode";
@@ -157,7 +156,7 @@ import {
   writeDesignCamera,
   type BoardCamera,
 } from "@/lib/designs/design-camera";
-import { isEditableKeyboardTarget } from "./keyboard";
+import { isBoardCovered, isEditableKeyboardTarget } from "./keyboard";
 import {
   didBoardTimelapseEndHeld,
   getBoardTimelapseCameraMode,
@@ -429,7 +428,6 @@ import { playEditSfx } from "@/lib/sound/sfx";
 import { visibleAnnotations } from "./clean/note/note-model";
 import { settleZonePoints } from "@/lib/model/zone-points";
 import { BOARD_PAPER_IDS } from "@/lib/model/board-paper";
-import { getSetupRules } from "@/lib/model/setup-rules";
 import { nearestFreeSpot, type PlacementRect, type PlacementRegion } from "./board-placement";
 import { registerBoardResize, type BoardResizeDraft } from "./board-resize";
 import { RESOURCE_DRAG_TYPE, readResourceDrag } from "@/lib/resource-drag";
@@ -1936,7 +1934,6 @@ export function FactoryFlow() {
   const connectNodesBatch = useFactoryStore((state) => state.connectNodesBatch);
   const connectCustomRate = useFactoryStore((state) => state.connectCustomRate);
   const connectTrash = useFactoryStore((state) => state.connectTrash);
-  const connectCrossFormEdge = useFactoryStore((state) => state.connectCrossFormEdge);
   // Pool mode's cell-fluid bridges need the Canner's litres-per-cell for every
   // cell/fluid pair the plan names in both forms. Fetched as the plan changes
   // and stored on the plan (`poolCellRatios`) so the solve and every shared
@@ -1975,31 +1972,6 @@ export function FactoryFlow() {
       });
     }
   }, [poolPairsSignature]);
-
-  // The async half of a loose cell wire: fetch the Canner's litres-per-cell,
-  // then commit the edge; no ratio drops the gesture whole. The wire carries
-  // the SOURCE's own resource and the target handle names the far form.
-  const connectLooseCellWire = useCallback(
-    async (
-      source: { nodeId: string; handleId: string },
-      target: { nodeId: string; handleId: string },
-      wireResource: Pick<ResourceAmount, "kind" | "id" | "displayName">,
-      match: { cellId: string; fluidId: string },
-    ) => {
-      const state = useFactoryStore.getState();
-      const version = state.datasetManifest?.versions.find(
-        (entry) => entry.id === state.selectedDatasetVersionId,
-      );
-      if (!version) {
-        return;
-      }
-      const litresPerCell = await fetchLitresPerCell(version, match.cellId, match.fluidId);
-      if (litresPerCell) {
-        connectCrossFormEdge(source, target, wireResource, litresPerCell);
-      }
-    },
-    [connectCrossFormEdge],
-  );
   const addStorageForConnection = useFactoryStore((state) => state.addStorageForConnection);
   const selectedNodeId = useFactoryStore((state) => state.selectedNodeId);
   const deleteNode = useFactoryStore((state) => state.deleteNode);
@@ -2323,10 +2295,8 @@ export function FactoryFlow() {
   const connectCompletedRef = useRef(false);
   // For the failure sound: the plan as it stood when the wire drag began
   // (onConnect runs before onConnectEnd, so "did this gesture change
-  // anything" must compare against drag START, not connect-end entry), and
-  // whether the gesture handed off to the async loose-cell ratio fetch.
+  // anything" must compare against drag START, not connect-end entry).
   const connectStartFingerprintRef = useRef<string | undefined>(undefined);
-  const pendingLooseWireRef = useRef(false);
   // The gesture's origin card, tracked separately from draggedResourceRef:
   // a drag can start on a handle whose resource cannot be resolved, and
   // such a drag ending dead must still buzz rather than slip through the
@@ -4057,23 +4027,8 @@ export function FactoryFlow() {
           if (!outputResource || !inputResource) {
             return;
           }
+          // A cell and its fluid never wire straight to each other: they meet in a fluid tank.
           if (!resourceMatchesInput(outputResource, inputResource)) {
-            // LOOSE CELL WIRES: a filled cell may land straight on its fluid's
-            // input, and a fluid on its cell's input. The ratio comes from the
-            // Canner's recipes (an API call, so the wire arrives a beat later);
-            // no recipe found means no wire, never a guessed ratio.
-            const crossFormMatch = getSetupRules(project).looseCellWires
-              ? getCrossFormCellMatch(outputResource, inputResource)
-              : undefined;
-            if (crossFormMatch && outputHandle.handleId && inputHandle.handleId) {
-              pendingLooseWireRef.current = true;
-              void connectLooseCellWire(
-                { nodeId: outputHandle.nodeId, handleId: outputHandle.handleId },
-                { nodeId: inputHandle.nodeId, handleId: inputHandle.handleId },
-                outputResource,
-                crossFormMatch,
-              );
-            }
             return;
           }
 
@@ -4098,7 +4053,7 @@ export function FactoryFlow() {
         connectResourceEdges(connection.source, connection.target);
       }
     },
-    [connectCustomRate, connectLooseCellWire, connectResourceEdges, connectTrash, project],
+    [connectCustomRate, connectResourceEdges, connectTrash, project],
   );
 
   const isValidResourceConnection = useCallback(
@@ -4248,7 +4203,6 @@ export function FactoryFlow() {
       connectStartFingerprintRef.current = projectSoundFingerprint(
         useFactoryStore.getState().project,
       );
-      pendingLooseWireRef.current = false;
       wireGestureOriginRef.current = nodeId ?? undefined;
       lastConnectionPointerRef.current = getClientPosition(event);
       draggedResourceRef.current =
@@ -4371,18 +4325,7 @@ export function FactoryFlow() {
             return;
           }
 
-          // LOOSE CELL WIRES: a cross-form drop commits through the ratio
-          // fetch, like a handle-precise wire; a plain edge here would cross
-          // kinds with no ratio and sit inert.
           if (inputResource && !resourceMatchesInput(outputResource, inputResource)) {
-            const crossFormMatch = getSetupRules(project).looseCellWires
-              ? getCrossFormCellMatch(outputResource, inputResource)
-              : undefined;
-            if (crossFormMatch) {
-              connectCompletedRef.current = true;
-              pendingLooseWireRef.current = true;
-              void connectLooseCellWire(source, target, outputResource, crossFormMatch);
-            }
             return;
           }
 
@@ -4453,7 +4396,6 @@ export function FactoryFlow() {
     [
       addStorageForConnection,
       connectCustomRate,
-      connectLooseCellWire,
       connectResourceEdges,
       connectTrash,
       project,
@@ -4481,9 +4423,6 @@ export function FactoryFlow() {
         return;
       }
       if (projectSoundFingerprint(useFactoryStore.getState().project) !== fingerprintAtStart) {
-        return;
-      }
-      if (pendingLooseWireRef.current) {
         return;
       }
       const dropCardId = clientPosition ? getBoardNodeIdAtPosition(clientPosition) : undefined;
@@ -4890,6 +4829,18 @@ export function FactoryFlow() {
     return true;
   }, [deleteBoardSelection, selectNode, selectedEdgeIds, selectedNodeIds]);
 
+  /** Escape lets go of the selection, as the controls list says: nothing stays armed for a later Delete. */
+  const clearBoardSelection = useCallback(() => {
+    setFlowNodes((current) =>
+      current.some((node) => node.selected)
+        ? current.map((node) => (node.selected ? { ...node, selected: false } : node))
+        : current,
+    );
+    setSelectedNodeIds([]);
+    setSelectedEdgeIds([]);
+    setSelectedBoardIds([]);
+  }, [setSelectedBoardIds]);
+
   // The recipe search covers the board; the board's own notices mute while
   // it does.
   const recipeSearchOpen = useFactoryStore((state) => Boolean(state.recipeBrowserResource));
@@ -4998,6 +4949,10 @@ export function FactoryFlow() {
       if (useFactoryStore.getState().project.poolMode && document.querySelector("[data-pool-worksheet]")) return;
       if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey) {
         const key = event.key.toLowerCase();
+        // Keys that change the plan leave a covered board alone.
+        if (key !== "c" && isBoardCovered()) {
+          return;
+        }
         if (key === "c" || key === "x") {
           // Never fight the browser for real text: typing fields and selected
           // page text keep native copy/cut.
@@ -5040,32 +4995,17 @@ export function FactoryFlow() {
       // Backspace deletes too. React Flow's own delete key is off
       // (deleteKeyCode null): it removes cards from the canvas without
       // telling the project, so they come back on the next commit.
+      // Only what is selected on the board goes, and nothing while the board
+      // is covered (the recipe search walks back on a bare Backspace). The
+      // store's selectedNodeId is never drawn (a landing and every delete
+      // point it at the first card), so a key on it deleted cards nobody saw.
       if (event.key === "Delete" || event.key === "Backspace") {
-        if (isEditableKeyboardTarget(event.target)) {
+        if (isEditableKeyboardTarget(event.target) || event.defaultPrevented || isBoardCovered()) {
           return;
         }
 
         if (deleteSelectedBoardItems()) {
           return;
-        }
-
-        if (selectedNodeId) {
-          if (project.nodes.some((node) => node.id === selectedNodeId)) {
-            deleteNode(selectedNodeId);
-            return;
-          }
-
-          if ((project.storages ?? []).some((storage) => storage.id === selectedNodeId)) {
-            deleteStorage(selectedNodeId);
-            selectNode(undefined);
-            return;
-          }
-
-          if ((project.annotations ?? []).some((annotation) => annotation.id === selectedNodeId)) {
-            deleteAnnotation(selectedNodeId);
-            selectNode(undefined);
-            return;
-          }
         }
 
         cancelResourceConnection();
@@ -5094,11 +5034,15 @@ export function FactoryFlow() {
           return;
         }
 
-        // Escape backs out of whatever tool or half-made wire is active.
+        // Escape backs out of whatever tool or half-made wire is active, and
+        // lets go of the selection.
         cancelResourceConnection();
         setNodeColorPaintMode(undefined);
         setAnnotationTool(undefined);
         setDeleteMode(false);
+        if (!isBoardCovered()) {
+          clearBoardSelection();
+        }
       }
     };
 
@@ -5107,19 +5051,12 @@ export function FactoryFlow() {
   }, [
     annotationTool,
     cancelResourceConnection,
+    clearBoardSelection,
     copyBoardSelection,
-    deleteAnnotation,
-    deleteNode,
     deleteSelectedBoardItems,
-    deleteStorage,
     isDeleteMode,
     nodeColorPaintMode,
     pasteBoardClipboard,
-    project.annotations,
-    project.nodes,
-    project.storages,
-    selectNode,
-    selectedNodeId,
     setNodeColorPaintMode,
     wrapSelectedBoardItems,
   ]);
@@ -12008,18 +11945,8 @@ function isCompatibleDraggedResourceTarget(
     targetHandle.side === "input"
       ? [draggedResource, targetResource]
       : [targetResource, draggedResource];
-  if (resourceMatchesInput(output, input)) {
-    return true;
-  }
-  // LOOSE CELL WIRES, machine to machine only: a drawer holds one form and
-  // its wires must stay in it, so the bidirectional drag and storage targets
-  // stay strict.
-  return Boolean(
-    getSetupRules(project).looseCellWires &&
-      !draggedResource.bidirectional &&
-      !(project.storages ?? []).some((storage) => storage.id === targetHandle.nodeId) &&
-      getCrossFormCellMatch(output, input),
-  );
+  // A cell and its fluid never take each other's wires: they meet in a fluid tank.
+  return resourceMatchesInput(output, input);
 }
 
 function getStorageHandleAtPointer(
@@ -12254,20 +12181,6 @@ function findNodeDropTargetOnSide(
     side === "input"
       ? resourceMatchesInput(draggedResource, candidate)
       : resourceMatchesInput(candidate, draggedResource);
-  // LOOSE CELL WIRES: a machine slot in the other form also takes the drop,
-  // either way round, so the wash and whole-card drop agree with a
-  // handle-precise wire. Drawers stay strict: a drawer holds one form.
-  const acceptsLoose = (
-    candidate: Pick<ResourceAmount, "kind" | "id" | "displayName" | "alternatives">,
-  ) =>
-    accepts(candidate) ||
-    Boolean(
-      getSetupRules(project).looseCellWires &&
-        !draggedResource.bidirectional &&
-        (side === "input"
-          ? getCrossFormCellMatch(draggedResource, candidate)
-          : getCrossFormCellMatch(candidate, draggedResource)),
-    );
   const port = (resource: Pick<ResourceAmount, "kind" | "id">): ResolvedResourceHandle => ({
     nodeId,
     handleId: makeResourceHandleId(side, resource),
@@ -12354,7 +12267,7 @@ function findNodeDropTargetOnSide(
     const candidates = side === "input" ? sectionRecipe.inputs : sectionRecipe.outputs;
     const match = (candidates ?? []).find(
       (candidate) =>
-        (side === "output" || isRecipeInputConsumed(candidate)) && acceptsLoose(candidate),
+        (side === "output" || isRecipeInputConsumed(candidate)) && accepts(candidate),
     );
     if (match) {
       const resolved = port(match);
@@ -12772,15 +12685,7 @@ function isCompatibleResourceConnection(
   if (sourceHandle.side === targetHandle.side) {
     return false;
   }
-  if (resourceMatchesInput(output, input)) {
-    return true;
-  }
-  // LOOSE CELL WIRES: a filled cell may land on its fluid's input and a
-  // fluid on its cell's input; handleConnect fetches the Canner ratio and
-  // commits the edge.
-  return Boolean(
-    getSetupRules(project).looseCellWires && getCrossFormCellMatch(output, input),
-  );
+  return resourceMatchesInput(output, input);
 }
 
 function getDraggedResourceForHandle(

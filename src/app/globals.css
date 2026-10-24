@@ -85,12 +85,20 @@
   color-scheme: dark;
 
   /*
-   * The one font the whole app renders in: the pixel font unless the
-   * settings dialog stamped a choice on <html>. The option list, storage key and these same
+   * The one font the whole app renders in: Inter unless the settings dialog
+   * stamped a choice on <html>. The option list, storage key and these same
    * stacks live in src/lib/app-font.ts; the boot script in layout.tsx
    * restores the attribute before first paint.
    */
-  --app-font: var(--font-minecraft), var(--cjk-fallback, monospace), monospace;
+  --app-font: var(--font-inter), var(--cjk-fallback, ui-sans-serif), ui-sans-serif, system-ui, sans-serif;
+
+  /*
+   * The pixel font's own dress, worn only under it (html[data-app-font="minecraft"]
+   * below): the game's hard text shadow and unsmoothed edges. Under a vector
+   * face the shadow reads as a blur and macOS draws unsmoothed text jagged.
+   */
+  --pixel-text-shadow: none;
+  --pixel-font-smoothing: auto;
 
   --background: #1b1d21;
   --foreground: #f5f5f5;
@@ -399,8 +407,10 @@
 }
 
 /* Kept in step with APP_FONTS in src/lib/app-font.ts. */
-html[data-app-font="inter"] {
-  --app-font: var(--font-inter), var(--cjk-fallback, ui-sans-serif), ui-sans-serif, system-ui, sans-serif;
+html[data-app-font="minecraft"] {
+  --app-font: var(--font-minecraft), var(--cjk-fallback, monospace), monospace;
+  --pixel-text-shadow: 1px 1px 0 color-mix(in srgb, currentColor 25%, #000);
+  --pixel-font-smoothing: none;
 }
 
 html[data-app-font="jetbrains-mono"] {
@@ -556,11 +566,14 @@ textarea {
   z-index: auto !important;
 }
 
-/* Always, not only while a gesture is flagged as moving: that flag flickers
-   per frame on keyboard pans, promoting and dropping the layer. The pan is a
-   scroll offset (scroll-camera.tsx), so this transform only changes on zoom;
-   the retained layer keeps a zoom from repainting the whole board. */
-.factory-flow-board .react-flow__viewport {
+/* Only while the zoom moves (data-zooming, scroll-camera.tsx zoomingMark:
+   zoom steps alone, never pans): the retained layer keeps a zoom step from
+   rastering the whole board again. Chrome keeps such a layer's raster scale
+   as the zoom falls, so worn at rest it would leave a board zoomed out drawn
+   from its old, larger raster, scaled down: soft text and icons. Without the
+   hint the layer stays composited (its translate3d) and rasters at its true
+   scale. */
+.factory-flow-board .react-flow__viewport[data-zooming] {
   will-change: transform;
 }
 
@@ -1299,14 +1312,13 @@ img {
 /* The hard pixel drop shadow belongs to the pixel font alone: under a
    vector face it read as a blur. This covers the title class and every
    inline Tailwind text-shadow utility on the NEI chrome. */
-html:not([data-app-font]) .minecraft-title,
 html[data-app-font="minecraft"] .minecraft-title {
   text-shadow:
     1px 1px 0 var(--mc-24),
     2px 2px 0 var(--mc-24);
 }
 
-html[data-app-font]:not([data-app-font="minecraft"]) [class*="[text-shadow:"] {
+html:not([data-app-font="minecraft"]) [class*="[text-shadow:"] {
   text-shadow: none;
 }
 

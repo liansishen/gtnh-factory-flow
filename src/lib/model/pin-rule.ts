@@ -1,7 +1,10 @@
 /**
- * A card's machine count rule (docs/up-to.md): Any (the plan picks), Up to N (what you have, the default for a set
- * count) or Exactly N. Stored as `solvePin` (the count) and `solvePinExact` (Exactly); every reader and writer goes
- * through here so the card, the overview and the solver adapter agree.
+ * A card's machine count rule (docs/up-to.md): Any (the plan picks), Up to N (what you have) or Exactly N. Stored as
+ * `solvePin` (the count) and `solvePinExact` (Exactly); every reader and writer goes through here so the card, the
+ * overview and the solver adapter agree.
+ *
+ * As a drawer's rate: no count is Any, a count typed in is Up to, and Exactly is picked from the rule menu. A cleared
+ * count is Any again, and the next count typed is Up to.
  */
 import { isCustomRateRecipe } from "./custom-rate";
 import type { FactoryNode, Recipe } from "./types";
@@ -20,7 +23,10 @@ export const PIN_RULE_ORDER: readonly PinRule[] = ["any", "upTo", "exact"];
 
 type Pinned = Pick<FactoryNode, "solvePin" | "solvePinExact">;
 
-/** The card's rule. A custom rate card's set count is always Exactly (its dial). */
+/**
+ * The rule: Any whenever no count is set (the plan picks), else Up to or Exactly. A custom rate card's set count is
+ * always Exactly (its dial).
+ */
 export function pinRuleOf(node: Pinned, recipe?: Pick<Recipe, "machineType">): PinRule {
   if (!((node.solvePin ?? 0) > 0)) return "any";
   if (isCustomRateRecipe(recipe)) return "exact";
@@ -33,17 +39,19 @@ export function nextPinRule(rule: PinRule): PinRule {
 }
 
 /**
- * The node with `rule` and `count` set: Any clears both fields; Up to sets the count and clears the flag; Exactly
- * sets both. A count that is not a positive number means Any. Fields not involved are kept as they are.
+ * The node with `rule` and `count` set: Any clears the count; Up to sets the count; Exactly sets the count and the
+ * flag. A count that is not a positive number clears it (Any). Fields not involved are kept as they are; an older
+ * plan's `solvePinAny` is dropped.
  */
 export function withPinRule<N extends Pinned>(
   node: N,
   rule: PinRule,
   count: number | undefined,
 ): N {
-  const { solvePin: _pin, solvePinExact: _exact, ...rest } = node;
-  if (rule === "any" || !(count !== undefined && Number.isFinite(count) && count > 0))
-    return rest as N;
+  const { solvePin: _pin, solvePinExact: _exact, solvePinAny: _any, ...rest } = node as N & {
+    solvePinAny?: unknown;
+  };
+  if (rule === "any" || !(count !== undefined && Number.isFinite(count) && count > 0)) return rest as N;
   return (
     rule === "exact"
       ? { ...rest, solvePin: count, solvePinExact: true }

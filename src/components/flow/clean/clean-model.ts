@@ -59,10 +59,10 @@ import type { RecipeNodeData } from "../RecipeNode";
 import { CC, CC_GEOMETRY } from "./tokens";
 import { mixHex } from "./colors";
 import { UP_TO_COLOR } from "./up-to-reason";
-import { cardLoop, type LoopTone } from "./loops";
+import { cardLoop, LOOP_WORD, type LoopTone } from "./loops";
 import { glanceBar, type GlanceBar } from "./glance";
 import { isPinned, pinMachineKey, settingControls } from "./menus/settings-model";
-import { mcTextWidth, measureClean, useFontEpoch } from "./text-measure";
+import { mcTextWidth, measureClean, measureRowFigure, measureRowName, useFontEpoch } from "./text-measure";
 
 type VoltageTier = Parameters<typeof getVoltageTierIndex>[0];
 
@@ -94,6 +94,8 @@ export interface CleanPortView {
   resourceKey: string;
   /** What the solve sends out of / brings into the plan at this port with no drawer. */
   forced?: { number: string; unit: string };
+  /** The buffer this port's forced row spills into (a maker making more than the buffer's users take). */
+  spillTo?: string;
   /** The row an Up to card's reason names (STARVED, CLOGGED, UNUSED): lit in the reason's colour. */
   why?: FootTone;
 }
@@ -123,9 +125,9 @@ export interface CleanPowerView {
 }
 
 /**
- * The count under the machine (docs/up-to.md): what runs, big, and under it what you set, small: the rule's word and
- * the number in gold ("up to 24", "exactly 24"). Nothing set (Any) shows "(set count)" while nothing sets this part
- * of the plan, else nothing (a crop says what it counts).
+ * The count under the machine (docs/up-to.md): what runs, big, and under it what is set, small: the rule's word and
+ * the set box, as the overview's machine lines have them ("Up to [24]", "Exactly [24]", "Any [Set]" with no count).
+ * The box asks for a count while nothing sets this part of the plan.
  */
 export interface CleanCountView {
   /** What runs, as printed: "×18.2" (a crop's has no times sign). */
@@ -135,17 +137,17 @@ export interface CleanCountView {
   /** A count is set: Up to or Exactly. */
   pinned: boolean;
   rule: PinRule;
-  /** The rule's word on the card, lower case: "up to", "exactly"; empty for Any. */
+  /** The rule's word on the card: "Any", "Up to", "Exactly". */
   ruleWord: string;
   /** The rule cannot change here: a custom rate card is always Exactly. */
   ruleFixed: boolean;
-  /** The count you set; absent for Any. */
+  /** The count you set; absent when none is. */
   set?: number;
-  /** The count you set as printed ("24"); empty for Any. */
+  /** The count you set as printed ("24"); empty when none is. */
   setText: string;
-  /** Under what runs when nothing is set: "(set count)", a crop's "crops planted", or empty. */
-  note: string;
-  /** The note asks for a count (it pulses with every prompt on the board). */
+  /** What the set box shows: the count you set, or "Set". */
+  box: string;
+  /** The box asks for a count (it blinks with every prompt on the board). */
   prompt: boolean;
   /** Nothing runs. */
   zero: boolean;
@@ -183,6 +185,8 @@ export interface CleanFootView {
   /** For the tip. */
   facts: {
     reason: UpToReason | null | "FORCED";
+    /** The ring the card is in, when it is in one. */
+    loop?: LoopTone;
     rule: PinRule;
     running: number;
     capacity: number;
@@ -232,11 +236,11 @@ export interface CleanCardActions {
   setAmps: (amps: number) => void;
   cycleMachine: (direction: -1 | 1) => void;
   switchMachine: (handlerId: string) => void;
-  /** Sets the count, keeping the rule (Any becomes Up to); nothing means Any. */
+  /** Sets the count, keeping the rule (Any becomes Up to); nothing clears it (Any). */
   setCount: (count: number | undefined) => void;
-  /** The wheel on the count: one up or down (from Any, Up to at what runs rounded up; below one, Any). */
+  /** The wheel on the count: one up or down (with none set, Up to at what runs rounded up; below one, none set). */
   stepCount: (direction: -1 | 1) => void;
-  /** Any, Up to or Exactly (from Any, at what runs rounded up). */
+  /** Any, Up to or Exactly (with none set, at what runs rounded up). */
   setRule: (rule: PinRule) => void;
   stepSetting: (id: string, direction: -1 | 1) => void;
 }
@@ -353,10 +357,11 @@ export function buildPortView(
   port: RailPort,
   node: Pick<FactoryNode, "portRates">,
   forcedAt: ReadonlyMap<string, number> | undefined,
+  spillAt?: ReadonlyMap<string, string>,
 ): CleanPortView {
-  const forcedRate = forcedAt?.get(
-    makePortKey(nodeId, port.side === "input" ? "i" : "o", port.handleId),
-  );
+  const portKey = makePortKey(nodeId, port.side === "input" ? "i" : "o", port.handleId);
+  const forcedRate = forcedAt?.get(portKey);
+  const spillTo = spillAt?.get(portKey);
   const shown = portRowPerSecond(port, forcedRate);
   let number: string;
   let unit: string;
@@ -384,11 +389,11 @@ export function buildPortView(
     zero: !(shown > 0),
     gold: node.portRates?.[port.handleId] !== undefined,
     rate: node.portRates?.[port.handleId],
-    numberSmall: measureClean(number, 13) + 2 + measureClean(unit, 8) > WORDS,
+    numberSmall: measureRowFigure(number, unit) > WORDS,
     // The mod's rule (CardPaint.words): full size when it fits in the game font (its 71 px), else 0.75; what still runs
-    // past the row in Monocraft is cut and faded.
+    // past the row in the app's face is cut and faded.
     nameSmall: mcTextWidth(port.displayName) > 71,
-    nameClipped: measureClean(port.displayName, mcTextWidth(port.displayName) > 71 ? 6 : 8) > WORDS,
+    nameClipped: measureRowName(port.displayName, mcTextWidth(port.displayName) > 71) > WORDS,
     wired: port.connected,
     choice: (port.resource?.alternatives?.length ?? 0) > 1,
     resourceKey: makeResourceKey(port.kind, port.resourceId),
@@ -399,6 +404,7 @@ export function buildPortView(
             unit: rateSuffixForKind(port.kind).trim(),
           }
         : undefined,
+    ...(spillTo !== undefined && forcedRate !== undefined && forcedRate > 0 ? { spillTo } : {}),
   };
 }
 
@@ -491,8 +497,8 @@ function planSetsOf(plan: NonNullable<PlanExtras>) {
 }
 
 /**
- * A card's count: its rule, what it needs, and what runs (an Up to card's reached count from the solve, else the pin
- * when one is set, else the solved count).
+ * A card's count: its rule as the board shows it, what it needs, and what runs (an Up to card's reached count from the
+ * solve, else the pin when one is set, else the solved count). With no count set the rule is Any: the plan picks it.
  */
 export function cardCountState(
   result: RecipeNodeData["result"],
@@ -527,8 +533,6 @@ export function buildCountView(
   opts: {
     /** A crop's count has no times sign. */
     noTimes?: boolean;
-    /** What an Any card says under its count when nothing asks for one (a crop's "crops planted"). */
-    anyNote?: string;
     /** A custom rate card: always Exactly, no rule menu. */
     ruleFixed?: boolean;
     title?: string;
@@ -536,16 +540,17 @@ export function buildCountView(
 ): CleanCountView {
   const { rule, pinned, value, unset, needed } = state;
   const set = pinned ? (state.pin as number) : undefined;
+  const setText = set !== undefined ? formatSetCount(set) : "";
   return {
     text: `${opts.noTimes ? "" : "×"}${formatSolvedMachines(value)}`,
     value,
     pinned,
     rule,
-    ruleWord: pinned ? PIN_RULE_LABEL[rule].toLowerCase() : "",
+    ruleWord: PIN_RULE_LABEL[rule],
     ruleFixed: opts.ruleFixed === true,
     set,
-    setText: set !== undefined ? formatSetCount(set) : "",
-    note: pinned ? "" : unset ? "(set count)" : (opts.anyNote ?? ""),
+    setText,
+    box: pinned ? setText : "Set",
     prompt: !pinned && unset,
     zero: state.upTo ? state.upTo.reached <= 0.0000005 : !pinned && needed <= 0.0000005,
     title:
@@ -559,8 +564,8 @@ export function buildCountView(
 }
 
 /**
- * The count after one wheel step: from Any, Up to at what runs rounded up (at least one); else the set count rounded,
- * plus or minus one; below one, Any (undefined).
+ * The count after one wheel step: with none set, what runs rounded up (at least one); else the set count rounded,
+ * plus or minus one; below one, none (undefined).
  */
 export function wheelCount(
   count: Pick<CleanCountView, "rule" | "set" | "value">,
@@ -572,17 +577,42 @@ export function wheelCount(
   return next >= 1 ? next : undefined;
 }
 
+/** A count typed into an open box is set once the typing rests this long, so "12" is one edit, not "1" then "12". */
+export const LIVE_TYPE_MS = 300;
+
+/**
+ * A count typed into the box: a number, a leading times sign allowed. Zero and an empty box clear it (0); text that
+ * is not a count, or a negative one, is undefined (nothing is set).
+ */
+export function parseCountText(text: string): number | undefined {
+  const trimmed = text.trim().replace(/^[×x]\s*/, "");
+  if (trimmed === "") return 0;
+  const value = Number.parseFloat(trimmed);
+  return Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
+/**
+ * The box's text after one wheel step while it is being typed in: the number in it rounded, plus or minus one (below
+ * one, empty); with nothing in it, what the wheel gives a card with no count. The box sets it at once.
+ */
+export function wheelDraft(
+  draft: string,
+  count: Pick<CleanCountView, "value">,
+  direction: -1 | 1,
+): string {
+  const typed = parseCountText(draft);
+  const next =
+    typed !== undefined && typed > 0
+      ? wheelCount({ rule: "upTo", set: typed, value: count.value }, direction)
+      : wheelCount({ rule: "any", set: undefined, value: count.value }, direction);
+  return next === undefined ? "" : formatSetCount(next);
+}
+
+type PinFields = Pick<FactoryNode, "solvePin" | "solvePinExact">;
+
 /** The patch that gives a card `rule` and `count` (every write of a count goes through `withPinRule`). */
-export function pinPatch(
-  node: Pick<FactoryNode, "solvePin" | "solvePinExact">,
-  rule: PinRule,
-  count: number | undefined,
-): Pick<FactoryNode, "solvePin" | "solvePinExact"> {
-  const next = withPinRule(
-    { solvePin: node.solvePin, solvePinExact: node.solvePinExact },
-    rule,
-    count,
-  );
+export function pinPatch(node: PinFields, rule: PinRule, count: number | undefined): PinFields {
+  const next = withPinRule({ solvePin: node.solvePin, solvePinExact: node.solvePinExact }, rule, count);
   return { solvePin: next.solvePin, solvePinExact: next.solvePinExact };
 }
 
@@ -591,28 +621,28 @@ export function pinPatch(
  * `count` is the card's own count view (a shared machine's is its recipes' together).
  */
 export function pinActions(
-  node: Pick<FactoryNode, "id" | "solvePin" | "solvePinExact">,
+  node: Pick<FactoryNode, "id"> & PinFields,
   count: Pick<CleanCountView, "rule" | "set" | "value" | "ruleFixed">,
-  update: (id: string, patch: Pick<FactoryNode, "solvePin" | "solvePinExact">) => void,
+  update: (id: string, patch: PinFields) => void,
   locked: () => boolean,
 ): Pick<CleanCardActions, "setCount" | "stepCount" | "setRule"> {
   const write = (rule: PinRule, value: number | undefined) => {
     if (!locked()) update(node.id, pinPatch(node, rule, value));
   };
-  // A typed or stepped count keeps the rule; from Any it is Up to (a custom rate card's is Exactly).
+  // A typed or stepped count keeps the rule; from Any it is Up to (a custom rate card's is Exactly). A count cleared
+  // (typed 0, stepped below one, the middle button) is Any, and the next count set is Up to again.
   const ruleForCount: PinRule = count.ruleFixed
     ? "exact"
     : count.rule === "any"
       ? "upTo"
       : count.rule;
   return {
-    setCount: (value) => write(value !== undefined && value > 0 ? ruleForCount : "any", value),
-    stepCount: (direction) => {
-      const next = wheelCount(count, direction);
-      write(next === undefined ? "any" : ruleForCount, next);
-    },
+    setCount: (value) => write(ruleForCount, value),
+    stepCount: (direction) => write(ruleForCount, wheelCount(count, direction)),
     setRule: (rule) => {
       if (count.ruleFixed && rule !== "any") return;
+      // The rule it already reads, with no count set: nothing to change.
+      if (rule === count.rule && count.set === undefined) return;
       write(rule, count.set ?? Math.max(1, Math.ceil(count.value - 0.000001)));
     },
   };
@@ -634,6 +664,9 @@ const FOOT_TONE: Record<UpToReason, FootTone> = {
   LIMITED: "limited",
 };
 
+/** A ring's bar takes the ring's tone: a dead loop STARVED's amber, a clog lock CLOGGED's purple (never UNUSED's grey). */
+export const LOOP_FOOT_TONE: Record<LoopTone, FootTone> = { dead: "starved", clog: "clogged" };
+
 /** The first of `lines` that fits `room` px at the bar's size; none fits, nothing (the word and fraction still say it). */
 function fitLine(lines: string[], room: number): string {
   return lines.find((line) => measureClean(line, FOOT_SIZE) <= room) ?? "";
@@ -653,13 +686,15 @@ function resourceName(
 
 /**
  * The foot bar of a card, or nothing: an Up to card with its read-out, or an Exactly card with a forced input on one
- * of its rows. `ports` are the card's rows (every recipe's on a shared machine), `cardName` names a card by id.
+ * of its rows. `ports` are the card's rows (every recipe's on a shared machine), `cardName` names a card by id. A card
+ * in a ring (`loop`) says DEAD LOOP or CLOG LOCK in the ring's tone in place of its reason.
  */
 export function buildFootView(
   count: Pick<CleanCountView, "rule" | "set">,
   upTo: PlanUpTo | undefined,
   ports: { inputs: readonly CleanPortView[]; outputs: readonly CleanPortView[] },
   cardName: (id: string) => string | undefined = () => undefined,
+  loop?: LoopTone,
 ): CleanFootView | undefined {
   const fmt = formatSolvedMachines;
   if (count.rule === "upTo" && upTo) {
@@ -694,7 +729,7 @@ export function buildFootView(
       })
       .filter((name): name is string => name !== undefined);
     const upstream = (upTo.upstream ?? []).map((id) => cardName(id) ?? "a card");
-    const word = reason ?? "";
+    const word = loop ? LOOP_WORD[loop] : (reason ?? "");
     const room =
       FOOT_TEXT -
       (word ? measureClean(word, FOOT_SIZE) + FOOT_GAP : 0) -
@@ -711,7 +746,7 @@ export function buildFootView(
             ? resource
               ? [`short of ${resource}`, "short of an input"]
               : ["short of an input"]
-            : reason === "CLOGGED"
+            : reason === "CLOGGED" || loop === "clog"
               ? resource
                 ? [`${resource} has nowhere to go`, `nowhere for ${resource}`, "an output backs up"]
                 : ["an output backs up"]
@@ -723,7 +758,7 @@ export function buildFootView(
                   ? ["the plan holds it back", "held back"]
                   : [];
     return {
-      tone: reason ? FOOT_TONE[reason] : "plain",
+      tone: loop ? LOOP_FOOT_TONE[loop] : reason ? FOOT_TONE[reason] : "plain",
       word,
       say: fitLine(lines, room),
       frac,
@@ -731,6 +766,7 @@ export function buildFootView(
       ghost,
       facts: {
         reason,
+        loop,
         rule: "upTo",
         running: reached,
         capacity,
@@ -941,10 +977,14 @@ export function useCleanCardModel(
   );
   const plan = lastResult?.plan;
 
-  // Only this card's forced entries; the plan list is short, so no memo.
+  // Only this card's forced entries, and its spills into buffers, which it forces out the same way; the plan lists are
+  // short, so no memo.
   const forcedAt = new Map<string, number>();
-  for (const entry of plan?.forced ?? []) {
-    if (entry.nodeId === projectNode.id) forcedAt.set(entry.portKey, entry.perSecond);
+  const spillAt = new Map<string, string>();
+  for (const entry of [...(plan?.forced ?? []), ...(plan?.spills ?? [])]) {
+    if (entry.nodeId !== projectNode.id) continue;
+    forcedAt.set(entry.portKey, (forcedAt.get(entry.portKey) ?? 0) + entry.perSecond);
+    if ("drawerId" in entry) spillAt.set(entry.portKey, entry.drawerId);
   }
 
   const { selectedMachineHandler, machineHandlers, tierControl, powerReport, steamReport } =
@@ -1045,15 +1085,20 @@ export function useCleanCardModel(
 
   // The rows an Up to card's reason names are lit in its colour (only while the card is Up to: `upTo` is its own).
   const inputs = withReasonPorts(
-    rails.inputs.map((port) => buildPortView(projectNode.id, port, projectNode, forcedAt)),
+    rails.inputs.map((port) => buildPortView(projectNode.id, port, projectNode, forcedAt, spillAt)),
     countState.upTo,
   );
   const outputs = withReasonPorts(
-    rails.outputs.map((port) => buildPortView(projectNode.id, port, projectNode, forcedAt)),
+    rails.outputs.map((port) => buildPortView(projectNode.id, port, projectNode, forcedAt, spillAt)),
     countState.upTo,
   );
-  const foot = buildFootView(count, countState.upTo, { inputs, outputs }, (id) =>
-    cardNameIn(liveProject, id),
+  const loop = cardLoop(plan?.loops, projectNode.id);
+  const foot = buildFootView(
+    count,
+    countState.upTo,
+    { inputs, outputs },
+    (id) => cardNameIn(liveProject, id),
+    loop,
   );
 
   const view: CleanCardView = {
@@ -1081,8 +1126,8 @@ export function useCleanCardModel(
     glanceArt: art ?? machineIcon?.iconPath,
     count,
     foot,
-    loop: cardLoop(plan?.loops, projectNode.id),
-    glance: glanceBar(countState.upTo),
+    loop,
+    glance: glanceBar(countState.upTo, loop),
     circuit: derived.circuit,
     chips: strip.chips,
     stripHeight: strip.height,

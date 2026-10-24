@@ -9,7 +9,7 @@
   box-sizing: border-box;
   pointer-events: none;
   font-family: var(--cc-font);
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
   user-select: none;
   color: var(--cc-ink);
 }
@@ -172,7 +172,7 @@
   box-sizing: border-box;
   background: var(--cc-surface);
   font-family: var(--cc-font);
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
   user-select: none;
   color: var(--cc-ink);
   cursor: grab;

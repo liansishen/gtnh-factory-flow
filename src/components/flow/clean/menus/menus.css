@@ -18,7 +18,7 @@
   color: #f5f5f5;
   /* The mod draws every menu and panel in the game font. */
   font-family: var(--cc-font);
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
   font-size: 14px;
   line-height: 18px;
   box-shadow:
@@ -261,7 +261,7 @@
   pointer-events: none;
   /* The mod draws every menu and panel in the game font. */
   font-family: var(--cc-font);
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
 }
 .pw {
   box-sizing: border-box;

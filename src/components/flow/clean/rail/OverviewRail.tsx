@@ -39,7 +39,7 @@ import { useFactoryStore, useRateDisplayUnits } from "@/store/factory-store";
 import { useWorkspaceView, writeWorkspaceView } from "@/lib/workspace-view";
 import { formatAmountWithSuffix, RULE_MARK, RULE_NAME, RULE_STEPS } from "../../rate-rule";
 import { AmpsChip, TierChip } from "../CleanCard";
-import { useCleanCardModel } from "../clean-model";
+import { useCleanCardModel, wheelDraft } from "../clean-model";
 import { powerPanelTip } from "../interaction/tips";
 import type { RecipeNodeData } from "../../RecipeNode";
 import { CC, tierChipColors } from "../tokens";
@@ -47,6 +47,9 @@ import { UP_TO_COLOR, UP_TO_WORD, shownReason, upToSentence } from "../up-to-rea
 import { PIN_RULE_LABEL } from "@/lib/model/pin-rule";
 import {
   pinCount,
+  pinSnapshot,
+  restorePin,
+  type PinSnapshot,
   setDrawerRate,
   setDrawerRule,
   setLineRate,
@@ -1097,6 +1100,8 @@ const MachineRow = memo(function MachineRow({
   useFontEpoch();
   const railWidth = useContext(RailWidthContext);
   const [hot, setHot] = useState(false);
+  // The count as it was when its box opened: Escape puts it back, as the box sets as it goes.
+  const opened = useRef<PinSnapshot | undefined>(undefined);
   const colors = entry.tier ? tierChipColors(entry.tier) : undefined;
   const countKey = `count:${entry.nodeId}`;
   const wheeled = state.wheeled[countKey];
@@ -1140,7 +1145,7 @@ const MachineRow = memo(function MachineRow({
   };
   const lines: TipContent = {
     title: entry.label,
-    sub: upTo
+    sub: upTo && entry.pinned
       ? `${machinesText(entry.count)} of ${machinesText(entry.pin!)} machines`
       : `${machinesText(entry.count)} machines${entry.pinned ? " (exactly)" : ""}`,
     notes: [
@@ -1211,7 +1216,8 @@ const MachineRow = memo(function MachineRow({
         </span>
         <div className="rail-controls" onClick={(event) => event.stopPropagation()}>
           <RuleKey
-            mark={set ? (upTo ? "≤" : "=") : "~"}
+            // ≤ Up to (a count wheeled onto Any is Up to), = Exactly, ~ Any.
+            mark={entry.rule === "exact" ? "=" : upTo || set ? "≤" : "~"}
             tone={set ? "gold" : "muted"}
             label={`Pin the ${entry.label}`}
             onClick={(event) => {
@@ -1240,8 +1246,13 @@ const MachineRow = memo(function MachineRow({
                     ],
                   }
                 : {
-                    title: "Any",
-                    notes: [{ text: "The plan decides how many.", tone: "muted" }],
+                    title: PIN_RULE_LABEL[entry.rule],
+                    notes: [
+                      {
+                        text: "The plan decides how many.",
+                        tone: "muted",
+                      },
+                    ],
                     actions: [{ input: "left", label: `Pin it at ${base}` }],
                   }
             }
@@ -1251,8 +1262,12 @@ const MachineRow = memo(function MachineRow({
             text={machinesText(shownPin)}
             gold={set}
             editing={state.editing === countKey}
-            initial={entry.pinned ? String(entry.pin) : ""}
-            onStartEdit={() => state.edit(countKey)}
+            // What the box shows, a wheel step not yet set included.
+            initial={set ? String(shownPin) : ""}
+            onStartEdit={() => {
+              opened.current = pinSnapshot(entry.nodeId);
+              state.edit(countKey);
+            }}
             onCommit={(value) => {
               state.edit(null);
               pinCount(entry.nodeId, value);
@@ -1262,6 +1277,10 @@ const MachineRow = memo(function MachineRow({
               if (entry.pinned) pinCount(entry.nodeId, 0);
             }}
             onWheel={(direction) => wheelCount(direction)}
+            // The card's count box steps what it holds the same way, and sets it as it goes.
+            onWheelDraft={(text, direction) => wheelDraft(text, { value: entry.count }, direction)}
+            onLive={(value) => pinCount(entry.nodeId, value)}
+            onRevert={() => restorePin(entry.nodeId, opened.current)}
             tip={() => ({
               title: "Machine count",
               actions: [

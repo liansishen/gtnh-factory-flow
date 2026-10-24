@@ -37,7 +37,8 @@
   --cc-pulse: 1.9s;
   --cc-accept-pulse: 1.43s;
   --cc-prompt: 1s;
-  /* The mod's pixel typeface; sizes below are the mod's: x1.5 (12) figures, x1 (8) text, x0.75 (6) small. */
+  /* The app's font (Inter unless the setting says otherwise); sizes below are the mod's: x1.5 (12) figures, x1 (8)
+     text, x0.75 (6) small. */
   --cc-font: var(--app-font);
 }
 
@@ -58,9 +59,9 @@
   line-height: 10px;
   font-weight: 400;
   letter-spacing: 0;
-  /* The game's text shadow (Hyb.text draws every word with it): a quarter of the colour, a pixel down and right. */
-  text-shadow: 1px 1px 0 color-mix(in srgb, currentColor 25%, #000);
-  -webkit-font-smoothing: none;
+  /* The game's text shadow (Hyb.text draws every word with it) under the pixel font alone (globals.css --pixel-text-shadow). */
+  text-shadow: var(--pixel-text-shadow);
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
   /* The frame is an inset shadow, never a border: a border would push rows off the grid. A card with a problem draws
      it in its bar's tone (--cc-frame). */
   box-shadow:
@@ -380,14 +381,10 @@
 .cc-row[data-port]:hover {
   --cc-tile: #31343a;
 }
-/* An unwired port the plan runs through anyway is a free end of it: the striped tile of a source (blue, a tank) or a
-   product (orange, a crate). */
+/* An unwired port the plan runs through anyway is a free end of it: the tile of a source (blue, a tank) or a product
+   (orange, a crate), a flat tint of it. */
 .cc-row[data-open] {
-  background: repeating-linear-gradient(
-    135deg,
-    var(--cc-open-stripe) 0 3px,
-    var(--cc-open-body) 3px 8px
-  );
+  background: var(--cc-open-body);
 }
 .cc-row[data-open][data-side="input"] {
   --cc-open-body: #292f38;
@@ -481,10 +478,10 @@
 }
 
 /*
- * Monocraft is shorter and wider than the game's font: at 14 px its capitals are the mod's x1.5 figures' 10.5 px, and a
- * letter spacing of -0.8 px keeps each figure as wide as at 13 px (what the fit checks measure). The same holds below:
- * names at 9 px (-0.6 px) stand as tall as the game's 8 px. Line 13: the name's glyphs start 14 px under the number's,
- * as the mod's (12 px figures, 2 px gap).
+ * The pixel font is shorter and wider than the game's font: at 14 px its capitals are the mod's x1.5 figures' 10.5 px,
+ * and a letter spacing of -0.8 px keeps each figure as wide as at 13 px. The same holds below: names at 9 px (-0.6 px)
+ * stand as tall as the game's 8 px. Line 13: the name's glyphs start 14 px under the number's, as the mod's (12 px
+ * figures, 2 px gap). The fit checks measure these sizes and spacings as drawn (text-measure.ts ROW_TYPE).
  */
 .cc-num {
   display: block;
@@ -496,10 +493,10 @@
   color: var(--cc-ink);
   white-space: nowrap;
 }
-/* The unit small beside the number, a space and 2 px after it, its foot a pixel above the number's (CardPaint.words). */
+/* The unit small beside the number, snug against it (a pixel), its foot a pixel above the number's. */
 .cc-num::after {
   content: attr(data-unit);
-  margin-left: 6px;
+  margin-left: 1px;
   font-size: 9px;
   letter-spacing: -0.6px;
   font-weight: 400;
@@ -591,7 +588,8 @@
   right: 30px;
 }
 
-/* A forced row: the plan sends material out (or brings it in) here with no drawer. A tile of the same shape, striped. */
+/* A forced row: the plan sends material out (or brings it in) here with no drawer. A tile of the same shape on a flat
+   tint of the side's colour, its edge in that colour. */
 .cc-forced {
   position: relative;
   box-sizing: border-box;
@@ -603,11 +601,7 @@
   justify-content: center;
   gap: 2px;
   border-radius: 3px;
-  background: repeating-linear-gradient(
-    135deg,
-    var(--cc-forced-stripe) 0 3px,
-    var(--cc-forced-body) 3px 8px
-  );
+  background: var(--cc-forced-body);
   box-shadow:
     inset 0 0 0 1px var(--cc-forced-edge),
     inset 1px 1px 0 1px var(--cc-forced-hi),
@@ -643,18 +637,22 @@
 .cc-forced[data-kind="out"] .cc-pname {
   color: #c39b84;
 }
+/* Lit with the rest of its spill (the buffer's Forced tile, its other makers'): the lit row's gold ring. */
+.cc-forced[data-lit] {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 210, 87, 0.75),
+    inset 0 0 0 2px rgba(255, 210, 87, 0.18),
+    inset 0 0 0 3px rgba(255, 210, 87, 0.12),
+    inset 0 0 0 4px rgba(255, 210, 87, 0.06);
+}
 
 /* The row an Up to card's reason names (STARVED's short input, CLOGGED's or UNUSED's output, and the rows tied with
-   it): striped in the reason's colour as a free end is in its own (body and stripe mixed in clean-model reasonStripes,
+   it): a flat tint of the reason's colour as a free end is of its own (the body mixed in clean-model reasonStripes,
    set inline), its edge and its name in that colour, the foot bar's tones. After the free ends' colours so it wins
-   over them; on a free end or a forced row its stripes replace theirs. */
+   over them; on a free end or a forced row its tint replaces theirs. */
 .cc-card .cc-row[data-why] {
   --cc-tile-edge: var(--cc-why);
-  background: repeating-linear-gradient(
-    135deg,
-    var(--cc-why-stripe) 0 3px,
-    var(--cc-why-body) 3px 8px
-  );
+  background: var(--cc-why-body);
 }
 .cc-card .cc-row[data-why][data-forced] {
   background: none;
@@ -662,11 +660,7 @@
 .cc-card .cc-row[data-why] > .cc-line,
 .cc-card .cc-row[data-why] > .cc-forced {
   --cc-forced-edge: var(--cc-why);
-  background: repeating-linear-gradient(
-    135deg,
-    var(--cc-why-stripe) 0 3px,
-    var(--cc-why-body) 3px 8px
-  );
+  background: var(--cc-why-body);
 }
 .cc-card .cc-row[data-why] > .cc-pname,
 .cc-card .cc-row[data-why] > .cc-line > .cc-pname {
@@ -742,9 +736,9 @@
 
 /*
  * The count under the machine (docs/up-to.md): what runs, big and white (`::before`, its own line), and under it what
- * you set: the rule word (`.cc-rule`, opens Any, Up to, Exactly) and the number in gold (`::after`). With nothing set
- * the line under says "(set count)" while nothing sets this part of the plan, else nothing; it always keeps its
- * height so the block never moves.
+ * is set, as the overview's machine lines say it: the rule word (`.cc-rule`, opens Any, Up to, Exactly) and the set
+ * box (`::after`, the overview's sunken box at the card's size): the number in gold, or "Set" in grey on Any, gold and
+ * blinking while nothing sets this part of the plan. Every rule draws both, so the block never moves.
  */
 .cc-count {
   position: relative;
@@ -776,11 +770,19 @@
 .cc-count[data-zero]::before {
   color: var(--cc-idle);
 }
+/* The set box: as wide as what it says, at least the box an open editor starts at. */
 .cc-count::after {
   content: attr(data-set);
-  min-width: 1px;
-  height: 10px;
-  color: var(--cc-muted);
+  box-sizing: border-box;
+  min-width: calc(3ch + 8px);
+  height: 12px;
+  padding: 0 3px;
+  border: 1px solid #5a5e68;
+  background: #0f1114;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.7);
+  line-height: 10px;
+  text-align: center;
+  color: #6f737c;
 }
 .cc-count[data-pinned]::after,
 .cc-count[data-prompt]::after {
@@ -790,12 +792,10 @@
 :root[data-cc-blink] .cc-count[data-prompt]::after {
   color: var(--cc-prompt-off);
 }
-/* What a click types into: the gold number when a count is set, else what runs. */
-.cc-count:not([data-pinned]):not([data-editing]):hover::before,
-.cc-count[data-pinned]:not([data-editing]):not(:has(.cc-rule:hover)):hover::after {
-  text-decoration: underline dotted;
-  text-decoration-color: var(--cc-muted);
-  text-underline-offset: 2px;
+/* What a click types into: the box. */
+.cc-count:not([data-editing]):not(:has(.cc-rule:hover)):hover::after {
+  border-color: var(--cc-gold);
+  background: #15171c;
 }
 .cc-count[data-editing]::after {
   display: none;
@@ -813,17 +813,18 @@
   border-bottom-color: transparent;
   cursor: text;
 }
-/* The count's box: as wide as the number it replaces (set inline in ch), never wider than the well. */
+/* The open box: the set box's size (its width set inline in ch, growing with what is typed), never wider than the
+   well. */
 .cc-count input {
   box-sizing: border-box;
-  min-width: 0;
+  min-width: calc(3ch + 8px);
   max-width: 100%;
   height: 12px;
   margin: 0;
   padding: 0 3px;
   border: 1px solid var(--cc-gold);
   outline: 0;
-  background: #0f1114;
+  background: #15171c;
   color: var(--cc-gold);
   font: inherit;
   font-size: 8px;

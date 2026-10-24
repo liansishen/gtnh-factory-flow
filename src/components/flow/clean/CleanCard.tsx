@@ -1,7 +1,6 @@
 "use client";
 import { I18nText, useT, useGameName } from "@/lib/i18n/react";
 
-
 import "./clean.css";
 import { fluidSwatchStyle } from "./fluid-swatch";
 
@@ -48,7 +47,14 @@ import type {
   CleanFootView,
   CleanPortView,
 } from "./clean-model";
-import { circuitNumber, frameTone, reasonStripes } from "./clean-model";
+import {
+  circuitNumber,
+  frameTone,
+  LIVE_TYPE_MS,
+  parseCountText,
+  reasonStripes,
+  wheelDraft,
+} from "./clean-model";
 import { glanceFace } from "./glance";
 import type { PinRule } from "@/lib/model/pin-rule";
 import { CountRuleMenu } from "./menus/CountRuleMenu";
@@ -56,6 +62,8 @@ import { tierChipColors } from "./tokens";
 import { syncPromptPhase } from "../virtual/prompt-phase";
 import { ensureInteractionHost, useClickSlop, tipAttrs, type TipSpec } from "./interaction";
 import { PortRateControls } from "./interaction/PortRateControls";
+import { useNativeWheel } from "./interaction/native-wheel";
+import { setSpillHover, useSpillHover } from "./interaction/spill-hover";
 import { forcedTip, menuTip, portTip, powerPanelTip } from "./interaction/tips";
 import { gearTip } from "./menus/card-tips";
 import { openSparePopupForPort } from "./rail/SparePopup";
@@ -66,7 +74,7 @@ import { OptionListMenu } from "./menus/OptionListMenu";
 import { SettingsSheet } from "./menus/SettingsSheet";
 import { useDeviceSettings } from "@/lib/device-settings";
 import { anchorOf, type MenuAnchor } from "./menus/MenuPortal";
-import { cloneWithSound, playEditSfx, sfxClick } from "@/lib/sound/sfx";
+import { cloneWithSound, playEditSfx, sfxClick, sfxTick } from "@/lib/sound/sfx";
 import {
   countRowsTip,
   footTip,
@@ -109,6 +117,8 @@ export function CleanPortRow({
   const resourceLit = useFactoryStore(
     (state) => (state.hoveredFlowResourceKey ?? state.selectedFlowResourceKey) === p.resourceKey,
   );
+  // This row's Forced tile lights with the rest of its spill (the buffer's tile and its other makers').
+  const spillLit = useSpillHover((state) => p.spillTo !== undefined && state.drawerId === p.spillTo);
   const [mobOpen, setMobOpen] = useState(false);
   const { port } = p;
   const isInput = p.side === "input";
@@ -217,11 +227,13 @@ export function CleanPortRow({
           setHoveredFlowScope(
             buildPortFlowScope(useFactoryStore.getState().project, p.nodeId, port),
           );
+          if (p.spillTo !== undefined) setSpillHover(p.spillTo);
         }
       }}
       onPointerLeave={() => {
         rowBrowse.handlers.onPointerLeave();
         setHoveredFlowScope(undefined);
+        if (p.spillTo !== undefined) setSpillHover(undefined);
       }}
       onPointerDown={rowBrowse.handlers.onPointerDown}
       onPointerMove={rowBrowse.handlers.onPointerMove}
@@ -261,6 +273,7 @@ export function CleanPortRow({
         <div
           className="cc-forced"
           data-kind={isInput ? "in" : "out"}
+          data-lit={spillLit ? "" : undefined}
           {...tipAttrs(forcedTip(p))}
           onClick={(event) => {
             // A leftover with somewhere else to go opens its split (rail/SparePopup.tsx).
@@ -380,9 +393,10 @@ function Words({ p, iconProps }: { p: CleanPortView; iconProps: Record<string, u
 
 /**
  * The count under the machine (docs/up-to.md): what runs, big and white (`::before`, from `data-run`), and under it
- * what you set: the rule word (a click opens Any, Up to, Exactly) and the number in gold (`::after`, from `data-set`).
- * A click anywhere else types a count (Any becomes Up to), the wheel steps it, the middle button goes back to Any.
- * Two elements: the block and the rule word.
+ * what is set, as the overview's machine lines say it: the rule word, always (a click opens Any, Up to, Exactly), and
+ * the set box (`::after`, from `data-set`): the number in gold, or "Set" with no count. A click anywhere else types a
+ * count (Any becomes Up to), the wheel steps it, the middle button clears it (Any). Two elements: the block and the rule
+ * word.
  */
 export function CountBox({
   view,
@@ -401,33 +415,80 @@ export function CountBox({
   onRule: (rule: PinRule) => void;
   wasClick: (event: MouseEvent) => boolean;
 }) {
-  const _i18nT = useT();
   const [draft, setDraft] = useState<string>();
+  const _i18nT = useT();
   const [ruleMenu, setRuleMenu] = useState<MenuAnchor>();
+  const [block, setBlock] = useState<HTMLDivElement | null>(null);
+  // Escape closed the box: a blur that follows (a browser may send one as the box goes) sets nothing.
+  const cancelled = useRef(false);
   const editing = draft !== undefined;
+  // The open box sets what it holds as it goes: each wheel step at once, typing once it rests (`LIVE_TYPE_MS`), so the
+  // plan follows without Enter. Read through refs: the wheel and the timer outlive the render that made them.
+  const latest = useRef({ view, draft });
+  latest.current = { view, draft };
+  const opened = useRef<{ rule: PinRule; set?: number }>({ rule: view.rule });
+  const changed = useRef(false);
+  const typing = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(typing.current), []);
+  // Sets `text` unless it is the card's count already. Typing never clears (an emptied box is a count being retyped);
+  // the wheel below one and a box let go of empty do.
+  const apply = (text: string, clear: boolean) => {
+    const value = parseCountText(text);
+    const now = latest.current.view;
+    if (value === undefined || (!(value > 0) && (!clear || !now.pinned))) return;
+    if (value > 0 && value === now.set) return;
+    changed.current = true;
+    onSet(value > 0 ? value : undefined);
+  };
+  // Let go of (a click anywhere else, Enter): what the box holds is set, if typing has not set it yet. Zero or nothing
+  // clears it. A count that is already the card's sets nothing, so opening and leaving the box costs no undo step.
   const commit = () => {
-    if (draft === undefined) return;
-    const text = draft.trim();
+    clearTimeout(typing.current);
+    if (draft === undefined || cancelled.current) return;
     setDraft(undefined);
-    if (text === "") {
-      onSet(undefined);
+    apply(draft, true);
+  };
+  // Escape: the box closes and the card goes back to the count it had when the box opened.
+  const cancel = () => {
+    clearTimeout(typing.current);
+    cancelled.current = true;
+    setDraft(undefined);
+    if (!changed.current) return;
+    if (opened.current.rule === "any" && opened.current.set === undefined) onRule("any");
+    else onSet(opened.current.set);
+  };
+  // The wheel steps the count, or the number in the box while it is open; the camera never gets it. Native and
+  // non-passive so Ctrl+wheel does not zoom the page.
+  useNativeWheel(block, (event) => {
+    if (event.deltaY === 0 || checklistLocked() || !wheelChangesValues()) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const up = event.deltaY < 0;
+    const open = latest.current.draft;
+    if (open !== undefined) {
+      sfxTick(up);
+      clearTimeout(typing.current);
+      const next = wheelDraft(open, latest.current.view, up ? 1 : -1);
+      latest.current.draft = next;
+      setDraft(next);
+      apply(next, true);
       return;
     }
-    const value = Number.parseFloat(text.replace(/^[×x]/, ""));
-    if (Number.isFinite(value) && value > 0) onSet(value);
-  };
+    // Each step ticks and claims the edit, so the board's change sound does not play on top.
+    playEditSfx("ui.tick", 1, up ? 1.12 : 0.9);
+    onStep(up ? 1 : -1);
+  });
   return (
     <div
+      ref={setBlock}
       role="button"
       tabIndex={0}
       className="cc-count nowheel"
       data-wheel-value=""
-      aria-label={_i18nT(view.pinned
-          ? `${view.text} running, ${view.ruleWord} ${view.setText}`
-          : `${view.text} machines`)}
+      aria-label={_i18nT(`${view.text} running, ${view.ruleWord.toLowerCase()}${view.pinned ? ` ${view.setText}` : ""}`)}
       data-rule={view.rule}
       data-run={view.text}
-      data-set={view.pinned ? view.setText : _i18nT(view.note)}
+      data-set={_i18nT(view.box)}
       data-pinned={view.pinned ? "" : undefined}
       data-zero={view.zero ? "" : undefined}
       data-prompt={view.prompt ? "" : undefined}
@@ -439,18 +500,13 @@ export function CountBox({
         glyph(event);
         if (!editing && wasClick(event) && !checklistLocked()) {
           sfxClick();
+          cancelled.current = false;
+          changed.current = false;
+          opened.current = { rule: view.rule, set: view.set };
           setDraft(view.set !== undefined ? view.setText : "");
         }
       }}
-      onWheel={(event: WheelEvent) => {
-        if (checklistLocked() || !wheelChangesValues()) return;
-        event.stopPropagation();
-        const up = event.deltaY < 0;
-        // Each step ticks and claims the edit, so the board's change sound does not play on top.
-        playEditSfx("ui.tick", 1, up ? 1.12 : 0.9);
-        onStep(up ? 1 : -1);
-      }}
-      // The middle button goes back to Any: the plan decides the count again.
+      // The middle button clears the count: Any, the plan decides it again.
       onMouseDown={(event) => {
         if (event.button === 1) event.preventDefault();
       }}
@@ -462,27 +518,25 @@ export function CountBox({
         onSet(undefined);
       }}
     >
-      {view.ruleWord ? (
-        <div
-          role={view.ruleFixed ? undefined : "button"}
-          tabIndex={view.ruleFixed ? undefined : 0}
-          className="cc-rule"
-          data-fixed={view.ruleFixed ? "" : undefined}
-          data-open={ruleMenu ? "" : undefined}
-          data-menu-anchor=""
-          aria-haspopup={view.ruleFixed ? undefined : "menu"}
-          aria-expanded={view.ruleFixed ? undefined : ruleMenu !== undefined}
-          {...(ruleTipSpec ? tipAttrs(ruleTipSpec) : {})}
-          onClick={(event) => {
-            glyph(event);
-            if (view.ruleFixed || !wasClick(event) || checklistLocked()) return;
-            sfxClick();
-            setRuleMenu(ruleMenu ? undefined : anchorOf(event.currentTarget));
-          }}
-        >
-          <I18nText>{view.ruleWord}</I18nText>
-        </div>
-      ) : null}
+      <div
+        role={view.ruleFixed ? undefined : "button"}
+        tabIndex={view.ruleFixed ? undefined : 0}
+        className="cc-rule"
+        data-fixed={view.ruleFixed ? "" : undefined}
+        data-open={ruleMenu ? "" : undefined}
+        data-menu-anchor=""
+        aria-haspopup={view.ruleFixed ? undefined : "menu"}
+        aria-expanded={view.ruleFixed ? undefined : ruleMenu !== undefined}
+        {...(ruleTipSpec ? tipAttrs(ruleTipSpec) : {})}
+        onClick={(event) => {
+          glyph(event);
+          if (view.ruleFixed || !wasClick(event) || checklistLocked()) return;
+          sfxClick();
+          setRuleMenu(ruleMenu ? undefined : anchorOf(event.currentTarget));
+        }}
+      >
+        <I18nText>{view.ruleWord}</I18nText>
+      </div>
       {editing ? (
         <input
           autoFocus
@@ -493,14 +547,19 @@ export function CountBox({
           className="nodrag"
           // As wide as the number it replaces, a few characters, growing with what is typed.
           style={{ width: `calc(${Math.max(3, draft.length + 1)}ch + 8px)` }}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={(event) => {
+            const text = event.target.value;
+            setDraft(text);
+            clearTimeout(typing.current);
+            typing.current = setTimeout(() => apply(text, false), LIVE_TYPE_MS);
+          }}
           onBlur={commit}
           onFocus={(event) => event.currentTarget.select()}
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => {
             if (event.key === "Enter") event.currentTarget.blur();
-            if (event.key === "Escape") setDraft(undefined);
+            if (event.key === "Escape") cancel();
             event.stopPropagation();
           }}
         />
@@ -645,7 +704,7 @@ export function TierChip({
         if (!fixed) onStep(event.deltaY < 0 ? 1 : -1);
       }}
     >
-      <I18nText>{label}</I18nText>
+      {label}
     </div>
   );
 }
@@ -1119,6 +1178,7 @@ export function CleanCard({ view, actions, context, recipe, node }: CleanCardPro
       {menu?.kind === "actions" ? (
         <CardActionsMenu
           anchor={{ left: menu.x, top: menu.top, bottom: menu.bottom }}
+          nodeId={node.id}
           onClose={() => setMenu(undefined)}
           onClone={() => cloneWithSound(duplicateNode, node.id)}
           onDelete={() => deleteNode(node.id)}

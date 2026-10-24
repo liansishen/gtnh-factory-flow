@@ -15,6 +15,7 @@ afterEach(() => {
   cleanup();
   sfx.sfxClick.mockClear();
   sfx.playEditSfx.mockClear();
+  setLocale("en");
 });
 
 const tip = () => ({ title: "" }) as never;
@@ -52,6 +53,91 @@ it("the rate box clicks for itself and ticks before every wheel step", () => {
     [1, false, false],
     [-1, true, false],
   ]);
+});
+
+it("the wheel over an open box steps what it holds, set when the box is let go of", () => {
+  const onCommit = vi.fn();
+  const onCancel = vi.fn();
+  const step = (text: string, direction: 1 | -1) => String(Number(text) + direction);
+  const open = (onWheelDraft?: typeof step) =>
+    render(
+      <RateBox
+        text="3"
+        gold
+        editing
+        initial="3"
+        onStartEdit={vi.fn()}
+        onCommit={onCommit}
+        onCancel={onCancel}
+        onWheelDraft={onWheelDraft}
+        tip={tip}
+        label="Count"
+      />,
+    ).container.querySelector<HTMLInputElement>("input")!;
+  const input = open(step);
+  // The rail's one wheel listener finds the open box as it finds a box at rest.
+  const wheel = wheelHandlerFor(input)!;
+  act(() => wheel(1, false, false));
+  act(() => wheel(1, false, false));
+  expect(input.value).toBe("5");
+  // Nothing is set while it is open.
+  expect(onCommit).not.toHaveBeenCalled();
+  fireEvent.blur(input);
+  expect(onCommit).toHaveBeenCalledWith(5);
+  cleanup();
+
+  // Escape drops the steps with the typing.
+  const again = open(step);
+  act(() => wheelHandlerFor(again)!(-1, false, false));
+  expect(again.value).toBe("2");
+  fireEvent.keyDown(again, { key: "Escape" });
+  expect(onCancel).toHaveBeenCalledTimes(1);
+  expect(onCommit).toHaveBeenCalledTimes(1);
+  cleanup();
+
+  // A box that steps nothing leaves the wheel to the list.
+  expect(wheelHandlerFor(open())).toBeUndefined();
+});
+
+it("an open box with onLive sets as it goes: wheel steps at once, typing once it rests, Escape puts it back", () => {
+  vi.useFakeTimers();
+  try {
+    const onLive = vi.fn();
+    const onRevert = vi.fn();
+    const onCommit = vi.fn();
+    const input = render(
+      <RateBox
+        text="3"
+        gold
+        editing
+        initial="3"
+        onStartEdit={vi.fn()}
+        onCommit={onCommit}
+        onCancel={vi.fn()}
+        onWheelDraft={(text, direction) => String(Number(text) + direction)}
+        onLive={onLive}
+        onRevert={onRevert}
+        tip={tip}
+        label="Count"
+      />,
+    ).container.querySelector<HTMLInputElement>("input")!;
+    act(() => wheelHandlerFor(input)!(1, false, false));
+    expect(onLive.mock.calls).toEqual([[4]]);
+    fireEvent.change(input, { target: { value: "1" } });
+    fireEvent.change(input, { target: { value: "12" } });
+    expect(onLive.mock.calls).toEqual([[4]]);
+    act(() => vi.advanceTimersByTime(300));
+    expect(onLive.mock.calls).toEqual([[4], [12]]);
+    // An emptied box is a number being retyped: never cleared while typing.
+    fireEvent.change(input, { target: { value: "" } });
+    act(() => vi.advanceTimersByTime(300));
+    expect(onLive).toHaveBeenCalledTimes(2);
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(onRevert).toHaveBeenCalledTimes(1);
+    expect(onCommit).not.toHaveBeenCalled();
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it("a middle click clears a set box or key with the board's unpin sound, and never autoscrolls", () => {

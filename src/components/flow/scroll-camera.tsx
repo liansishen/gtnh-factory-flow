@@ -47,6 +47,44 @@ export const SCROLL_CAMERA_ATTRIBUTE = "data-scroll-camera";
 
 export const CAMERA_ZOOM_VAR = "--camera-zoom";
 
+/** On the viewport while the zoom moves; globals.css hangs `will-change: transform` on it. */
+export const ZOOMING_ATTRIBUTE = "data-zooming";
+
+/** How long the zoom must stand still before the board is rastered again at its scale. */
+export const ZOOM_REST_MS = 200;
+
+/**
+ * The viewport wears `will-change: transform` while the zoom moves and drops
+ * it once the zoom has rested ZOOM_REST_MS (globals.css, data-zooming). The
+ * hint keeps each step from rastering the board again; Chrome keeps the
+ * raster scale of a layer that wears it as the zoom falls, so dropping it is
+ * what rasters the board once at the scale it stopped at, keeping text and
+ * icons sharp.
+ * One timer per zoom step, nothing per frame; a pan never calls it.
+ */
+export function zoomingMark(viewport: HTMLElement) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const rest = () => {
+    timer = undefined;
+    viewport.removeAttribute(ZOOMING_ATTRIBUTE);
+  };
+  return {
+    zoomed() {
+      if (timer === undefined) {
+        viewport.setAttribute(ZOOMING_ATTRIBUTE, "");
+      } else {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(rest, ZOOM_REST_MS);
+    },
+    dispose() {
+      if (timer !== undefined) clearTimeout(timer);
+      timer = undefined;
+      viewport.removeAttribute(ZOOMING_ATTRIBUTE);
+    },
+  };
+}
+
 /** Whether a scroll camera is running (the board mounts one, always). */
 let scrollCameraActive = false;
 
@@ -96,12 +134,16 @@ export function ScrollCamera({ boardRef }: { boardRef: RefObject<HTMLElement | n
     let expectedLeft = 0;
     let expectedTop = 0;
     let writtenZoom: number | undefined;
+    const zooming = zoomingMark(viewport);
     const apply = (transform: readonly [number, number, number]) => {
       expectedLeft = SCROLL_CAMERA_OFFSET - transform[0];
       expectedTop = SCROLL_CAMERA_OFFSET - transform[1];
       // Zoom first: a wheel zoom changes x, y and z together, and the scroll
       // offsets below are only right against the new scale.
       if (transform[2] !== writtenZoom) {
+        // The camera's first placement is not a zoom: the board is rastered
+        // at its scale from the start.
+        if (writtenZoom !== undefined) zooming.zoomed();
         writtenZoom = transform[2];
         viewport.style.setProperty(CAMERA_ZOOM_VAR, String(transform[2]));
       }
@@ -164,6 +206,7 @@ export function ScrollCamera({ boardRef }: { boardRef: RefObject<HTMLElement | n
 
     return () => {
       unsubscribe();
+      zooming.dispose();
       marqueeObserver.disconnect();
       wrapper.removeEventListener("scroll", onScroll);
       wrapper.removeEventListener("mousedown", onMouseDown, { capture: true });

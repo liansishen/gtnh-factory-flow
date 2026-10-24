@@ -12,6 +12,7 @@ import { chromium } from "playwright-core";
 
 const base = process.env.APP_URL ?? "http://127.0.0.1:17840";
 const evidence = process.env.I18N_EVIDENCE_DIR;
+const officialReadOnly = process.env.NEXT_PUBLIC_OFFICIAL_COMMUNITY_READ_ONLY === "1";
 if (!evidence) throw new Error("Set I18N_EVIDENCE_DIR to a private directory for screenshots and observations.");
 await fs.mkdir(evidence, { recursive: true });
 
@@ -376,9 +377,12 @@ async function tabMenus() {
   await menu().waitFor();
   assert.match(await menu().getAttribute("aria-label"), new RegExp(SECOND_NAME), "tab menu names the plan verbatim");
   const rows = await menuLabels();
-  for (const source of ["Rename", "Copy plan code", "Post a copy to Community...", "Close tab", "Close other tabs", "Delete plan"]) {
+  const expectedRows = ["Rename", "Copy plan code", "Close tab", "Close other tabs", "Delete plan"];
+  if (!officialReadOnly) expectedRows.push("Post a copy to Community...");
+  for (const source of expectedRows) {
     assert.ok(rows.includes(zh(source)), `tab menu row ${JSON.stringify(source)} missing from ${JSON.stringify(rows)}`);
   }
+  if (officialReadOnly) assert.ok(!rows.includes(zh("Post a copy to Community...")), "official community is read-only");
   await observe("menu-tab-zh");
 
   // Rename from the menu on the active plan keeps the user's words.

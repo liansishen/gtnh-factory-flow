@@ -597,6 +597,7 @@
   display: none;
 }
 .nrw-pin {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -609,6 +610,14 @@
   background: rgba(0, 0, 0, 0.14);
   box-shadow: inset 0 0 0 1px #2a2c31;
   text-align: center;
+}
+/* The pin's unpin key, in its corner: a condition row's remove key. */
+.nrw-pin .nrw-pin-clear {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
 }
 
 /* Menus opened from a slot or a recipe: the panel's list. */

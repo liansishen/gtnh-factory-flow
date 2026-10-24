@@ -36,7 +36,7 @@
   line-height: 10px;
   font-weight: 400;
   letter-spacing: 0;
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
   color: var(--tb-ink);
 }
 .tb button,

@@ -137,7 +137,12 @@ interface MachineTab {
   count?: number;
   icon?: RecipeMapChip["icon"];
   generators?: boolean;
+  /** The pinned machine's own tab while the stencil is empty: no recipes asked for yet. */
+  pinned?: boolean;
 }
+
+/** The pinned machine's tab's id: never a recipe map's name. */
+const PINNED_TAB = "@pinned";
 
 // NEI's measures in shell px (one GUI pixel is about 1.75): an 18 px slot, a 24 px tab. A page is a grid of the
 // tab's cards, every card in the tab's tallest card's cell, as a handler's recipes are.
@@ -187,6 +192,7 @@ export function RecipeSearchOverlay({
   contextResource,
   searchPickerResources,
   machinePin,
+  onClearPin,
 }: {
   clauses: StencilClause[];
   takesOp: RecipeQuerySideOp;
@@ -228,6 +234,8 @@ export function RecipeSearchOverlay({
   ) => Promise<DatasetResourceIndexEntry[]>;
   /** SHARED MACHINES: the search is pinned to one card's machine; only its recipes show and the add joins that card. */
   machinePin?: RecipeBrowserMachinePin;
+  /** The pin card's unpin key: every machine's recipes show and a pick makes a new card. */
+  onClearPin?: () => void;
 }) {
   const _i18nName = useGameName();
   const _i18nT = useT();
@@ -645,20 +653,34 @@ export function RecipeSearchOverlay({
     [addPowerSourceNode, refactorNodeToPowerSource, onClose],
   );
 
+  // PINNED with an empty stencil and no name typed: nothing is asked yet. The
+  // window shows the machine as its one tab and asks for an item instead.
+  const pinnedIdle = machinePin !== undefined && clauses.length === 0 && query.trim() === "";
+
   // ===== the tabs: Generators first when any answer, then a tab per machine =====
   const tabs = useMemo<MachineTab[]>(
-    () => [
-      ...(powerHits.length > 0
-        ? [{ id: GENERATORS_TAB, label: "Generators", count: powerHits.length, generators: true }]
-        : []),
-      ...recipeMapChips.map((chip) => ({
-        id: chip.id,
-        label: chip.label,
-        count: chip.count,
-        icon: chip.icon,
-      })),
-    ],
-    [powerHits.length, recipeMapChips],
+    () =>
+      pinnedIdle && machinePin
+        ? [
+            {
+              id: PINNED_TAB,
+              label: machinePin.label,
+              icon: machinePinIcon ? { ...machinePinIcon, amount: 1 } : undefined,
+              pinned: true,
+            },
+          ]
+        : [
+            ...(powerHits.length > 0
+              ? [{ id: GENERATORS_TAB, label: "Generators", count: powerHits.length, generators: true }]
+              : []),
+            ...recipeMapChips.map((chip) => ({
+              id: chip.id,
+              label: chip.label,
+              count: chip.count,
+              icon: chip.icon,
+            })),
+          ],
+    [machinePin, machinePinIcon, pinnedIdle, powerHits.length, recipeMapChips],
   );
   const activeTabId =
     activeTab && tabs.some((tab) => tab.id === activeTab) ? activeTab : tabs[0]?.id;
@@ -996,13 +1018,13 @@ export function RecipeSearchOverlay({
     ? queryError
     : clauses.length === 0 && !query.trim()
       ? machinePin
-        ? `Pick an item or type a name. Only recipes the ${machinePin.label} runs will show.`
+        ? _i18nT("Add an item to Takes or Makes. Only recipes the {machine} runs will show.").replace("{machine}", _i18nName(machinePin.label))
         : "Add an item to either side of the card below."
       : tabs.length === 0 && !isLoading
         ? asksWhatTakesPower
           ? "Nearly every machine takes power, so that list would be the whole pack. Search for what makes power instead."
           : machinePin
-            ? `Nothing the ${machinePin.label} runs matches.`
+            ? _i18nT("Nothing the {machine} runs matches.").replace("{machine}", _i18nName(machinePin.label))
             : "No matching recipes."
         : undefined;
 
@@ -1068,7 +1090,7 @@ export function RecipeSearchOverlay({
                 data-machine-tab=""
                 onClick={() => selectTab(tab.id)}
                 onMouseEnter={() => {
-                  if (!tab.generators) onRecipeMapHover(tab.id);
+                  if (!tab.generators && !tab.pinned) onRecipeMapHover(tab.id);
                 }}
                 onMouseMove={(event) =>
                   setTabTip({ id: tab.id, x: event.clientX, y: event.clientY })
@@ -1124,7 +1146,7 @@ export function RecipeSearchOverlay({
             ) : null}
             <div className="nrw-band">
               <span className="nrw-text nrw-title" data-recipe-tab-title="">
-                <I18nText game>{active?.label ?? (isLoading ? "" : "No recipes")}</I18nText>
+                <I18nText game>{active?.label ?? machinePin?.label ?? (isLoading ? "" : "No recipes")}</I18nText>
               </span>
             </div>
             {tabs.length > 1 ? (
@@ -1400,11 +1422,25 @@ export function RecipeSearchOverlay({
           >
             <div className="flex items-stretch gap-2 compact:gap-1">
               {machinePin ? (
-                /* THE MACHINE PIN: the search came from a card's "add a
-                   recipe" key, so that machine is the whole question. Its
-                   picture, its name, one word. Nothing to press: there is
-                   no other way to pin one, and closing the search ends it. */
-                <div className="nrw-pin compact:!w-[104px]">
+                /* THE MACHINE PIN: the search came from a card's "Add another
+                   recipe", so only that machine's recipes show and a pick
+                   joins its card. Its picture, its name, one word, and the
+                   unpin key; closing the search ends it too. */
+                <div className="nrw-pin compact:!w-[104px]" data-machine-pin="">
+                  {onClearPin ? (
+                    <button
+                      type="button"
+                      className="nei-btn nrw-pin-clear"
+                      onClick={() => {
+                        playBoardSound("stencilRemove");
+                        onClearPin();
+                      }}
+                      aria-label={_i18nT("Unpin the {machine}").replace("{machine}", _i18nName(machinePin.label))}
+                      title={_i18nT("Unpin: every machine's recipes show and a pick makes a new card")}
+                    >
+                      <X className="h-3 w-3" aria-hidden />
+                    </button>
+                  ) : null}
                   <span className="flex h-12 w-12 items-center justify-center">
                     {machinePinIcon ? (
                       <ResourceIcon
@@ -1418,7 +1454,7 @@ export function RecipeSearchOverlay({
                       />
                     ) : null}
                   </span>
-                  <span className="nrw-text w-full truncate text-[13px]"><I18nText>{machinePin.label}</I18nText></span>
+                  <span className="nrw-text w-full truncate text-[13px]"><I18nText game>{machinePin.label}</I18nText></span>
                   <span className="text-[11px] uppercase text-[#9a9ca4]"><I18nText>Pinned</I18nText></span>
                 </div>
               ) : null}
@@ -1513,9 +1549,9 @@ export function RecipeSearchOverlay({
                   cardMenu.add();
                   setCardMenu(undefined);
                 }}
-              ><I18nText>
-                Add to board
-              </I18nText></button>
+              >
+                <I18nText>{machinePin ? "Add to the card" : "Add to board"}</I18nText>
+              </button>
             ) : (
               <div className="nrw-menu-head"><I18nText>Open a copy to add recipes</I18nText></div>
             )}

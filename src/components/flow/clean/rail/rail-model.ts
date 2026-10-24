@@ -87,7 +87,7 @@ export interface RailLine {
 export interface RailMachine extends MachineListEntry {
   /** A count is set (Up to or Exactly). */
   pinned: boolean;
-  /** The count rule: Any, Up to or Exactly. */
+  /** The count rule as the card shows it: Any, Up to (with or without a count) or Exactly. */
   rule: PinRule;
   /** The set count when pinned. */
   pin?: number;

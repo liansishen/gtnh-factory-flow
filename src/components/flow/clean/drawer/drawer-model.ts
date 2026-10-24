@@ -5,7 +5,7 @@ import { storageTargetMode, type TargetMode } from "@/lib/model/storage-target";
 import { rateMultiplierForKind, rateSuffixForKind } from "@/lib/model/rate-unit";
 import { RULE_MARK, RULE_NAME, trimFlow } from "../../rate-rule";
 import type { DrawerKind } from "../tokens";
-import { mcTextWidth, measureClean } from "../text-measure";
+import { mcTextWidth, measureRowFigure, measureRowName } from "../text-measure";
 import type { TipSpec } from "../interaction/tip-spec";
 
 /**
@@ -21,6 +21,12 @@ export const TO_PRODUCT = "Keep it (product)";
 
 /** The words column of the drawer: 76 px at the row's 14 px figure and 9 px name. */
 const WORDS = 76;
+
+/** The name's own box (drawer.css .cd-name), which cuts what runs past it: a longer name is faded at its edge. */
+const NAME_BOX = 71;
+
+/** The words beside a spill's Forced out tile (drawer.css .cd[data-spill] .cd-num and .cd-name). */
+const SPILL_WORDS = 41;
 
 /**
  * Whether the clean drawer draws this one: every drawer. A power drawer is the same source or product drawer with
@@ -100,7 +106,14 @@ export interface CleanDrawerView {
   linked: boolean;
   /** The glance pill: a sign and a short figure. */
   glanceRate: string;
+  /**
+   * A buffer whose makers make more than its users take: the extra, forced out at the makers, totalled on a small
+   * Forced out tile left of the drawer's own figure (the drawer grows a cell wider by it).
+   */
+  spill?: { number: string; unit: string; tip: TipSpec };
   tips: { bar: TipSpec; del: TipSpec; rule: TipSpec; rate: TipSpec; body: TipSpec };
+  /** The key that makes an input drawer an output one or the reverse (its wires come off); absent on a buffer. */
+  flip?: TipSpec;
 }
 
 export interface DrawerViewInput {
@@ -113,6 +126,8 @@ export interface DrawerViewInput {
   /** The plan's `unmetDrawers` includes it. */
   unmet: boolean;
   linked: boolean;
+  /** What the makers of a buffer force out beyond what its users take, per second (the plan's `spills`, summed). */
+  spill?: number;
 }
 
 const KIND_NAME: Record<DrawerKind, string> = {
@@ -128,18 +143,6 @@ export function bufferThroughput(result: Pick<StorageThroughputResult, "produced
 }
 
 function ruleMeaning(kind: DrawerKind, rule: TargetMode): string {
-  if (kind === "buffer") {
-    switch (rule) {
-      case "ignore":
-        return "No target: the plan passes whatever its users take.";
-      case "at-least":
-        return "The plan passes at least the rate through it.";
-      case "exact":
-        return "The plan passes exactly the rate through it.";
-      case "at-most":
-        return "The plan passes no more than the rate through it.";
-    }
-  }
   const flow = kind === "source" ? "draws from it" : "puts in it";
   switch (rule) {
     case "ignore":
@@ -154,14 +157,15 @@ function ruleMeaning(kind: DrawerKind, rule: TargetMode): string {
 }
 
 export function buildDrawerView(input: DrawerViewInput): CleanDrawerView {
-  const { storage, role, label, result, unanchored, unmet, linked } = input;
+  const { storage, role, label, result, unanchored, unmet, linked, spill } = input;
   const kind = drawerKindFor(role, storage);
   const resourceKind = storage.kind;
   // A buffer's net is zero (in equals out): its figure is what passes through.
   const net = kind === "buffer" ? bufferThroughput(result) : Math.abs(result?.netPerSecond ?? 0);
   const { number, unit } = formatRateParts(net, resourceKind);
   const zero = !(net > 0.000005);
-  const hasRule = kind !== "trash";
+  // A buffer has no rule: it passes what its users take. Trash has its key but no rate.
+  const hasRule = kind !== "trash" && kind !== "buffer";
   const target = storage.targetPerSecond;
   // A byproduct is a product with no rule: whatever its stored rule, it reads as Any until it is made a product.
   const inert = role === "byproduct" || role === "trash";
@@ -228,6 +232,10 @@ export function buildDrawerView(input: DrawerViewInput): CleanDrawerView {
       { input: "middle", label: "Clear" },
     ],
   };
+  // A buffer never dumps: what its makers make beyond what its users take is forced out at the makers (their Forced
+  // tiles) and only totalled here, on a Forced tile of its own under the row.
+  const spilling = kind === "buffer" && spill !== undefined && spill > 0.000005;
+  const spillText = spilling ? formatRateField(spill!, resourceKind) : undefined;
   const bodyNotes: NonNullable<TipSpec["notes"]> = [];
   if (kind === "buffer") bodyNotes.push({ text: "Its makers put in what its users take out.", tone: "muted" });
   if (!linked) bodyNotes.push({ text: "Unconnected", tone: "warn" });
@@ -256,10 +264,10 @@ export function buildDrawerView(input: DrawerViewInput): CleanDrawerView {
     number,
     unit,
     zero,
-    numberSmall: measureClean(number, 13) + 2 + measureClean(unit, 8) > WORDS,
+    numberSmall: measureRowFigure(number, unit) > (spilling ? SPILL_WORDS : WORDS),
     // The mod's rule, as the card's (CardPaint.words).
     nameSmall: mcTextWidth(label) > 71,
-    nameClipped: measureClean(label, mcTextWidth(label) > 71 ? 6 : 8) > WORDS,
+    nameClipped: measureRowName(label, mcTextWidth(label) > 71) > (spilling ? SPILL_WORDS : NAME_BOX),
     hasRule,
     rule,
     ruleMark: kind === "trash" ? "×" : RULE_MARK[rule],
@@ -272,6 +280,35 @@ export function buildDrawerView(input: DrawerViewInput): CleanDrawerView {
     tone,
     linked,
     glanceRate: `${sign}${number}`,
+    ...(kind === "buffer"
+      ? {}
+      : {
+          flip: {
+            id: `${storage.id}|flip`,
+            title: kind === "source" ? "Make it an output" : "Make it an input",
+            notes: [{ text: "Its wires come off.", tone: "muted" as const }],
+            actions: [{ input: "left" as const, label: "Switch" }],
+          },
+        }),
+    ...(spilling
+      ? {
+          spill: {
+            number: spillText!,
+            unit,
+            tip: {
+              id: `${storage.id}|spill`,
+              title: "Forced out",
+              rows: [{ label: "At its makers", value: `${spillText} ${unitLabel}` }],
+              notes: [
+                {
+                  text: `Its makers make ${spillText} ${unitLabel} more than its users take. They force it out themselves; this adds it up.`,
+                  tone: "muted",
+                },
+              ],
+            },
+          },
+        }
+      : {}),
     tips: {
       bar: {
         id: `${storage.id}|bar`,

@@ -19,7 +19,13 @@ import { resourceMatchesInput } from "@/lib/model";
 import { MACHINE_PIN_RESOURCE_ID, useFactoryStore } from "@/store/factory-store";
 import { useDesignStore } from "@/store/design-store";
 import { leaveWelcomeTab, readWelcomeTabState } from "@/lib/welcome/welcome-tab";
-import type { RecipeInputPicks, TierFilter } from "@/store/factory-store";
+import type {
+  RecipeBrowserMachinePin,
+  RecipeBrowserMode,
+  RecipeBrowserResource,
+  RecipeInputPicks,
+  TierFilter,
+} from "@/store/factory-store";
 import type { Recipe, ResourceAmount } from "@/lib/model/types";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import {
@@ -75,6 +81,7 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
   const seedNonce = useFactoryStore((state) => state.recipeBrowserSeedNonce);
   const machinePin = useFactoryStore((state) => state.recipeBrowserMachinePin);
   const addRecipeToNode = useFactoryStore((state) => state.addRecipeToNode);
+  const clearMachinePin = useFactoryStore((state) => state.clearMachinePin);
   const selectedRecipeId = useFactoryStore((state) => state.selectedRecipeId);
   const setRecipeSearch = useFactoryStore((state) => state.setRecipeSearch);
   const setHighlightSearch = useFactoryStore((state) => state.setHighlightSearch);
@@ -100,6 +107,8 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
   // burst of scroll events all ask for the same page. A bare
   // `page => page + 1` can skip a page when two events beat the loading flag.
   const landedRecipePageKeyRef = useRef<string | undefined>(undefined);
+  // The query key of the first page whose answer (or error) is on screen.
+  const [answeredKey, setAnsweredKey] = useState<string | undefined>(undefined);
   const [recipeBookSearch, setRecipeBookSearch] = useState("");
   const [filteredRecipes, setFilteredRecipes] = useState<RecipeSummary[]>([]);
   const [, setRecipeTotal] = useState(0);
@@ -231,18 +240,7 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
   // asked: left click = one output condition, right click = one input - or,
   // for a refactor, every input and output of the card being replaced. Edits
   // made after that carry the browse's key and win while it stays open.
-  const browseKey = browserResource
-    ? [
-        // The nonce makes every refactor press a fresh browse: the card's
-        // settings may have changed, and old stencil edits must not
-        // resurrect over the new seed.
-        refactorNodeId ? `refactor:${refactorNodeId}:${seedNonce}` : "",
-        machinePin ? `pin:${machinePin.nodeId}:${seedNonce}` : "",
-        browserResource.kind,
-        browserResource.id,
-        browserMode,
-      ].join("|")
-    : "";
+  const browseKey = browseKeyOf(browserResource, browserMode, refactorNodeId, machinePin, seedNonce);
   const seededStencil = useMemo<StencilClause[]>(() => {
     if (!browserResource) {
       return [];
@@ -267,6 +265,14 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
       },
     ];
   }, [browserMode, browserResource, browserSeed]);
+  // A closed search forgets its stencil: the next browse, even of the same
+  // item, starts from what it asks.
+  useEffect(() => {
+    if (browserResource) {
+      return;
+    }
+    return deferStateUpdate(() => setStencilEdits(undefined));
+  }, [browserResource]);
   const editsApply = stencilEdits?.key === browseKey;
   const stencilClauses = editsApply ? stencilEdits.clauses : seededStencil;
   // ALL is the default reading: a fresh stencil holds one condition, where
@@ -311,10 +317,38 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
     });
     setRecipePage(0);
   }, [browseKey, makesOp, stencilClauses, takesOp]);
+  // The stencil's unpin key: every machine's recipes show and a pick makes a
+  // new card. What the player put on the stencil stays: its edits move to the
+  // key the page has once the pin is gone.
+  const unpinMachine = useCallback(() => {
+    setStencilEdits({
+      key: browseKeyOf(browserResource, browserMode, refactorNodeId, undefined, seedNonce),
+      clauses: stencilClauses,
+      takesOp,
+      makesOp,
+    });
+    setRecipePage(0);
+    clearMachinePin();
+  }, [
+    browserMode,
+    browserResource,
+    clearMachinePin,
+    makesOp,
+    refactorNodeId,
+    seedNonce,
+    stencilClauses,
+    takesOp,
+  ]);
 
   const activeRecipeQuery = activeResource
     ? debouncedRecipeBookSearch.trim()
     : debouncedRecipeSearch.trim();
+
+  // PINNED with nothing on the stencil and no name typed: the machine alone is
+  // not a question (its whole book runs to thousands of recipes), so nothing is
+  // asked and the page asks for an item on Takes or Makes instead.
+  const pinnedIdle =
+    machinePin !== undefined && queryClauses.length === 0 && activeRecipeQuery === "";
 
   const selectedDatasetVersion = useMemo(
     () => datasetManifest?.versions.find((entry) => entry.id === selectedDatasetVersionId),
@@ -381,7 +415,7 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
   // starts travelling now.
   const prefetchRecipeMapTab = useCallback(
     (recipeMap: string) => {
-      if (!selectedDatasetVersion || !activeResource) {
+      if (!selectedDatasetVersion || !activeResource || pinnedIdle) {
         return;
       }
       const selection = selectionForTab(recipeMap);
@@ -434,6 +468,7 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
       getRecipeQueryKey,
       makesOp,
       maxTier,
+      pinnedIdle,
       queryClauses,
       selectedDatasetVersion,
       selectionForTab,
@@ -506,12 +541,13 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
         ? undefined
         : currentState.recipeBrowserRefactorNodeId;
       const currentMachinePin = welcomeCovered ? undefined : currentState.recipeBrowserMachinePin;
-      const anchorNodeId = welcomeCovered ? undefined : currentResource?.anchorNodeId;
-      const contextResource = getRecipeAddContextResource(
-        currentResource,
-        currentMode,
-        recipeSummary,
-      );
+      // The pin's stand-in resource is no item: a search unpinned after it
+      // opened places the pick as a new card, wired to nothing.
+      const standIn = currentResource?.id === MACHINE_PIN_RESOURCE_ID;
+      const anchorNodeId = welcomeCovered || standIn ? undefined : currentResource?.anchorNodeId;
+      const contextResource = standIn
+        ? undefined
+        : getRecipeAddContextResource(currentResource, currentMode, recipeSummary);
       // The book closes on the press, not on the response. A click that seems
       // to do nothing gets clicked again; the chip over the board carries the
       // wait instead, and the apology when the fetch fails.
@@ -520,8 +556,14 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
       try {
         const recipe = await getFullRecipe(recipeSummary.id, Boolean(currentResource));
         if (currentMachinePin) {
-          // The pinned machine's card takes the pick as one more recipe.
-          if (!addRecipeToNode(currentMachinePin.nodeId, recipe, { inputPicks })) {
+          // The pinned machine's card takes the pick as one more recipe, keeping
+          // the concrete item it was browsed from in its slots.
+          if (
+            !addRecipeToNode(currentMachinePin.nodeId, recipe, {
+              resource: contextResource,
+              inputPicks,
+            })
+          ) {
             failRecipeAdd(
               pendingId,
               `No machine runs both ${recipeSummary.name} and what ${currentMachinePin.label} already has.`,
@@ -599,6 +641,7 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
   useEffect(() => {
     if (!selectedDatasetVersion) {
       return deferStateUpdate(() => {
+        setAnsweredKey("");
         setFilteredRecipes([]);
         setRecipeTotal(0);
         setRecipeHasMore(false);
@@ -627,10 +670,25 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
     }
 
     const cacheKey = getRecipeQueryKey(querySelection, recipePage);
+    if (pinnedIdle) {
+      return deferStateUpdate(() => {
+        landedRecipePageKeyRef.current = cacheKey;
+        setAnsweredKey(cacheKey);
+        setFilteredRecipes([]);
+        setRecipeTotal(0);
+        setRecipeHasMore(false);
+        setAvailableRecipeMaps([]);
+        setRecipeMapIcons({});
+        setRecipeMapCounts({});
+        setRecipeQueryLoading(false);
+        setRecipeQueryError(undefined);
+      });
+    }
     const cached = getCachedRecipeQuery(recipeQueryCacheRef.current, cacheKey);
     if (cached) {
       return scheduleAfterPaint(() => {
         landedRecipePageKeyRef.current = cacheKey;
+        if (recipePage === 0) setAnsweredKey(cacheKey);
         setFilteredRecipes((current) =>
           recipePage === 0 ? cached.recipes : appendUniqueRecipes(current, cached.recipes),
         );
@@ -692,6 +750,7 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
           setCachedRecipeQuery(recipeQueryCacheRef.current, cacheKey, result);
           trimRecipeQueryCache(recipeQueryCacheRef.current);
           landedRecipePageKeyRef.current = cacheKey;
+          if (recipePage === 0) setAnsweredKey(cacheKey);
           setFilteredRecipes((current) =>
             recipePage === 0 ? result.recipes : appendUniqueRecipes(current, result.recipes),
           );
@@ -706,6 +765,7 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
           if (cancelled) {
             return;
           }
+          if (recipePage === 0) setAnsweredKey(cacheKey);
           setFilteredRecipes([]);
           setRecipeTotal(0);
           setRecipeHasMore(false);
@@ -729,6 +789,7 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
     datasetManifestUrl,
     getRecipeQueryKey,
     makesOp,
+    pinnedIdle,
     querySelection,
     maxTier,
     queryClauses,
@@ -736,6 +797,12 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
     selectedDatasetVersion,
     takesOp,
   ]);
+  // Until the open question's first page has an answer (or while a typed name
+  // waits out its debounce) the page reads as loading: never "nothing matches"
+  // for a question not yet asked.
+  const answerPending =
+    answeredKey !== getRecipeQueryKey(querySelection, 0) ||
+    recipeBookSearch.trim() !== debouncedRecipeBookSearch.trim();
   return (
     <>
       <aside
@@ -787,7 +854,7 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
           onRecipeMapHover={prefetchRecipeMapTab}
           recipes={filteredRecipes}
           hasMore={recipeHasMore}
-          isLoading={recipeQueryLoading}
+          isLoading={recipeQueryLoading || answerPending}
           queryError={recipeQueryError}
           query={recipeBookSearch}
           onQueryChange={(query) => {
@@ -832,10 +899,35 @@ export function RecipeBrowser({ onLoadDatasetVersion }: RecipeBrowserProps) {
           contextResource={activeResource}
           searchPickerResources={searchPickerResources}
           machinePin={machinePin}
+          onClearPin={unpinMachine}
         />
       ) : null}
     </>
   );
+}
+
+/**
+ * The open page's identity: the stencil's edits and the open tab hold only while it stays the same. The nonce makes
+ * every refactor or pin press a fresh browse: the card's settings may have changed, and old stencil edits must not
+ * resurrect over the new seed.
+ */
+function browseKeyOf(
+  resource: RecipeBrowserResource | undefined,
+  mode: RecipeBrowserMode,
+  refactorNodeId: string | undefined,
+  machinePin: RecipeBrowserMachinePin | undefined,
+  seedNonce: number,
+): string {
+  if (!resource) {
+    return "";
+  }
+  return [
+    refactorNodeId ? `refactor:${refactorNodeId}:${seedNonce}` : "",
+    machinePin ? `pin:${machinePin.nodeId}:${seedNonce}` : "",
+    resource.kind,
+    resource.id,
+    mode,
+  ].join("|");
 }
 
 interface RecipeMapTab {

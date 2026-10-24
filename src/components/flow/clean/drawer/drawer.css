@@ -24,9 +24,9 @@
   line-height: 10px;
   font-weight: 400;
   letter-spacing: 0;
-  /* The game's text shadow (Hyb.text draws every word with it): a quarter of the colour, a pixel down and right. */
-  text-shadow: 1px 1px 0 color-mix(in srgb, currentColor 25%, #000);
-  -webkit-font-smoothing: none;
+  /* The game's text shadow (Hyb.text draws every word with it) under the pixel font alone (globals.css --pixel-text-shadow). */
+  text-shadow: var(--pixel-text-shadow);
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
   --cd-radius: 6px;
 }
 
@@ -112,7 +112,7 @@
 .cd-fill {
   inset: 1px;
   overflow: hidden;
-  background: repeating-linear-gradient(135deg, var(--cd-stripe) 0 3px, var(--cd-body) 3px 8px);
+  background: var(--cd-body);
   border-radius: calc(var(--cd-radius) - 1px);
 }
 /* A bin narrows 4 px a side to its base (the mod's 3 of 48). Box shadows ignore a clip, so a bin's rings are a drop-shadow list. */
@@ -210,6 +210,44 @@
   position: absolute;
   inset: -3px;
 }
+/* The side key: the delete key's twin at the top right (10 x 10 at 3 from the edge), on an input or output drawer, never a
+   buffer. It makes an input drawer an output one or the reverse, and takes its wires off. Two arrows, one each way. */
+.cd-flip {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  z-index: 41;
+  background: var(--cc-key);
+  cursor: pointer;
+  visibility: hidden;
+  box-shadow:
+    inset 0 0 0 1px var(--cc-key-edge),
+    inset 1px 1px 0 1px var(--cc-key-hi),
+    inset -1px -1px 0 1px var(--cc-key-lo);
+}
+.cd-flip::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  background: var(--cc-ink);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 6 6%27><path d=%27M0 1h4V0l2 1.5L4 3V2H0zM6 4H2V3L0 4.5 2 6V5h4z%27/></svg>") center / 6px 6px no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 6 6%27><path d=%27M0 1h4V0l2 1.5L4 3V2H0zM6 4H2V3L0 4.5 2 6V5h4z%27/></svg>") center / 6px 6px no-repeat;
+}
+.cd:hover .cd-flip,
+.cd[data-selected] .cd-flip {
+  visibility: visible;
+}
+.cd-flip:hover {
+  background: var(--cc-key-hot, #4a4e57);
+}
+.cd-flip::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+}
 /* ---- The body: the row and its controls --------------------------------------------------------------------- */
 
 .cd-body {
@@ -249,12 +287,12 @@
 }
 
 /* The words: the number's glyphs 8 px under the bar (the mod's 3 under its 8 px bar in a 40 px box, centred in 50
-   here), the name 2 px under the number, both 41 px in from the icon's side and 75 wide. */
+   here), the name 2 px under the number, in a 71 px column beside the icon. */
 .cd-num {
   position: absolute;
   top: 3px;
   width: 71px;
-  /* As the card's: Monocraft at 14 px, -0.8 px apart, stands as tall as the mod's figures (clean.css .cc-num). */
+  /* As the card's: 14 px, -0.8 px apart, as tall as the mod's figures in the pixel font (clean.css .cc-num). */
   font-size: 14px;
   letter-spacing: -0.8px;
   font-weight: 400;
@@ -263,10 +301,10 @@
   white-space: nowrap;
   pointer-events: none;
 }
-/* The unit small beside the number, a space and 2 px after it, its foot a pixel above the number's (CardPaint.words). */
+/* The unit small beside the number, snug against it (a pixel), its foot a pixel above the number's. */
 .cd-num::after {
   content: attr(data-unit);
-  margin-left: 6px;
+  margin-left: 1px;
   font-size: 9px;
   letter-spacing: -0.6px;
   font-weight: 400;
@@ -307,6 +345,12 @@
   -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 10px), transparent);
   mask-image: linear-gradient(90deg, #000 calc(100% - 10px), transparent);
 }
+/* Centred in their column beside the icon, so a short figure leaves no empty side. A word too long for the column starts
+   at its left edge and is cut and faded at its right (the browser start-aligns an overflowing centred line). */
+.cd-num,
+.cd-name {
+  text-align: center;
+}
 .cd[data-kind="source"] .cd-num,
 .cd[data-kind="source"] .cd-name {
   left: 41px;
@@ -314,7 +358,6 @@
 .cd:not([data-kind="source"]) .cd-num,
 .cd:not([data-kind="source"]) .cd-name {
   left: 4px;
-  text-align: right;
 }
 
 /* The rule key 10 x 10 and the rate box 63 x 10, a pair 2 px apart under the words (CardLayout.CTRL_*: the mod's box
@@ -451,6 +494,85 @@
   left: 16px;
 }
 
+/* ---- A buffer: no rule, so no rule key or rate box; its row centres in the body ------------------------------------ */
+
+/* A buffer passes what its users take and asks for nothing, so the row has the body to itself: the icon and the
+   words (figure over name, 23 px) centre on the body's middle (abs 27.5). */
+.cd[data-kind="buffer"] .cd-icon {
+  top: 11px;
+}
+.cd[data-kind="buffer"] .cd-num {
+  top: 9px;
+}
+.cd[data-kind="buffer"] .cd-name {
+  top: 22px;
+}
+
+/* Its spill: what its makers force out beyond what its users take, on a Forced tile (the card's flat tint, edge and
+   colours of an output's) down the drawer's left, its figure over "Forced out". The drawer is a cell wider while it has
+   one (136): the tile takes the left column, centred with the row and clear of the delete key; the words move right of
+   it, 4 px apart, their right edge 4 px short of the icon. Wires dock on the grown edge (its measured size, as a
+   card's). */
+.cd-wrap[data-spill],
+.cd[data-spill] {
+  width: 136px;
+}
+.cd[data-spill] .cd-num,
+.cd[data-spill] .cd-name {
+  left: 54px;
+  width: 41px;
+}
+.cd-forced {
+  position: absolute;
+  /* Over the row's wire handle (30): it has its own hover. */
+  z-index: 35;
+  left: 4px;
+  top: 14px;
+  width: 46px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 3px;
+  background: #322d2e;
+  box-shadow:
+    inset 0 0 0 1px #815e49,
+    inset 1px 1px 0 1px #4b3f39,
+    inset -1px -1px 0 1px #2a2425;
+}
+.cd-forced[data-lit] {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 210, 87, 0.75),
+    inset 0 0 0 2px rgba(255, 210, 87, 0.18),
+    inset 0 0 0 3px rgba(255, 210, 87, 0.12),
+    inset 0 0 0 4px rgba(255, 210, 87, 0.06);
+}
+.cd-forced-num {
+  font-size: 11px;
+  line-height: 12px;
+  letter-spacing: -0.6px;
+  color: #f2ae81;
+  white-space: nowrap;
+}
+.cd-forced-num::after {
+  content: attr(data-unit);
+  margin-left: 1px;
+  font-size: 7px;
+  letter-spacing: -0.3px;
+  color: var(--cc-muted);
+}
+.cd-forced-name {
+  font-size: 7px;
+  line-height: 9px;
+  letter-spacing: -0.3px;
+  color: #c39b84;
+  white-space: nowrap;
+}
+
 /* ---- Selection, lit and accepting rings ---------------------------------------------------------------------- */
 
 .cd[data-selected] .cd-edge {
@@ -576,7 +698,7 @@
   font-family: var(--cc-font);
   font-size: 14px;
   line-height: 17px;
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
 }
 .cd-menu-row {
   display: flex;

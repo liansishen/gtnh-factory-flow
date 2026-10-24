@@ -1,5 +1,5 @@
 /**
- * Every prompt that pulses ("(set count)", "Set rate", the acceptance glow)
+ * Every prompt that pulses (a count's "Set" box, "Set rate", the acceptance glow)
  * shares one phase however late it mounted: when a CSS animation of ours
  * starts, its start time is set to the document timeline's origin, so all
  * copies of it are in step (the mod draws them off one clock).
@@ -18,7 +18,7 @@ export function syncAnimation(animation: Animation): void {
 export function installPromptSync(): void {
   if (installed || typeof document === "undefined") return;
   installed = true;
-  // The prompts ("(set count)", "Set rate") blink off one clock, not an animation each (virtual/prompt-phase.ts).
+  // The prompts (a count's "Set" box, "Set rate") blink off one clock, not an animation each (virtual/prompt-phase.ts).
   startPromptClock();
   document.addEventListener(
     "animationstart",

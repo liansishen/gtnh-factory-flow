@@ -57,6 +57,46 @@ export function solutionScale(
 }
 
 /**
+ * What dust is measured against, per connected port, per edge and per machine: the largest rate on the network a port
+ * sits on (its ports' extents times quantities, its edges' flows, its externals). The solver's error follows the rows
+ * a value sits in, so one network's rates say nothing of another's noise: judged over the whole point, a reactor's
+ * billions of EU a second made a real 0.03/s item flow read as dust. A machine takes its smallest network, so it reads
+ * as dust only where every network it touches would; one with no connected port takes the whole point's scale. Pass null for parts the caller does not hold (externals alone).
+ */
+export interface DustScales {
+  ports: number[];
+  edges: number[];
+  machines: number[];
+}
+
+export function dustScales(
+  model: ModelData,
+  extents: ArrayLike<number> | null,
+  flows: ArrayLike<number> | null,
+  externals: ArrayLike<number>,
+): DustScales {
+  const network = new Map<number, number>();
+  model.connectedPorts.forEach((port, p) => {
+    let most = Math.abs(externals[p]!);
+    if (extents) most = Math.max(most, Math.abs(extents[port.machine]! * port.qtyPerCraft));
+    if (flows) for (const e of port.edges) most = Math.max(most, Math.abs(flows[e]!));
+    const c = model.portComponent[p]!;
+    network.set(c, Math.max(network.get(c) ?? 0, most));
+  });
+  const ports = model.connectedPorts.map((_, p) =>
+    Math.max(network.get(model.portComponent[p]!)!, MIN_NORMAL),
+  );
+  const whole =
+    extents && flows ? solutionScale(model, extents, flows, externals) : scaleOf(externals);
+  const machines = new Array<number>(model.machines.length).fill(Infinity);
+  model.connectedPorts.forEach((port, p) => {
+    machines[port.machine] = Math.min(machines[port.machine]!, ports[p]!);
+  });
+  for (let m = 0; m < machines.length; m++) if (machines[m] === Infinity) machines[m] = whole;
+  return { ports, edges: model.edges.map((edge) => ports[edge.srcPort]!), machines };
+}
+
+/**
  * Null when the point conserves, else the offending row as text. A negative counts once it is past dust of the point's
  * scale, or of 1 when the point is smaller (as the conservation rows below): a point that is all but zero (every Up to
  * card idle, solved by an engine without exact vertices) is all noise, and its noise is no negative.

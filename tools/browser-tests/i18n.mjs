@@ -355,8 +355,9 @@ try {
   await page.getByRole("menuitem", { name: /What's new|更新内容/ }).click();
   await appDialog.waitFor();
   await observe("changelog-desktop-zh");
-  assert.match(await appDialog.innerText(), /菜单与机器设置汉化补全/);
+  assert.match(await appDialog.innerText(), /4\.4\.3\.7/);
   await appDialog.getByRole("button", { name: /完整历史/ }).click();
+  assert.match(await appDialog.innerText(), /菜单与机器设置汉化补全/);
   assert.match(await appDialog.innerText(), /支持中文、英文和拼音搜索/);
   assert.match(await appDialog.innerText(), /在线规划器已迁至新地址/);
   assert.match(await appDialog.innerText(), /中文和手机端提示显示修复/);

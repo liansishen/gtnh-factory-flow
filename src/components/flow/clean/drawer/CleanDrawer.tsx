@@ -38,6 +38,7 @@ import { TO_PRODUCT, TO_TRASH, bufferThroughput, buildDrawerView } from "./drawe
 import { DrawerIcon } from "./DrawerIcon";
 import { BoardMenu, MenuLine, MenuRow } from "../menus/BoardMenu";
 import { ensureInteractionHost, tipAttrs } from "../interaction";
+import { setSpillHover, useSpillHover } from "../interaction/spill-hover";
 import { startPromptClock } from "../../virtual/prompt-phase";
 import type { TargetMode } from "@/lib/model/storage-target";
 import { playEditSfx } from "@/lib/sound/sfx";
@@ -118,9 +119,19 @@ export function CleanDrawer({
   const unmet = useFactoryStore(
     (state) => state.lastResult?.plan?.unmetDrawers?.includes(storage.id) === true,
   );
+  // The buffer's Forced tile lights with its makers' when one of them, or the tile itself, is under the pointer.
+  const spillLit = useSpillHover((state) => state.drawerId === storage.id);
+  // A buffer's makers' spills (their forced rows), totalled here: a number, so the selector is stable.
+  const spill = useFactoryStore((state) => {
+    let total = 0;
+    for (const entry of state.lastResult?.plan?.spills ?? [])
+      if (entry.drawerId === storage.id) total += entry.perSecond;
+    return total;
+  });
   const readOnly = useFactoryStore((state) => state.isReadOnly);
   const browseResource = useFactoryStore((state) => state.browseResource);
   const deleteStorage = useFactoryStore((state) => state.deleteStorage);
+  const flipStorageSide = useFactoryStore((state) => state.flipStorageSide);
   const setDrainMode = useFactoryStore((state) => state.setStorageDrainMode);
 
   const resourceKey = makeResourceKey(storage.kind, storage.resourceId);
@@ -131,10 +142,10 @@ export function CleanDrawer({
   );
   const view = useMemo(
     () =>
-      buildDrawerView({ storage, role, label, result, unanchored, unmet, linked: role !== "idle" }),
+      buildDrawerView({ storage, role, label, result, unanchored, unmet, linked: role !== "idle", spill }),
     // The rate and power dials change the strings (the units are read inside).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [storage, role, label, result, unanchored, unmet, rateUnit, powerUnit, fontEpoch],
+    [storage, role, label, result, unanchored, unmet, spill, rateUnit, powerUnit, fontEpoch],
   );
   // "Set rate" blinks off the board's one clock (virtual/prompt-phase.ts).
   useEffect(() => {
@@ -263,7 +274,7 @@ export function CleanDrawer({
       muted: boolean;
       run: () => void;
     }> = [];
-    if (view.kind !== "trash") {
+    if (view.hasRule) {
       for (const step of RULE_STEPS) {
         rows.push({
           mark: RULE_MARK[step],
@@ -351,6 +362,7 @@ export function CleanDrawer({
       data-storage-node-id={storage.id}
       data-storage-kind={storage.kind}
       data-storage-resource-id={storage.resourceId}
+      data-spill={view.spill ? "" : undefined}
     >
       {/* Wires dock on the drawer's perimeter: both anchors span the whole drawer, the router picks the side. */}
       <span
@@ -372,6 +384,7 @@ export function CleanDrawer({
         data-selected={selected ? "" : undefined}
         data-lit={lit ? "" : undefined}
         data-unset={view.prompt ? "" : undefined}
+        data-spill={view.spill ? "" : undefined}
       >
         <div
           className="cd-edge"
@@ -396,6 +409,20 @@ export function CleanDrawer({
             if (wasClick(event) && !locked) deleteStorage(storage.id);
           }}
         />
+        {view.flip && !locked ? (
+          <div
+            role="button"
+            tabIndex={0}
+            className="cd-flip"
+            {...tipAttrs(view.flip)}
+            aria-label={_i18nT(view.flip.title)}
+            onPointerDownCapture={pressed}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (wasClick(event) && !rule.locked && !checklistLocked()) flipStorageSide(storage.id);
+            }}
+          />
+        ) : null}
         <div
           className="cd-body"
           data-lit={lit ? "" : undefined}
@@ -537,6 +564,20 @@ export function CleanDrawer({
             </div>
           ) : null}
         </div>
+        {view.spill ? (
+          <div
+            className="cd-forced"
+            data-lit={spillLit ? "" : undefined}
+            {...tipAttrs(view.spill.tip)}
+            onPointerEnter={() => setSpillHover(storage.id)}
+            onPointerLeave={() => setSpillHover(undefined)}
+          >
+            <span className="cd-forced-num" data-unit={view.spill.unit}>
+              {view.spill.number}
+            </span>
+            <span className="cd-forced-name"><I18nText>Forced out</I18nText></span>
+          </div>
+        ) : null}
         {rowBrowse.menu}
       </div>
       {menu ? (

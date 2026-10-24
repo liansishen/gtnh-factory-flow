@@ -30,5 +30,5 @@ the shared phase of every pulse.
 - Open ports (no wire, no drawer): `PortRateControls` is the rule key and rate box, writing
   `portRates` (`port-rate.ts`: typed `2.5k` and `1/3`, wheel steps, pure).
 - Prompts: `prompt-sync.ts` sets every pulse's start time to the document timeline's origin when it
-  starts, so "(set count)", "Set" and drawers' "Set rate" blink together.
+  starts, so a count's and a port's "Set" and drawers' "Set rate" blink together.
 - `selection.ts`: the selection bar's Combine rule, pure; `combine-deps.ts` has the real deps.

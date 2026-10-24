@@ -27,9 +27,14 @@ describe("pin rule", () => {
     const node = { id: "n", solvePin: 3, solvePinExact: true, other: 1 };
     expect(withPinRule(node, "any", 3)).toEqual({ id: "n", other: 1 });
     expect(withPinRule(node, "upTo", 5)).toEqual({ id: "n", other: 1, solvePin: 5 });
-    const bare: { id: string; solvePin?: number; solvePinExact?: boolean } = { id: "n" };
+    const bare: { id: string; solvePin?: number; solvePinExact?: boolean; solvePinAny?: boolean } = {
+      id: "n",
+      solvePinAny: true,
+    };
     expect(withPinRule(bare, "exact", 2)).toEqual({ id: "n", solvePin: 2, solvePinExact: true });
+    // No count is Any, and an older plan's Any mark is dropped.
     expect(withPinRule(node, "upTo", 0)).toEqual({ id: "n", other: 1 });
     expect(withPinRule(node, "exact", undefined)).toEqual({ id: "n", other: 1 });
+    expect(withPinRule(bare, "upTo", undefined)).toEqual({ id: "n" });
   });
 });

@@ -40,6 +40,65 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "4.4.3.7",
+    date: "2026-10-24",
+    headline: "Upstream 4.4.3 update",
+    notes: [
+      "Machine counts now use Any, Up to and Exactly consistently; clearing a count returns to Any.",
+      "Sharper board text, visible low-rate wires and fixes for large power plans improve planning.",
+      "Delete and Backspace respect the visible board selection and recipe search.",
+      "Account sync handles service interruptions and pending live edits more safely.",
+    ],
+  },
+  {
+    version: "4.4.3",
+    date: "2026-10-23",
+    headline: "Machine counts work like drawers",
+    notes: [
+      "A machine with no count now reads Any: the plan picks how many. Picking Any no longer jumps back to Up to.",
+      "Typing a count makes it Up to. Exactly is picked from the rule menu. Clearing the count goes back to Any.",
+      "The programmed circuit on a card shows its real colours again instead of a washed-out white.",
+    ],
+  },
+  {
+    version: "4.4.2",
+    date: "2026-10-22",
+    headline: "No more invisible wires",
+    notes: [
+      "Fixed wires disappearing from a card the plan ran at almost nothing while the plan still used them. Its rows and wires now stay on the board.",
+    ],
+  },
+  {
+    version: "4.4.1",
+    date: "2026-10-21",
+    headline: "Big power plans solve again",
+    notes: [
+      "Fixed plans with a huge power maker, like a naquadah reactor, saying the planner couldn't solve them.",
+      "When a plan can't be solved, the message now points to Feedback in the top bar instead of a log you can't see.",
+    ],
+  },
+  {
+    version: "4.4.0",
+    date: "2026-10-21",
+    headline: "Sharper board, clearer counts",
+    warning:
+      "Cards with no count set now say Up to instead of Any. Your numbers did not change: the plan still picks the count until you set one.",
+    notes: [
+      "No more blurry board. Text and icons stay sharp after a reload and a zoom.",
+      "Inter is the default font now. Want the pixel font back? Settings, Font, Minecraft.",
+      "Every card shows its count rule and a box for the number: Up to 24, Exactly 24, or Up to with an empty Set box.",
+      "New cards start on Up to, and the Set box blinks until you give it a number. Any is still in the rule menu.",
+      "Scroll or type in the count box and the plan updates right away, no Enter needed. Escape puts the old count back.",
+      "Fixed scroll steps in the count box getting lost when you clicked away. Scrolling the overview's open box now changes the number, not the list.",
+      "More than one recipe on a machine: card menu, Add another recipe. The recipe search opens on just that machine's recipes.",
+      "Card menu, Replace the recipe picks a new recipe for a card.",
+      "Buffers show their spillover again. What the makers make beyond what the users take is a Forced row on each maker, and the buffer adds it up as Forced out. Hover any of them to light the rest.",
+      "Buffers no longer take a rate. They pass what their users take, nothing more.",
+      "Hover an input or output drawer for a switch key top right. It turns an input into an output or back, and takes its wires off.",
+      "Your plans sync with your account every 2 minutes instead of every 30 seconds. Your own edits still go up a few seconds after you stop.",
+    ],
+  },
+  {
     version: "4.3.0.6",
     date: "2026-10-21",
     headline: "Official community plans",

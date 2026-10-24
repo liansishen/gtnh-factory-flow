@@ -56,7 +56,7 @@ const NOTES_READ_KEY = "gtnh-factory-flow.changelog-read.v1";
 
 // Legacy fork release labels retain their recorded names and compare by fork revision.
 function releaseVersion(version: string): string {
-  return APP_VERSION.startsWith("4.3.0.") && /^4\.3\.[123]$/.test(version)
+  return /^4\.3\.[123]$/.test(version)
     ? `4.3.0.${version.split(".")[2]}`
     : version;
 }

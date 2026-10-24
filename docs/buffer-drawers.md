@@ -1,8 +1,9 @@
 # Buffer drawers
 
 Written 2026-10-14. A buffer is a drawer in the middle of a resource network: cards making the resource feed it, cards
-using it draw from it, and it shows what passes through. It can carry the same rule as any drawer (Any, At least,
-Exactly, At most a rate), which then holds the flow through it. The same feature in both planners: the mod
+using it draw from it, and it shows what passes through. In the solver it can carry the same rule as any drawer (Any,
+At least, Exactly, At most a rate), which then holds the flow through it; the website gives a buffer no rule (it is
+always Any, see "On the board"), the mod still offers one. The same feature in both planners: the mod
 (`Drawer.Kind.BUFFER`) and the website's one-mode board (a storage both fed and drawn from, `getStorageRoles` =
 `"buffer"`). The solver change is identical in the Java balancer and its TypeScript port and is checked by one corpus
 case both suites pass (`buffer-drawers`).
@@ -77,11 +78,15 @@ The same in both:
   port again takes it off. A buffer left with no users is a product again, with no makers a source again; the rule stays.
   On the website the same is wiring a card's input from the product drawer's handle (the role is read off the wires).
 - **Look.** The drawer body as the others in the buffer's own colour, teal (`0xFF2E9C8F`, website `--cd-buffer`), with
-  a wire socket on both sides (makers dock on its left, users on its right), its figure the throughput with no sign, and
-  the rule key and rate box of a product. Its body tip: "Buffer: its makers put in what its users take out." The rule
-  tip: "The plan passes at least / exactly / no more than the rate through it."
+  a wire socket on both sides (makers dock on its left, users on its right), its figure the throughput with no sign.
+  Its body tip: "Buffer: its makers put in what its users take out." The mod adds the rule key and rate box of a
+  product (its rule tip: "The plan passes at least / exactly / no more than the rate through it.").
+- **Website: no rule.** A buffer only passes what its users take, so the website draws no rule key, rate box or rule
+  menu on it, and its adapter sends every buffer as rule Any (`drawerKindAndRule`): a rule stored on it (an older plan,
+  the mod's, or one it had as a product) waits until it is a product again. Its row centres in the body instead.
 - **Forced rows.** A port linked to a buffer is a wired port: the plan's leftover there shows as its Forced row, as on a
   plain wire (a buffer is not an end of the plan, so it never takes it).
 - **Overview.** A buffer adds no input or output line; its resource is internal.
 - **Sounds.** As any drawer: linking clacks, bubbles or sparks by what it carries.
-- **Menu.** The rule menu (Any, At least, Exactly, At most) and Delete; no product/trash cycle.
+- **Menu.** In the mod, the rule menu (Any, At least, Exactly, At most) and Delete; on the website, Delete alone. No
+  product/trash cycle in either.

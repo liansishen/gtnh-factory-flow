@@ -8,7 +8,9 @@ lockstep: every rule here has a Java twin and the two must give the same answer.
 
 A card's machine count has one of three rules:
 
-- **Any**: the plan picks how many (no `solvePin`).
+- **Any**: the plan picks how many (no `solvePin`), as a drawer with no rate. A new card and a cleared count are Any.
+  A count typed in is Up to; Exactly is picked from the rule menu. A cleared count is Any again, and the next count is
+  Up to.
 - **Up to N** (the default for a set count): `solvePin = N`. The machines run as hard as the rest of the plan lets
   them, never above N. No forced flow (a gate: material brought in or sent out at a wired port with no drawer) makes
   up what they cannot do; they slow down instead, as in the game. It is old Build mode inside the one solver.
@@ -93,9 +95,14 @@ With Up to pools a BUFFER drawer with rule ANY is a bank, as old Build's overflo
 may put into it what its takers do not take (`SolveContext.bankPorts`). That crossing is the buffer's: never a forced
 flow (`gatedSinks`), never a gate for the trades or the alternatives' swaps, outside the guard, and as little as it can
 be in the sink stage, after the push has shipped all it can to the takers. `DrawerReadout.banked` gives each such
-buffer's banked rate (absent without Up to pools or such buffers). A buffer with a rule keeps today's meaning: its rule
-is a row over what passes through, and it banks nothing (a maker whose takers are full slows down). Without Up to pools
-a buffer is wiring only, as before.
+buffer's banked rate (absent without Up to pools or such buffers), and `DrawerReadout.spills` the same per maker port. A
+buffer with a rule keeps today's meaning: its rule is a row over what passes through, and it banks nothing (a maker
+whose takers are full slows down). Without Up to pools a buffer is wiring only, as before.
+
+On the board the bank is the makers', never the drawer's: each maker port's spill (`PlanSolveExtras.spills`) is drawn
+as that card's forced row, and the buffer totals them on a small Forced out tile left of its figure (its figure is still
+what passes through), with a tip saying the makers force it out themselves; hovering any of those tiles lights them all. A website read-out only: the mod's
+balancer computes the same bank and needs no change for it.
 
 ### The read-out (`SolutionView.upTo`)
 
@@ -138,10 +145,15 @@ Islands: each island's read-out is its own; `solvePlan` concatenates them, sorte
 Old Build's dead loop and clog lock (`death-spiral.ts`, `clog-lock.ts`), found once every pool's reason is known, a pure
 graph over the read-out and the model's networks (no LP, no budget). A pool blames the Up to pools on the wire network of
 its `port` and `tied` ports: a STARVED pool those that make what it is short of, a CLOGGED or UNUSED pool those that take
-what it cannot get rid of. A ring is a strongly connected part of that relation (a pool blaming itself counts):
+what it cannot get rid of. A ring is a strongly connected part of that relation (a pool blaming itself counts) whose
+members all stand still (every machine within the solve's dust of zero, as UNUSED is judged):
 
-- **DEAD_LOOP**: every member STARVED. A recycling loop nothing feeds; the fix is to feed it.
-- **CLOG_LOCK**: every member CLOGGED or UNUSED. Frozen by its own surplus; the fix is a drawer.
+- **DEAD_LOOP**: every member STARVED and standing still. A recycling loop nothing feeds; the fix is to feed it.
+- **CLOG_LOCK**: every member UNUSED (CLOGGED standing still). Frozen by its own surplus; the fix is a drawer.
+
+Standing still is the test, as in old Build: a ring that loses material every lap winds down to zero when nothing
+feeds it, so a ring that runs at all is fed from outside and held back by that feed, which its members' STARVED already
+says (the `fed ring` fixture: a ring fed a quarter of what it could take runs at half its counts and is no ring).
 
 Each is `UpToLoop { kind, nodes, ports }`: `nodes` the members' `node` in pool order, `ports` the members' blaming ports
 that lie on the ring's edges, member by member. Rings are sorted by their first member's `node` (`compareIds`), merged
@@ -155,8 +167,11 @@ card ids), each ring to `PlanUpToLoop`, and every shortfall to `PlanShortfall` w
 `NodeThroughputResult.utilization` is reached / capacity for an Up to card; `status` is `bottleneck` for BOTTLENECK,
 `underutilized` below the count.
 
-The card (pass 3): under the machine what runs, big and white ("×18.2"), and what you set, small, the number gold ("up
-to 24"; click the number to type, the wheel steps it, click the rule word for Any, Up to, Exactly). Along the foot one
+The card (pass 3): under the machine what runs, big and white ("×18.2"), and what you set, small, as the overview's
+machine lines say it: the rule word, always, and the set box ("Up to [24]", "Exactly [24]", "Any [Set]" with no
+count, the Set blinking while nothing sets that part of the plan). Click the box to type (a count typed on Any is Up
+to, as in the overview), the wheel steps it, click the rule word for Any, Up to, Exactly. A cleared count (an empty
+box, the middle button, the wheel below one) is Any. Along the foot one
 bar for an Up to card: its fill is reached / capacity, then one word in the reason's colour, one plain line, and a
 fraction on the right ("18.2 / 24"); a bottleneck's bar runs on, striped, to what the line wants ("24 / 31"). An
 Exactly card with a forced input says FORCED IN with the resource and rate. No bar for Any, or Exactly with nothing

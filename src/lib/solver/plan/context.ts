@@ -5,7 +5,7 @@
 import { comparePortRef } from "./ids";
 import { buildModel, portKey, TICKS_PER_SECOND, type ModelData } from "./model";
 import type { Trades } from "./trade";
-import { NUMERICS, scaleOf, solutionScale, validatePoint } from "./validate";
+import { dustScales, NUMERICS, scaleOf, solutionScale, validatePoint } from "./validate";
 import type {
   ChoiceKey,
   DrawerRule,
@@ -258,9 +258,10 @@ export class SolveContext {
   /** Every gate the point puts flow through, however little. What a buffer banks opens no gate. */
   carryingGates(externals: ArrayLike<number>, fallback: Iterable<number> = []): Set<number> {
     const carrying = new Set<number>(fallback);
-    const dust = NUMERICS.dust * scaleOf(externals);
+    const scales = dustScales(this.model, null, null, externals).ports;
     for (let p = 0; p < externals.length; p++)
-      if (externals[p]! > dust && !this.bankPorts.has(p)) carrying.add(this.model.portGate[p]!);
+      if (externals[p]! > NUMERICS.dust * scales[p]! && !this.bankPorts.has(p))
+        carrying.add(this.model.portGate[p]!);
     return carrying;
   }
 
@@ -319,28 +320,51 @@ export class SolveContext {
 
   /**
    * Commits the answer with what the solver left at its dust set to exactly zero, so an idle machine reads 0 and
-   * `unneeded` works. Dust of the point's scale, or of 1 when the point is smaller (`validatePoint`): a point that is
-   * all but zero commits as zero. The point keeps the SAME support it was given.
+   * `unneeded` works. Dust of the network's scale (`dustScales`), or of 1 when the network is smaller
+   * (`validatePoint`): a network that is all but zero commits as zero. A machine snaps only where it is dust on every
+   * network it touches, so a snapped machine never leaves a flow behind. The point keeps the SAME support it was given.
    */
   commit(committed: StageOutcome): void {
-    const tol = NUMERICS.dust * Math.max(1, this.solutionScaleOf(committed));
+    const tol = (scale: number) => NUMERICS.dust * Math.max(1, scale);
+    const scales = dustScales(this.model, committed.extents, committed.flows, committed.externals);
     const extents = committed.extents.slice();
     const flows = committed.flows.slice();
     const externals = committed.externals.slice();
+    const portsOf = new Map<number, number[]>();
+    this.model.connectedPorts.forEach((port, p) => {
+      const list = portsOf.get(port.machine);
+      if (list) list.push(p);
+      else portsOf.set(port.machine, [p]);
+    });
     let snapped = false;
     for (let m = 0; m < extents.length; m++) {
-      const md = this.model.machines[m]!;
-      let most = 0;
-      for (const q of md.inQty) most = Math.max(most, q);
-      for (const q of md.outQty) most = Math.max(most, q);
-      if (extents[m] !== 0 && Math.abs(extents[m]!) * Math.max(most, 1) <= tol) {
+      if (extents[m] === 0) continue;
+      const extent = Math.abs(extents[m]!);
+      const ports = portsOf.get(m);
+      let dust: boolean;
+      if (ports) {
+        dust = ports.every((p) => {
+          const port = this.model.connectedPorts[p]!;
+          return extent * Math.max(port.qtyPerCraft, 1) <= tol(scales.ports[p]!);
+        });
+      } else {
+        const md = this.model.machines[m]!;
+        let most = 0;
+        for (const q of md.inQty) most = Math.max(most, q);
+        for (const q of md.outQty) most = Math.max(most, q);
+        dust = extent * Math.max(most, 1) <= tol(scales.machines[m]!);
+      }
+      if (dust) {
         extents[m] = 0;
         snapped = true;
       }
     }
-    for (const values of [flows, externals]) {
+    for (const [values, scale] of [
+      [flows, scales.edges],
+      [externals, scales.ports],
+    ] as const) {
       for (let i = 0; i < values.length; i++) {
-        if (values[i] !== 0 && Math.abs(values[i]!) <= tol) {
+        if (values[i] !== 0 && Math.abs(values[i]!) <= tol(scale[i]!)) {
           values[i] = 0;
           snapped = true;
         }

@@ -29,7 +29,9 @@ The board must stay smooth with 100+ cards on weak PCs.
 8. Round every DOM-measured routing input; sub-pixel jitter breaks determinism.
 9. The scroll camera: only the wrapper scrolls. React rewrites the board's className,
    so hang CSS on data attributes. Per-frame CSS variables go on the smallest element;
-   under the shell zoom animate left/width, not transforms.
+   under the shell zoom animate left/width, not transforms. The viewport wears
+   `will-change: transform` only while the zoom moves (`zoomingMark`, `data-zooming`):
+   worn at rest, Chrome draws a board zoomed out from its old, larger raster (soft text).
 10. Profile with Playwright + CDP Profiler (CPU throttle 6-20x) on a cloned stress plan. If
    route scoring shows up during pan, zoom or hover, a cache is being invalidated.
 
@@ -46,6 +48,8 @@ The board must stay smooth with 100+ cards on weak PCs.
 
 ## Cards and ports
 
+- A wired port keeps its row at any rate (`buildRailPorts`): the row holds the handle its wire is drawn to, and a card
+  the plan runs at almost nothing would otherwise drop it and leave the wire undrawn while the plan still runs it.
 - The port ROW is the control: click = what makes it, right click = what uses it, R / U
   over the hovered row, long press = menu, drag = wire. The icon is `pointer-events-none`.
   `port-browse.ts` holds the hovered row imperatively; do not subscribe cards to it.
@@ -68,10 +72,17 @@ The board must stay smooth with 100+ cards on weak PCs.
   wire) and a port chip that answers exactly like a port row (`usePortRowBrowse`). Keep
   the two zones separate.
 - Solve mode: source and product drawers show a rule row, a rule button (Any / At least /
-  Exactly / At most) and a sunken rate box (`RuleInput`, `useRateRule`, `setStorageRule`).
+  Exactly / At most) and a sunken rate box (`RuleInput`, `useRateRule`, `setStorageRule`). A buffer has none: it passes
+  what its users take, and the adapter sends it as Any whatever it stores (`docs/buffer-drawers.md`).
   Any is `targetMode: "ignore"` or no number. Pool's table uses the same `RuleButton`
   in its "table" dress (`rate-rule.tsx`).
-- Sources have no role switch (it would drop their wires). Buffer modes: overflow (banks
+- A buffer's spills (Up to makers making more than its users take, `plan.spills`) are the makers' forced rows; the
+  buffer only totals them on a small Forced out tile left of its figure (`.cd-forced`; the drawer grows a cell wider
+  by it, and routing and arrange read the measured size). Hovering any tile of a spill, or a maker's row, lights every tile of that
+  spill and nothing else (`clean/interaction/spill-hover.ts`, a store of its own).
+- The side key (`.cd-flip`, the delete key's twin at the top right, on hover) makes an input drawer an output one or
+  the reverse (`flipStorageSide`): its wires come off and its rate goes, and its declared `poolSide` keeps it on the
+  board unwired. Never on a buffer. Buffer modes: overflow (banks
   surplus), strict (clogs), ratio (percent splits edited in `StorageRatioEditor.tsx`, a
   non-modal panel; branch percentages ride the wires near the drawer).
 - Traps: `.storage-chip-text` must not set a z-index; drawer content is not clipped so
@@ -150,6 +161,9 @@ The board must stay smooth with 100+ cards on weak PCs.
 - Other people in a live plan are `LivePresenceLayer.tsx`, mounted only with live plans: a ViewportPortal layer
   over the cards fed by `src/lib/live/live-presence.ts`, never by a board store, so a remote pointer never re-renders
   a card. Its outline selector costs one length check while nobody else has anything selected.
+- Delete and Backspace take React Flow's selection only, never the store's `selectedNodeId` (never drawn), and do
+  nothing while the recipe search, Library, Welcome or a task board covers the board (`isBoardCovered`); the search
+  walks back on a bare Backspace. Escape lets go of the selection. Exam: `board-delete-key.test.ts`.
 - One right-click menu, `BoardContextMenu.tsx`. A control with its own right click calls
   `preventDefault`; board handlers skip prevented events.
 - Calm mode is session-only and never stored: a stored flag once stranded players with no
@@ -198,7 +212,7 @@ contents. Read `virtual/card-virtualizer.ts` first (pure, tested); budgets and n
   `edges` prop only changes with the plan, and the memo in FactoryFlow applies the current choice.
 - `--board-zoom` is written on the board only at the glance step and on each sticky note directly (`zoom-var.ts`):
   an inherited property written per step restyles every element under it.
-- The prompts ("(set count)", "Set rate") blink off one clock: `data-cc-blink` on the root, flipped twice a second
+- The prompts (a count's "Set" box, "Set rate") blink off one clock: `data-cc-blink` on the root, flipped twice a second
   by `prompt-phase.ts` while a prompt is mounted, and their colour follows it in CSS. Never a CSS animation per
   prompt: one running animation keeps the page drawing and restyling every frame. The acceptance glow (a wire in
   hand) is still an animation, pinned to the shared phase by one `document.getAnimations()` a frame.

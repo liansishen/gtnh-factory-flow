@@ -5,7 +5,7 @@ import {
   checkRateLimit,
   getCommunityDb,
   isCommunityConfigured,
-  makeActorKey,
+  addressKey,
 } from "@/lib/server/community";
 import { isOfficialCommunity, officialReadOnlyResponse } from "@/lib/server/official-community";
 
@@ -82,7 +82,6 @@ export async function POST(request: Request) {
   try {
     const form = await request.formData();
     const file = form.get("image");
-    const deviceId = typeof form.get("deviceId") === "string" ? (form.get("deviceId") as string) : undefined;
     if (!(file instanceof Blob)) {
       return NextResponse.json({ error: "No image in the upload." }, { status: 400 });
     }
@@ -93,7 +92,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const actorKey = makeActorKey(request, deviceId);
+    const actorKey = addressKey(request);
     if (!(await checkRateLimit(actorKey, "image_upload", UPLOADS_PER_HOUR, 3600))) {
       return NextResponse.json(
         { error: "Too many image uploads: try again in a little while." },

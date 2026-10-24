@@ -32,7 +32,9 @@ const TASKS_ENABLED = isLiveConfigured();
  *
  * - the void: a new product drawer, picked from the item picker the pool
  *   key uses, set down where you clicked;
- * - a machine or a drawer: clone it, delete it;
+ * - a machine: the card's rows (`CardRows`: clone, another recipe, replace
+ *   the recipe, delete);
+ * - a drawer: clone it, delete it;
  * - a wire: add a drawer HERE (the wire is cut at the click and both halves
  *   run through the new drawer), or delete the wire.
  *
@@ -205,6 +207,7 @@ export function BoardContextMenu({
       {target.kind === "pane" ? <MenuRow label="Background" onClick={() => setBackground(true)} /> : null}
       {target.kind === "node" ? (
         <CardRows
+          nodeId={target.id}
           onClone={() => cloneWithSound(store().duplicateNode, target.id)}
           onDelete={() => store().deleteNode(target.id)}
           onAddToTask={

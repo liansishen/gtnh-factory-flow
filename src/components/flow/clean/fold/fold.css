@@ -10,7 +10,7 @@
   font-weight: 400;
   line-height: 17px;
   color: #e8e9ee;
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
 }
 .fold-key {
   display: inline-flex;

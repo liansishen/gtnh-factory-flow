@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render } from "@testing-library/react";
+import { setSpillHover, useSpillHover } from "./interaction/spill-hover";
 import { ReactFlowProvider } from "@xyflow/react";
 import type { FactoryNode, Recipe, ResourceKind } from "@/lib/model/types";
 import type { RailPort } from "../node-verdict";
@@ -13,7 +14,7 @@ import type {
   CleanCardView,
   CleanPortView,
 } from "./clean-model";
-import { buildCountView, buildFootView, layoutStrip, reasonStripes } from "./clean-model";
+import { buildCountView, buildFootView, layoutStrip, LIVE_TYPE_MS, reasonStripes } from "./clean-model";
 
 vi.mock("@/lib/compact-view", () => ({ isCompactViewport: () => false }));
 
@@ -32,11 +33,15 @@ beforeAll(() => {
     disconnect() {}
   } as unknown as typeof ResizeObserver;
 });
-afterEach(() => { cleanup(); setLocale("en"); });
+afterEach(() => {
+  cleanup();
+  setLocale("en");
+});
 
 /**
  * The most elements one reference card may cost: 3 inputs + power + 2 outputs + 2 chips + 3 strip chips + the circuit
- * badge in the well (68). An Up to card with its bar along the foot costs two more (the rule word and the bar): 70.
+ * badge in the well + the count's rule word, which every rule shows (69). An Up to card with its bar along the foot
+ * costs one more: 70. The set box is the count's `::after`, no element.
  */
 const BUDGET = 70;
 
@@ -178,6 +183,56 @@ function renderCard(view: CleanCardView, actions: CleanCardActions = actionsSpy(
   );
 }
 
+it("lights a spill's Forced tile with the rest of the spill, and lights the rest from its own row", () => {
+  const view = referenceView();
+  view.outputs = [
+    { ...view.outputs[0]!, forced: { number: "5", unit: "/s" }, spillTo: "buf" },
+    ...view.outputs.slice(1),
+  ];
+  const { container } = renderCard(view);
+  const tile = () => container.querySelector(".cc-forced")!;
+  expect(tile().hasAttribute("data-lit")).toBe(false);
+  // The buffer's own tile (or another maker's row) under the pointer.
+  act(() => setSpillHover("buf"));
+  expect(tile().hasAttribute("data-lit")).toBe(true);
+  act(() => setSpillHover("other"));
+  expect(tile().hasAttribute("data-lit")).toBe(false);
+  act(() => setSpillHover(undefined));
+  // This row under the pointer names its buffer.
+  const row = container.querySelector(".cc-row[data-forced]")!;
+  fireEvent.pointerEnter(row);
+  expect(useSpillHover.getState().drawerId).toBe("buf");
+  fireEvent.pointerLeave(row);
+  expect(useSpillHover.getState().drawerId).toBeUndefined();
+});
+
+it("localizes CSS-painted count text and verdicts without changing the model", () => {
+  const plain = referenceView();
+  const plainBefore = JSON.stringify(plain);
+  const { container, unmount } = renderCard(plain);
+  act(() => setLocale("zh-CN"));
+  // The set box is `attr()` content painted by CSS: the card prints its text, it is not a React child.
+  expect(container.querySelector(".cc-count")?.getAttribute("data-set")).toBe("设置");
+  expect(container.querySelector(".cc-rule")?.textContent).toBe("任意");
+  expect(JSON.stringify(plain)).toBe(plainBefore);
+  unmount();
+  const view = upToView();
+  view.foot = { ...view.foot!, say: "short of Steel Ingot", facts: { ...view.foot!.facts, resource: "Steel Ingot" } };
+  const before = JSON.stringify(view);
+  const card = renderCard(view).container;
+  expect(card.querySelector(".cc-foot")?.getAttribute("data-word")).toBe("断料");
+  expect(card.querySelector(".cc-foot")?.textContent).toBe("缺少 钢锭");
+  expect(card.querySelector(".cc-foot")?.getAttribute("data-frac")).toBe(view.foot.frac);
+  expect(card.querySelector(".cc-count")?.getAttribute("aria-label")).not.toContain("I18nText");
+  expect(card.querySelector(".cc-count")?.getAttribute("data-set")).toBe("24");
+  expect(card.querySelector(".cc-rule")?.textContent).toBe("至多");
+  expect(JSON.stringify(view)).toBe(before);
+  act(() => setLocale("en"));
+  expect(card.querySelector(".cc-foot")?.getAttribute("data-word")).toBe("STARVED");
+  expect(card.querySelector(".cc-foot")?.textContent).toBe("short of Steel Ingot");
+  expect(card.querySelector(".cc-rule")?.textContent).toBe("Up to");
+});
+
 it("costs at most 70 elements for the reference card", () => {
   const { container } = renderCard(referenceView());
   const elements = container.querySelectorAll("*").length;
@@ -194,40 +249,26 @@ it("costs at most 70 elements as an Up to card with its bar", () => {
   expect(elements).toBeLessThanOrEqual(BUDGET);
 });
 
-it("localizes CSS-painted count prompts and verdicts without changing the model", () => {
-  const plain = referenceView();
-  const plainBefore = JSON.stringify(plain);
-  const { container, unmount } = renderCard(plain);
-  act(() => setLocale("zh-CN"));
-  expect(container.querySelector(".cc-count")?.getAttribute("data-set")).toBe("（设置数量）");
-  expect(JSON.stringify(plain)).toBe(plainBefore);
-  unmount();
-  const view = upToView();
-  view.foot = { ...view.foot!, say: "short of Steel Ingot", facts: { ...view.foot!.facts, resource: "Steel Ingot" } };
-  const before = JSON.stringify(view);
-  const card = renderCard(view).container;
-  expect(card.querySelector(".cc-foot")?.getAttribute("data-word")).toBe("断料");
-  expect(card.querySelector(".cc-foot")?.textContent).toBe("缺少 钢锭");
-  expect(card.querySelector(".cc-foot")?.getAttribute("data-frac")).toBe(view.foot.frac);
-  expect(card.querySelector(".cc-count")?.getAttribute("aria-label")).not.toContain("I18nText");
-  expect(JSON.stringify(view)).toBe(before);
-  act(() => setLocale("en"));
-  expect(card.querySelector(".cc-foot")?.getAttribute("data-word")).toBe("STARVED");
-  expect(card.querySelector(".cc-foot")?.textContent).toBe("short of Steel Ingot");
-});
-
 it("keeps every control a div, so the button font rule cannot reach it", () => {
   const { container } = renderCard(upToView());
   expect(container.querySelectorAll("button, input, select, textarea").length).toBe(0);
 });
 
-it("says what runs big and what is set small, through data attributes", () => {
+it("says what runs big, and under it the rule and the set box for every rule, through data attributes", () => {
   const { container } = renderCard(referenceView());
   const any = container.querySelector(".cc-count")!;
   expect(any.getAttribute("data-run")).toBe("×1.2");
-  expect(any.getAttribute("data-set")).toBe("(set count)");
+  // Any says so, with an empty box asking for a count while nothing sets this part of the plan.
+  expect(any.querySelector(".cc-rule")!.textContent).toBe("Any");
+  expect(any.getAttribute("data-set")).toBe("Set");
+  expect(any.hasAttribute("data-pinned")).toBe(false);
   expect(any.hasAttribute("data-prompt")).toBe(true);
-  expect(any.querySelector(".cc-rule")).toBeNull();
+  cleanup();
+  const quiet = renderCard({ ...referenceView(), unset: false, count: count("any", undefined, 1.2) });
+  const settled = quiet.container.querySelector(".cc-count")!;
+  expect(settled.querySelector(".cc-rule")!.textContent).toBe("Any");
+  expect(settled.getAttribute("data-set")).toBe("Set");
+  expect(settled.hasAttribute("data-prompt")).toBe(false);
   cleanup();
 
   const upTo = renderCard(upToView()).container.querySelector(".cc-count")!;
@@ -236,7 +277,7 @@ it("says what runs big and what is set small, through data attributes", () => {
   expect(upTo.getAttribute("data-rule")).toBe("upTo");
   expect(upTo.hasAttribute("data-pinned")).toBe(true);
   expect(upTo.hasAttribute("data-prompt")).toBe(false);
-  expect(upTo.querySelector(".cc-rule")!.textContent).toBe("up to");
+  expect(upTo.querySelector(".cc-rule")!.textContent).toBe("Up to");
   cleanup();
 
   const exact = renderCard({
@@ -244,10 +285,22 @@ it("says what runs big and what is set small, through data attributes", () => {
     unset: false,
     count: count("exact", 24, 24),
   }).container;
-  expect(exact.querySelector(".cc-rule")!.textContent).toBe("exactly");
+  expect(exact.querySelector(".cc-rule")!.textContent).toBe("Exactly");
   expect(exact.querySelector(".cc-count")!.getAttribute("data-set")).toBe("24");
   // An Exactly card with nothing forced has no bar; neither has an Any card.
   expect(exact.querySelector(".cc-foot")).toBeNull();
+});
+
+it("types a count into an Any card's box, which opens empty", () => {
+  const actions = actionsSpy();
+  const { container } = renderCard(referenceView(), actions);
+  fireEvent.click(container.querySelector(".cc-count")!);
+  const input = container.querySelector<HTMLInputElement>(".cc-count input")!;
+  expect(input.value).toBe("");
+  fireEvent.change(input, { target: { value: "4" } });
+  fireEvent.blur(input);
+  // The card's own rule for a typed count decides Up to (pinActions), as the overview's box does (pinCount).
+  expect(actions.setCount).toHaveBeenCalledWith(4);
 });
 
 it("opens Any, Up to, Exactly from the rule word and sends the pick", () => {
@@ -283,6 +336,89 @@ it("types a count on a click, steps it on the wheel and goes back to Any on a mi
   fireEvent.change(input, { target: { value: "30" } });
   fireEvent.blur(input);
   expect(actions.setCount).toHaveBeenLastCalledWith(30);
+});
+
+it("sets what the open box holds as it goes: each wheel step at once, typing once it rests", () => {
+  vi.useFakeTimers();
+  try {
+    const actions = actionsSpy();
+    const { container } = renderCard(upToView(), actions);
+    const block = container.querySelector(".cc-count")!;
+    const input = () => container.querySelector<HTMLInputElement>(".cc-count input");
+    fireEvent.click(block);
+    // The wheel over the open box is the box's: the page does not zoom and the board's camera never sees it.
+    const wheel = new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true });
+    fireEvent(input()!, wheel);
+    expect(wheel.defaultPrevented).toBe(true);
+    expect(input()!.value).toBe("25");
+    expect(actions.setCount).toHaveBeenLastCalledWith(25);
+    fireEvent.wheel(input()!, { deltaY: -100 });
+    expect(input()!.value).toBe("26");
+    expect(actions.setCount).toHaveBeenLastCalledWith(26);
+    // The box stays open for more, and the closed box's own step is never used.
+    expect(input()).not.toBeNull();
+    expect(actions.stepCount).not.toHaveBeenCalled();
+
+    // Typing is set once it rests, not on each key: "1" then "12" sets 12 alone.
+    vi.mocked(actions.setCount).mockClear();
+    fireEvent.change(input()!, { target: { value: "1" } });
+    vi.advanceTimersByTime(100);
+    fireEvent.change(input()!, { target: { value: "12" } });
+    expect(actions.setCount).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(LIVE_TYPE_MS);
+    expect(vi.mocked(actions.setCount).mock.calls).toEqual([[12]]);
+    // An emptied box is a count being retyped: nothing is cleared while typing.
+    fireEvent.change(input()!, { target: { value: "" } });
+    vi.advanceTimersByTime(LIVE_TYPE_MS);
+    expect(vi.mocked(actions.setCount).mock.calls).toEqual([[12]]);
+
+    // Escape closes the box and puts back the count it opened with; a blur as the box goes sets nothing more.
+    const box = input()!;
+    fireEvent.keyDown(box, { key: "Escape" });
+    fireEvent.blur(box);
+    expect(input()).toBeNull();
+    expect(actions.setCount).toHaveBeenLastCalledWith(24);
+    expect(actions.setCount).toHaveBeenCalledTimes(2);
+
+    // Enter sets what is typed at once, without waiting for the typing to rest.
+    fireEvent.click(block);
+    fireEvent.change(input()!, { target: { value: "9" } });
+    fireEvent.keyDown(input()!, { key: "Enter" });
+    expect(input()).toBeNull();
+    expect(actions.setCount).toHaveBeenLastCalledWith(9);
+    vi.advanceTimersByTime(LIVE_TYPE_MS);
+    expect(actions.setCount).toHaveBeenCalledTimes(3);
+
+    // Opened and let go of unchanged: no write. Escape with nothing set: no write. Emptied or zero, let go: cleared.
+    fireEvent.click(block);
+    fireEvent.blur(input()!);
+    fireEvent.click(block);
+    fireEvent.keyDown(input()!, { key: "Escape" });
+    expect(actions.setCount).toHaveBeenCalledTimes(3);
+    fireEvent.click(block);
+    fireEvent.change(input()!, { target: { value: "0" } });
+    fireEvent.blur(input()!);
+    expect(actions.setCount).toHaveBeenLastCalledWith(undefined);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("puts an Any card back to Any on Escape after the box set a count", () => {
+  vi.useFakeTimers();
+  try {
+    const actions = actionsSpy();
+    const { container } = renderCard(referenceView(), actions);
+    fireEvent.click(container.querySelector(".cc-count")!);
+    const input = container.querySelector<HTMLInputElement>(".cc-count input")!;
+    fireEvent.change(input, { target: { value: "4" } });
+    vi.advanceTimersByTime(LIVE_TYPE_MS);
+    expect(actions.setCount).toHaveBeenLastCalledWith(4);
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(actions.setRule).toHaveBeenLastCalledWith("any");
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 it("steps on the wheel only while Scroll changes values is on; off, the wheel is left for the board to zoom", () => {

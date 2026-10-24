@@ -9,7 +9,7 @@ import type { SolveContext, StageOutcome } from "./context";
 import { keyString } from "./enumerate";
 import { portKey } from "./model";
 import type { Alternative, Alternatives, Bearer, External, Leftover, PortRef } from "./types";
-import { NUMERICS, scaleOf } from "./validate";
+import { dustScales, NUMERICS } from "./validate";
 
 /** A bearer key: `${node}:${i|o}:${port}`. */
 export function bearerKey(ref: PortRef): string {
@@ -52,7 +52,12 @@ function shares(
   return out.map((s) => s / total);
 }
 
-function addMix(into: number[], vertex: ArrayLike<number>, own: ArrayLike<number>, w: number): void {
+function addMix(
+  into: number[],
+  vertex: ArrayLike<number>,
+  own: ArrayLike<number>,
+  w: number,
+): void {
   if (w === 0) return;
   for (let i = 0; i < into.length; i++) into[i]! += w * (vertex[i]! - own[i]!);
 }
@@ -129,7 +134,7 @@ export function applySpares(
   }
 
   const now = ctx.point!.externals;
-  const dust = NUMERICS.dust * scaleOf(now);
+  const scales = dustScales(ctx.model, null, null, now).ports;
   return drafts.map((d): Leftover => {
     const custom = mixed && d.shares !== null;
     const bearers = d.options.map((option, b): Bearer => {
@@ -141,7 +146,8 @@ export function applySpares(
           : ctx.model.portLookup.get(portKey(machine, option.opens.port, option.opens.input));
       if (port !== undefined) {
         for (const p of ctx.model.gates[ctx.model.portGate[port]!]!.ports) {
-          if (now[p]! > dust) flowsHere.push({ port: ctx.refOf(p), ratePerSecond: now[p]! });
+          if (now[p]! > NUMERICS.dust * scales[p]!)
+            flowsHere.push({ port: ctx.refOf(p), ratePerSecond: now[p]! });
         }
       }
       let max = 0;

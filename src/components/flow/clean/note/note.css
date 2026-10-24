@@ -10,7 +10,7 @@
   color: var(--sn-ink);
   /* The mod's pixel face, as the card's. */
   font-family: var(--cc-font);
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: var(--pixel-font-smoothing);
   /* Follows the folded outline. */
   filter: drop-shadow(2px 3px 3px rgba(0, 0, 0, 0.32));
   user-select: none;

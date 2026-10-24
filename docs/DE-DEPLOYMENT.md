@@ -142,7 +142,8 @@ and management commands also traverse DeVPS.
 npm ci
 npm run typecheck
 npm test -- --maxWorkers=2
-NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_SITE_URL=https://plan.playgtnh.dpdns.org npm run build
+NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_OFFICIAL_COMMUNITY_READ_ONLY=1 \
+  NEXT_PUBLIC_SITE_URL=https://plan.playgtnh.dpdns.org npm run build
 ```
 
 Assemble `.next/standalone/`, `.next/static/` and `public/`, with static files in
@@ -158,6 +159,10 @@ Install datasets separately from a checksum-verified archive. Link the new
 release's `public/datasets/gtnh` and `.next/cache` to the shared locations above.
 Keep release files root-owned and readable by `gtnh-flow`. Switch `current` to
 the new release, restart the app, and retain the previous release for rollback.
+Before a runtime update, run the database backup and apply any new additive SQL
+migrations from `supabase/migrations/` with `ON_ERROR_STOP`. The account-vote
+migration `2026-10-23-votes-per-account.sql` adds the account id and its unique
+index; notify PostgREST to reload its schema after applying it.
 Change both warm-up URLs and the nginx texture version path when the dataset
 version changes. Configuration changes require `sshd -t` or `nginx -t` before
 reloading the respective service.
@@ -189,7 +194,8 @@ texture cache hits, compression and service memory/restart counts. Check the
 existing `mcspr.service` and Minecraft access through DeVPS after infrastructure
 changes. The game server, worlds and Minecraft relay are separate services.
 
-Plans and language preferences belong to the browser's origin. Use plan export
-and import to move between domains. Supabase accounts, Community and live
-collaboration require separate backend configuration; this deployment runs the
-signed-out planner. The previous TX deployment remains removed.
+Plans and language preferences belong to the browser's origin. Signed-in plans
+also sync through this deployment's account backend, so the same account can open
+them in another browser. Export and import can move plans between sites. Live
+collaboration requires separate live-service configuration. The previous TX
+deployment remains removed.

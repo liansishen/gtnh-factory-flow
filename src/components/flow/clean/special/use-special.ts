@@ -140,7 +140,6 @@ export function countView(
   plan: Parameters<typeof cardCountState>[2],
   opts?: {
     noTimes?: boolean;
-    anyNote?: string;
     title?: string;
     recipe?: Pick<Recipe, "machineType">;
   },
@@ -148,7 +147,6 @@ export function countView(
   const state = cardCountState(undefined, node, plan, opts?.recipe, needed);
   const count = buildCountView(state, {
     noTimes: opts?.noTimes,
-    anyNote: opts?.anyNote,
     title: opts?.title,
     ruleFixed: isCustomRateRecipe(opts?.recipe),
   });
@@ -211,19 +209,20 @@ export function useSharedCardModel(data: RecipeNodeData, selected: boolean): Spe
     [liveRecipes, projectNode],
   );
 
-  // The forced entries of every section, filed under the card and the section's prefixed handle.
+  // The forced entries of every section (spills into buffers among them), filed under the card and the section's
+  // prefixed handle.
   const forcedAt = new Map<string, number>();
-  for (const entry of plan?.forced ?? []) {
+  const spillAt = new Map<string, string>();
+  for (const entry of [...(plan?.forced ?? []), ...(plan?.spills ?? [])]) {
     const parsed = parsePortKey(entry.portKey);
     if (!parsed) continue;
     const owner = entry.nodeId.split("#r")[0]!;
     if (owner !== projectNode.id) continue;
     const at = entry.nodeId.indexOf("#r");
     const section = at < 0 ? 0 : Number(entry.nodeId.slice(at + 2));
-    forcedAt.set(
-      `${projectNode.id}|${parsed.side}|${sectionHandleId(section, parsed.handle)}`,
-      entry.perSecond,
-    );
+    const key = `${projectNode.id}|${parsed.side}|${sectionHandleId(section, parsed.handle)}`;
+    forcedAt.set(key, (forcedAt.get(key) ?? 0) + entry.perSecond);
+    if ("drawerId" in entry) spillAt.set(key, entry.drawerId);
   }
 
   const sections: SpecialSection[] = [section0(base)];
@@ -245,10 +244,10 @@ export function useSharedCardModel(data: RecipeNodeData, selected: boolean): Spe
     sections.push({
       section: entry.section,
       inputs: rails.inputs.map((port) =>
-        buildPortView(projectNode.id, port, projectNode, forcedAt),
+        buildPortView(projectNode.id, port, projectNode, forcedAt, spillAt),
       ),
       outputs: rails.outputs.map((port) =>
-        buildPortView(projectNode.id, port, projectNode, forcedAt),
+        buildPortView(projectNode.id, port, projectNode, forcedAt, spillAt),
       ),
     });
   }
@@ -328,6 +327,7 @@ export function useSharedCardModel(data: RecipeNodeData, selected: boolean): Spe
       outputs: sections.flatMap((entry) => entry.outputs),
     },
     (id) => cardNameIn(liveProject, id),
+    base.view.loop,
   );
   const handlers = useMemo(
     () =>
@@ -360,7 +360,7 @@ export function useSharedCardModel(data: RecipeNodeData, selected: boolean): Spe
     count,
     foot,
     loop: base.view.loop,
-    glance: glanceBar(upTo),
+    glance: glanceBar(upTo, base.view.loop),
     chips: base.view.chips,
     stripHeight: base.view.stripHeight,
     warnings: [],
@@ -590,11 +590,8 @@ export function useCropCardModel(data: RecipeNodeData, selected: boolean): Speci
 
   const needed = result?.theoreticalMachinesRequired ?? 0;
   const crops = Math.max(0, Math.round(needed));
-  // The count is crops planted: no times sign, and with nothing set the line under it says so.
-  const { count, unset: countUnset } = countView(projectNode, needed, plan, {
-    noTimes: true,
-    anyNote: Math.round(needed) === 1 ? "crop planted" : "crops planted",
-  });
+  // The count is crops planted: no times sign, and its tip says what it counts.
+  const { count, unset: countUnset } = countView(projectNode, needed, plan, { noTimes: true });
   if (!count.pinned) count.title = "How many crops the plan plants.";
 
   // The harvester's draw: the Industrial Farm burns whole farms, the Crop Manager spends per harvest. Zero by hand.

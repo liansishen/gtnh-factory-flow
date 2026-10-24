@@ -4,8 +4,9 @@ import { useT } from "@/lib/i18n/react";
 
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { parseRateInput } from "./rail-math";
+import { LIVE_TYPE_MS } from "../clean-model";
 import { tipProps, type TipContent } from "./rail-tip";
-import { playEditSfx, sfxClick } from "@/lib/sound/sfx";
+import { playEditSfx, sfxClick, sfxTick } from "@/lib/sound/sfx";
 
 /**
  * The small controls every rail row shares: the rule key (`~ = >= <=`) and the
@@ -115,6 +116,9 @@ export function RateBox({
   onCancel,
   onMiddle,
   onWheel,
+  onWheelDraft,
+  onLive,
+  onRevert,
   tip,
   label,
   width,
@@ -134,6 +138,15 @@ export function RateBox({
   onCancel: () => void;
   onMiddle?: () => void;
   onWheel?: WheelHandler;
+  /** The wheel over the open box: the text it holds after one step (set when the box is let go of, or at once with `onLive`). */
+  onWheelDraft?: DraftWheel;
+  /**
+   * Sets what the open box holds as it goes: each wheel step at once, typing once it rests, never an emptied box
+   * (that is a number being retyped). Without it nothing is set until the box is let go of.
+   */
+  onLive?: (value: number) => void;
+  /** Escape after `onLive` has set something: put back what was there when the box opened. */
+  onRevert?: () => void;
   tip: () => TipContent;
   label: string;
   width?: number;
@@ -146,6 +159,9 @@ export function RateBox({
         initial={initial}
         onCommit={onCommit}
         onCancel={onCancel}
+        onWheelDraft={onWheelDraft}
+        onLive={onLive}
+        onRevert={onRevert}
         style={style}
         label={label}
       />
@@ -189,16 +205,25 @@ export function RateBox({
   );
 }
 
+/** One wheel step over an open box: the text it holds now, to the text it holds after. */
+export type DraftWheel = (text: string, direction: 1 | -1, ctrl: boolean, shift: boolean) => string;
+
 function RateEditor({
   initial,
   onCommit,
   onCancel,
+  onWheelDraft,
+  onLive,
+  onRevert,
   style,
   label,
 }: {
   initial: string;
   onCommit: (value: number) => void;
   onCancel: () => void;
+  onWheelDraft?: DraftWheel;
+  onLive?: (value: number) => void;
+  onRevert?: () => void;
   style?: { width: number };
   label: string;
 }) {
@@ -206,6 +231,40 @@ function RateEditor({
   const [value, setValue] = useState(initial);
   const input = useRef<HTMLInputElement>(null);
   const done = useRef(false);
+  // Read through refs: the wheel handler and the typing timer outlive the render that made them.
+  const text = useRef(initial);
+  const live = useRef({ onLive, onWheelDraft });
+  live.current = { onLive, onWheelDraft };
+  const sent = useRef(false);
+  const typing = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(typing.current), []);
+  const send = (raw: string, clear: boolean) => {
+    const set = live.current.onLive;
+    if (!set) return;
+    const trimmed = raw.trim();
+    const parsed = trimmed === "" ? 0 : parseRateInput(trimmed);
+    if (parsed === undefined || !(parsed >= 0) || (parsed === 0 && !clear)) return;
+    sent.current = true;
+    set(parsed);
+  };
+  // The rail's one wheel listener finds the open box by `data-wheel` and steps what it holds. With `onLive` each step
+  // is set at once; without it nothing is set until the box is let go of, and Escape drops the steps with the typing.
+  useEffect(() => {
+    const element = input.current;
+    if (!element || !onWheelDraft) return undefined;
+    wheelHandlers.set(element, (direction, ctrl, shift) => {
+      sfxTick(direction > 0);
+      clearTimeout(typing.current);
+      const next = live.current.onWheelDraft!(text.current, direction, ctrl, shift);
+      text.current = next;
+      setValue(next);
+      send(next, true);
+    });
+    return () => {
+      wheelHandlers.delete(element);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onWheelDraft !== undefined]);
   useEffect(() => {
     input.current?.focus();
     input.current?.select();
@@ -213,7 +272,9 @@ function RateEditor({
   const finish = (commit: boolean) => {
     if (done.current) return;
     done.current = true;
+    clearTimeout(typing.current);
     if (!commit) {
+      if (sent.current) onRevert?.();
       onCancel();
       return;
     }
@@ -235,7 +296,15 @@ function RateEditor({
       value={value}
       inputMode="decimal"
       spellCheck={false}
-      onChange={(event) => setValue(event.target.value)}
+      data-wheel={onWheelDraft ? "" : undefined}
+      onChange={(event) => {
+        const next = event.target.value;
+        text.current = next;
+        setValue(next);
+        if (!onLive) return;
+        clearTimeout(typing.current);
+        typing.current = setTimeout(() => send(next, false), LIVE_TYPE_MS);
+      }}
       onBlur={() => finish(true)}
       onClick={(event) => event.stopPropagation()}
       onContextMenu={(event) => event.stopPropagation()}
