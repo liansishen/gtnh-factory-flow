@@ -21,6 +21,13 @@ describe("the changelog in Chinese", () => {
   it("translates the newest three releases", () => {
     render(<ChangelogDialog onClose={vi.fn()} />);
     expect(screen.getByText("所有改动，最新的在最前。")).toBeTruthy();
+    expect(screen.getByText("消耗提示与种子数量汉化")).toBeTruthy();
+    expect(
+      screen.getByText("输入消耗概率和资源名称说明现已翻译为中文。"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("屏幕阅读器会用中文朗读种子数量及其“任意”“至多”“恰好”规则。"),
+    ).toBeTruthy();
     expect(screen.getByText("官方 4.7.0 更新")).toBeTruthy();
     expect(
       screen.getByText("自动整理可以保留分组，也可以拆开所有分组后整理每张卡片，并优先减少导线交叉。"),
@@ -29,8 +36,6 @@ describe("the changelog in Chinese", () => {
     expect(
       screen.getByText("在带分组的方案上，自动整理会询问：保留分组，还是拆开全部分组后整理每张卡片。"),
     ).toBeTruthy();
-    expect(screen.getByText("导线即时跟随")).toBeTruthy();
-    expect(screen.getByText("移动卡片后导线会立刻更新，并在拖动过程中跟随。")).toBeTruthy();
   });
 
   it("translates the Full history count through the dynamic rule", () => {

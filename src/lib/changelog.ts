@@ -40,6 +40,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "4.7.0.9",
+    date: "2026-10-27",
+    headline: "Consumption hints and seed counts in Chinese",
+    notes: [
+      "Input consumption probabilities and resource-name notes are translated into Chinese.",
+      "Screen readers announce seed counts and their Any, Up to or Exactly rule in Chinese.",
+    ],
+  },
+  {
     version: "4.7.0.8",
     date: "2026-10-27",
     headline: "Upstream 4.7.0 update",

@@ -16,7 +16,7 @@ describe("fork releases", () => {
     expect(CHANGELOG[0].version).toBe(APP_VERSION);
   });
 
-  it.each(["4.3.1", "4.3.2", "4.3.3", "4.3.0.3", "4.3.0.4", "4.3.0.5", "4.4.3.7", "4.4.4", "4.5.1", "4.6.0", "4.7.0"])(
+  it.each(["4.3.1", "4.3.2", "4.3.3", "4.3.0.3", "4.3.0.4", "4.3.0.5", "4.4.3.7", "4.4.4", "4.5.1", "4.6.0", "4.7.0", "4.7.0.8"])(
     "shows this release after the read stamp %s",
     (read) => {
       window.localStorage.setItem(NOTES_READ_KEY, read);
@@ -32,6 +32,7 @@ describe("fork releases", () => {
       "4.3.1",
       [
         APP_VERSION,
+        "4.7.0.8",
         "4.7.0",
         "4.6.0",
         "4.5.1",
@@ -53,6 +54,7 @@ describe("fork releases", () => {
       "4.3.0.1",
       [
         APP_VERSION,
+        "4.7.0.8",
         "4.7.0",
         "4.6.0",
         "4.5.1",
@@ -74,6 +76,7 @@ describe("fork releases", () => {
       "4.3.2",
       [
         APP_VERSION,
+        "4.7.0.8",
         "4.7.0",
         "4.6.0",
         "4.5.1",
@@ -94,6 +97,7 @@ describe("fork releases", () => {
       "4.3.3",
       [
         APP_VERSION,
+        "4.7.0.8",
         "4.7.0",
         "4.6.0",
         "4.5.1",
@@ -113,6 +117,7 @@ describe("fork releases", () => {
       "4.3.0.4",
       [
         APP_VERSION,
+        "4.7.0.8",
         "4.7.0",
         "4.6.0",
         "4.5.1",
@@ -131,6 +136,7 @@ describe("fork releases", () => {
       "4.3.0.5",
       [
         APP_VERSION,
+        "4.7.0.8",
         "4.7.0",
         "4.6.0",
         "4.5.1",
@@ -148,6 +154,7 @@ describe("fork releases", () => {
       "4.3.0.6",
       [
         APP_VERSION,
+        "4.7.0.8",
         "4.7.0",
         "4.6.0",
         "4.5.1",
@@ -164,6 +171,7 @@ describe("fork releases", () => {
       "4.4.0",
       [
         APP_VERSION,
+        "4.7.0.8",
         "4.7.0",
         "4.6.0",
         "4.5.1",
@@ -179,6 +187,7 @@ describe("fork releases", () => {
       "4.4.1",
       [
         APP_VERSION,
+        "4.7.0.8",
         "4.7.0",
         "4.6.0",
         "4.5.1",
@@ -193,6 +202,7 @@ describe("fork releases", () => {
       "4.4.2",
       [
         APP_VERSION,
+        "4.7.0.8",
         "4.7.0",
         "4.6.0",
         "4.5.1",
@@ -204,14 +214,15 @@ describe("fork releases", () => {
     ],
     [
       "4.4.3",
-      [APP_VERSION, "4.7.0", "4.6.0", "4.5.1", "4.5.0", "4.4.4", "4.4.3.7"],
+      [APP_VERSION, "4.7.0.8", "4.7.0", "4.6.0", "4.5.1", "4.5.0", "4.4.4", "4.4.3.7"],
     ],
-    ["4.4.3.7", [APP_VERSION, "4.7.0", "4.6.0", "4.5.1", "4.5.0", "4.4.4"]],
-    ["4.4.4", [APP_VERSION, "4.7.0", "4.6.0", "4.5.1", "4.5.0"]],
-    ["4.5.0", [APP_VERSION, "4.7.0", "4.6.0", "4.5.1"]],
-    ["4.5.1", [APP_VERSION, "4.7.0", "4.6.0"]],
-    ["4.6.0", [APP_VERSION, "4.7.0"]],
-    ["4.7.0", [APP_VERSION]],
+    ["4.4.3.7", [APP_VERSION, "4.7.0.8", "4.7.0", "4.6.0", "4.5.1", "4.5.0", "4.4.4"]],
+    ["4.4.4", [APP_VERSION, "4.7.0.8", "4.7.0", "4.6.0", "4.5.1", "4.5.0"]],
+    ["4.5.0", [APP_VERSION, "4.7.0.8", "4.7.0", "4.6.0", "4.5.1"]],
+    ["4.5.1", [APP_VERSION, "4.7.0.8", "4.7.0", "4.6.0"]],
+    ["4.6.0", [APP_VERSION, "4.7.0.8", "4.7.0"]],
+    ["4.7.0", [APP_VERSION, "4.7.0.8"]],
+    ["4.7.0.8", [APP_VERSION]],
   ] as const)("preserves intermediate unread releases after %s", (read, expected) => {
     window.localStorage.setItem(NOTES_READ_KEY, read);
     expect(unseenEntries().map((entry) => entry.version)).toEqual(expected);
