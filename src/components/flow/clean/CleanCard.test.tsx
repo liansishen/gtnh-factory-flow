@@ -215,6 +215,7 @@ it("localizes CSS-painted count text and verdicts without changing the model", (
   // The set box is `attr()` content painted by CSS: the card prints its text, it is not a React child.
   expect(container.querySelector(".cc-count")?.getAttribute("data-set")).toBe("设置");
   expect(container.querySelector(".cc-count")?.getAttribute("data-unit")).toBe("种子");
+  expect(container.querySelector(".cc-run")?.getAttribute("data-unit")).toBe("种子");
   expect(container.querySelector(".cc-rule")?.textContent).toBe("任意");
   expect(JSON.stringify(plain)).toBe(plainBefore);
   unmount();

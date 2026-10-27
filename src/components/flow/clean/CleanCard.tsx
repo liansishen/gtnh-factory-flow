@@ -522,7 +522,7 @@ export function CountBox({
       }}
     >
       {view.unit ? (
-        <div className="cc-run" data-unit={view.unit}>
+        <div className="cc-run" data-unit={_i18nT(view.unit)}>
           {view.text}
         </div>
       ) : null}
