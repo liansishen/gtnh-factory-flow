@@ -22,6 +22,7 @@ import {
 } from "@/lib/model";
 import { powerDisplayFromEuT, powerDisplaySuffix, rateSuffixForKind } from "@/lib/model/rate-unit";
 import { isCustomRateRecipe } from "@/lib/model/custom-rate";
+import { isBeeProductionRecipe, isCropProductionRecipe } from "@/lib/model/passive-production";
 import {
   getRecipeProgrammedCircuit,
   type RecipeProgrammedCircuit,
@@ -132,6 +133,8 @@ export interface CleanPowerView {
 export interface CleanCountView {
   /** What runs, as printed: "×18.2" (a crop's has no times sign). */
   text: string;
+  /** What the number counts, under it, when it is not machines: a crop card counts seeds. */
+  unit?: string;
   /** What runs: an Up to card's reached count, else the solved count (the pin when one is set). */
   value: number;
   /** A count is set: Up to or Exactly. */
@@ -376,6 +379,9 @@ export function buildPortView(
   const chance = (port.resource as { chance?: number } | undefined)?.chance;
   const chanceText =
     chance !== undefined && chance < 1 ? `${Math.round(chance * 10000) / 100}%` : undefined;
+  const consumeChance = (port.resource as { consumeChance?: number } | undefined)?.consumeChance;
+  const consumeText =
+    consumeChance !== undefined && consumeChance < 1 ? `used up ${Math.round(consumeChance * 10000) / 100}% of runs` : undefined;
   return {
     key: port.key,
     nodeId,
@@ -385,7 +391,11 @@ export function buildPortView(
     number,
     unit,
     name: port.displayName,
-    title: chanceText ? `${port.displayName} (${chanceText} chance)` : port.displayName,
+    title: chanceText
+      ? `${port.displayName} (${chanceText} chance)`
+      : consumeText
+        ? `${port.displayName} (${consumeText})`
+        : port.displayName,
     zero: !(shown > 0),
     gold: node.portRates?.[port.handleId] !== undefined,
     rate: node.portRates?.[port.handleId],
@@ -474,9 +484,12 @@ export function cardPicture(
   mapIcons: ReturnType<typeof useRecipeMapIcons>,
 ) {
   const pictureTier = (face.tierControl?.current ?? projectNode.overclockTier) as string;
-  const recipeMapIcon = mapIcons.get(recipe.source?.recipeMap ?? recipe.machineType) as
-    | MachineHandlerIcon
-    | undefined;
+  // A bee or crop map's icon is a specimen (the first species exported), not a machine: every bee card wore the
+  // Uranium bee and took its name. Those cards fall back to the housing or harvester's own name instead.
+  const recipeMapIcon =
+    isBeeProductionRecipe(recipe) || isCropProductionRecipe(recipe)
+      ? undefined
+      : (mapIcons.get(recipe.source?.recipeMap ?? recipe.machineType) as MachineHandlerIcon | undefined);
   const machineIcon =
     machineIconAtTier(machineIcons.get(face.selectedMachineHandler.id), pictureTier) ??
     recipeMapIcon;
@@ -536,6 +549,7 @@ export function buildCountView(
     /** A custom rate card: always Exactly, no rule menu. */
     ruleFixed?: boolean;
     title?: string;
+    unit?: string;
   } = {},
 ): CleanCountView {
   const { rule, pinned, value, unset, needed } = state;
@@ -543,6 +557,7 @@ export function buildCountView(
   const setText = set !== undefined ? formatSetCount(set) : "";
   return {
     text: `${opts.noTimes ? "" : "×"}${formatSolvedMachines(value)}`,
+    unit: opts.unit,
     value,
     pinned,
     rule,

@@ -3,7 +3,7 @@ import { I18nText, useT } from "@/lib/i18n/react";
 
 import "./chrome.css";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useDeviceSettings } from "@/lib/device-settings";
 import { isLiveConfigured } from "@/lib/live/live-config";
 import { leaveLibrary } from "@/lib/library/library-tab";
@@ -15,6 +15,7 @@ import { useDesignStore } from "@/store/design-store";
 import { useFactoryStore } from "@/store/factory-store";
 import { arrangeLabel, getBoardCommands, pressArrange, useArrangeState } from "./board-commands";
 import { BarKey, useBarFit } from "./bar-parts";
+import { ChromeMenu, chromeAnchorOf, type ChromeAnchor } from "./ChromeMenu";
 import { PixelBolt, PixelIcon } from "./pixel-icons";
 
 /** Task boards come with live plans: none of it shows without NEXT_PUBLIC_LIVE_URL. */
@@ -135,6 +136,9 @@ function BoardKeys({ tight }: { tight: boolean }) {
   const closePowerMenu = useFactoryStore((state) => state.closePowerMenu);
   const isReadOnly = useFactoryStore((state) => state.isReadOnly);
   const arrange = useArrangeState();
+  const hasGroups = useFactoryStore((state) => (state.project.pockets?.length ?? 0) > 0);
+  // A plan with groups asks how to treat them; one without arranges at once.
+  const [arrangeMenu, setArrangeMenu] = useState<ChromeAnchor | undefined>(undefined);
 
   const rateIndex = Math.max(0, RATE_ORDER.indexOf(rateUnit === "eu" ? "second" : rateUnit));
   const stepRate = (step: number) => {
@@ -193,55 +197,79 @@ function BoardKeys({ tight }: { tight: boolean }) {
         </BarKey>
       </div>
       <div className="mb-group mb-group-right">
-        <BarKey
-          id="arrange"
-          label={arrangeLabel(arrange)}
-          width={arrange.running ? 90 : undefined}
-          tip="Auto-arrange the plan (press again to stop)"
-          off={isReadOnly}
-          onClick={() => pressArrange()}
+      <BarKey
+        id="arrange"
+        label={arrangeLabel(arrange)}
+        width={arrange.running ? 90 : undefined}
+        tip="Auto-arrange the plan (press again to stop)"
+        off={isReadOnly}
+        open={arrangeMenu !== undefined}
+        menuAnchor={hasGroups}
+        onClick={(event) => {
+          if (arrange.running || !hasGroups) {
+            pressArrange();
+          } else if (arrangeMenu) {
+            setArrangeMenu(undefined);
+          } else {
+            setArrangeMenu(chromeAnchorOf(event.currentTarget));
+          }
+        }}
+      />
+      {arrangeMenu ? (
+        <ChromeMenu
+          anchor={arrangeMenu}
+          label="Arrange"
+          minWidth={110}
+          entries={[
+            {
+              label: "Keep groups",
+              tip: "Each group moves as one block. What is inside a group stays where it is.",
+              onSelect: () => pressArrange(),
+            },
+            {
+              label: "Ungroup all",
+              tip: "Takes every group apart, then arranges all the cards. Undo brings the groups back.",
+              onSelect: () => pressArrange({ ungroup: true }),
+            },
+          ]}
+          onClose={() => setArrangeMenu(undefined)}
         />
-        <BarKey
-          id="fit"
-          label="Fit"
-          width={24}
-          tip="Zoom to fit the whole plan"
-          onClick={() => getBoardCommands()?.fit()}
-        />
-        <BarKey
-          id="rate"
-          gap
-          label={RATE_LABEL[rateUnit] ?? "/s"}
-          width={32}
-          tip="Rate unit: per tick, second, minute or hour"
-          onClick={() => stepRate(1)}
-          onContext={() => stepRate(-1)}
-          onWheel={scrollChangesValues ? stepRate : undefined}
-        />
-        <BarKey
-          id="power"
-          label={isAmps ? "Amps" : "EU/t"}
-          width={36}
-          tip="Show power as EU/t, or as amps at each machine's tier"
-          onClick={togglePower}
-          onContext={togglePower}
-          onWheel={scrollChangesValues ? togglePower : undefined}
-        />
-        <BarKey
-          id="annotate"
-          gap
-          icon
-          off={isReadOnly}
-          ariaLabel="Annotations"
-          tip="Add a sticky note, box or arrow, or change the background"
-          menuAnchor
-          onClick={(event) => {
-            const rect = event.currentTarget.getBoundingClientRect();
-            getBoardCommands()?.openBoardMenu?.({ x: rect.left, y: rect.bottom + 2 });
-          }}
-        >
-          <PixelIcon name="pencil" />
-        </BarKey>
+      ) : null}
+      <BarKey id="fit" label="Fit" width={24} tip="Zoom to fit the whole plan" onClick={() => getBoardCommands()?.fit()} />
+      <BarKey
+        id="rate"
+        gap
+        label={RATE_LABEL[rateUnit] ?? "/s"}
+        width={32}
+        tip="Rate unit: per tick, second, minute or hour"
+        onClick={() => stepRate(1)}
+        onContext={() => stepRate(-1)}
+        onWheel={scrollChangesValues ? stepRate : undefined}
+      />
+      <BarKey
+        id="power"
+        label={isAmps ? "Amps" : "EU/t"}
+        width={36}
+        tip="Show power as EU/t, or as amps at each machine's tier"
+        onClick={togglePower}
+        onContext={togglePower}
+        onWheel={scrollChangesValues ? togglePower : undefined}
+      />
+      <BarKey
+        id="annotate"
+        gap
+        icon
+        off={isReadOnly}
+        ariaLabel="Annotations"
+        tip="Add a sticky note, box or arrow, or change the background"
+        menuAnchor
+        onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          getBoardCommands()?.openBoardMenu?.({ x: rect.left, y: rect.bottom + 2 });
+        }}
+      >
+        <PixelIcon name="pencil" />
+      </BarKey>
       </div>
     </>
   );

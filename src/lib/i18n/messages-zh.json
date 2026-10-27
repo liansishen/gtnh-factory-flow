@@ -2896,5 +2896,17 @@
   "A free, instant canner: the planner's tank.": "免费且瞬时完成的装罐机：规划器的储罐。",
   "1 cell wire now goes through a fluid tank.": "1 根单元连线现在通过流体储罐。",
   "Cells no longer wire straight into fluid slots.": "单元不再直接连到流体槽。",
-  "Cells and their fluids meet in fluid tanks.": "单元及其流体会在流体储罐中连接。"
+  "Cells and their fluids meet in fluid tanks.": "单元及其流体会在流体储罐中连接。",
+  "Keep groups": "保留分组",
+  "Each group moves as one block. What is inside a group stays where it is.": "每个分组作为一个整体移动，分组内部保持原位。",
+  "Ungroup all": "全部拆组",
+  "Takes every group apart, then arranges all the cards. Undo brings the groups back.": "拆开所有分组，然后整理全部卡片。撤销可恢复分组。",
+  "seed": "种子",
+  "seeds": "种子",
+  "How many seeds the plan plants. Machines follow from the seeds.": "方案要种植的种子数量，机器数量随种子而定。",
+  "Crop Managers": "作物管理机",
+  "Industrial Farms": "工业农场",
+  "Set a number to plant that many full machines.": "设置数量即可种满相应数量的机器。",
+  "Not used": "未消耗",
+  "Used up": "消耗"
 }

@@ -21,6 +21,15 @@ shipped; the query dataset remains RC-2.
 Resource and recipe searches use this fork's Chinese, English and pinyin code
 on DE. Keep `GTNH_DATASET_BACKEND_URL` unset.
 
+The resource index keeps catalog-level alternatives only; recipe-slot substitutes
+remain in their recipe shards. Rebuild it with `build-resource-index.mjs` using
+the installed catalog and the ordered shards when the original full export is
+unavailable, and verify that only alternatives changed. This installation omits
+`recipes.json.gz`: index-only updates fingerprint the three installed indexes
+and sorted recipe shards, hashing each relative path, a NUL and its binary
+SHA-256 digest. Record that fingerprint in the manifest and deployment metadata,
+and retain the previous index, manifest and checksum inventory together.
+
 ## DE files and service
 
 - `/opt/gtnh-factory-flow/releases/<revision>/`: standalone runtime, static

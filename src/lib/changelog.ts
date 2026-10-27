@@ -40,6 +40,68 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "4.7.0.8",
+    date: "2026-10-27",
+    headline: "Upstream 4.7.0 update",
+    notes: [
+      "Arrange can keep groups or ungroup every card, and prefers fewer wire crossings.",
+      "Wires follow card edits faster and keep their routes when you reopen a plan.",
+      "Tree, bee and crop cards use corrected production amounts and machine counts.",
+      "Plans with an Up to count above what they need now solve more reliably.",
+    ],
+  },
+  {
+    version: "4.7.0",
+    date: "2026-10-26",
+    headline: "Arrange with or without groups",
+    notes: [
+      "On a plan with groups, Arrange asks: keep the groups, or ungroup all and arrange every card.",
+      "Arrange now checks its layouts against the real wires on plans with groups too.",
+      "Arrange prefers layouts with fewer crossing wires.",
+    ],
+  },
+  {
+    version: "4.6.0",
+    date: "2026-10-25",
+    headline: "Wires keep up",
+    notes: [
+      "Wires update in a moment after you move a card, and follow it while you drag.",
+      "Only the wires a change touches are routed again; the rest stay where they are.",
+      "Wires meet drawers straight on instead of at an angle.",
+      "Reopening a plan keeps its wires instead of routing them all again.",
+    ],
+  },
+  {
+    version: "4.5.1",
+    date: "2026-10-25",
+    headline: "Up to counts that fit now solve",
+    notes: [
+      "Fixed a plan saying there is no way to meet all the rules and pinned counts when a machine's Up to count was more than it needed.",
+    ],
+  },
+  {
+    version: "4.5.0",
+    date: "2026-10-25",
+    headline: "Trees, bees and leaves",
+    notes: [
+      "Tree Growth Simulators now make more at higher tiers.",
+      "The Boldarnator only uses up its leaves 10% of the time, like in game.",
+      "Bee cards show the housing and the bee. Crop cards count seeds and show the machines they fill.",
+      "Distilled Water from Water is back, and drawers are easier to grab.",
+    ],
+  },
+  {
+    version: "4.4.4",
+    date: "2026-10-23",
+    headline: "No more vanishing machines",
+    notes: [
+      "Fixed Delete and Backspace removing machines you never selected, including while typing in the recipe search. They now only remove what is selected.",
+      "Escape clears the selection.",
+      "Fixed machines built while a shared plan was reconnecting being lost when it reconnected.",
+      "Voting on library plans now needs an account, one vote per plan.",
+    ],
+  },
+  {
     version: "4.4.3.7",
     date: "2026-10-24",
     headline: "Upstream 4.4.3 update",

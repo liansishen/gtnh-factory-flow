@@ -5,6 +5,9 @@ The mod's flat card on the website's board. It draws every `RecipeNode`: `Recipe
 classic `RecipeNode` and `StorageNode` stay in the tree, unreachable from the board). A node the plain card
 cannot be goes to `special/` (`specialKindOf`): a shared machine, a generator, a custom rate or fluid tank
 holder, a crop card. Bees, the Extreme Entity Crusher and every other machine are the plain card.
+- A bee or crop map's icon is a specimen, never the machine (`cardPicture`): those cards wear the housing's or
+  harvester's own face (the server's `SYNTHESIZED_HANDLER_FACES`) or its name. A bee card's species is a kept row
+  ("Not used", node-verdict's inert rows), the only thing on it that names the bee.
 
 - `special/` is those cards on the plain card's classes (`cc-card`, `cc-head`, `cc-rail`, `cc-row`, `cc-pic`,
   `cc-strip`) plus `sp-*` (`special.css`, loaded after `clean.css`; `cs-*` is the menus'). `use-special.ts` has
@@ -15,6 +18,10 @@ holder, a crop card. Bees, the Extreme Entity Crusher and every other machine ar
   handles) until a port is dropped on it; the fluid tank adopts the dataset's Tank recipe the port fits
   (`lib/datasets/tank-recipe.ts`, `lib/model/fluid-tank.ts`) and lets go when unwired. A generator's pinned settings
   are the plan's `settingPins["power:<source>"]`.
+  A crop card's count is seeds, never machines (`.cc-run`, the word small beside the number). Its harvesters are a
+  number setting (`CROP_MACHINES_ID`, `NumberSetting`), pinned by default: what the seeds fill at the tier's capacity
+  (`cropsNhCropsPerMachine`); typed or stepped, it sets the seeds to that many full machines. Pin toggles pass every
+  pinnable setting, or the ones left out unpin.
 
 - A card's menu (`menus/CardActionsMenu.tsx` `CardRows`, from its actions key and a right click on it) is the mod's
   order: Clone node, Add another recipe, Replace the recipe, Add to a task, then Delete node in red. The recipe rows

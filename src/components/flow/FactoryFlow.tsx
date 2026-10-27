@@ -272,8 +272,8 @@ import {
 import { RecipeAddChips } from "@/components/RecipeAddChip";
 import {
   LANE_CAPACITY,
+  cardRimDocks,
   laneWidthForHeat,
-  solveGridRoutes,
   type GridEndpoint,
   type GridRouteRequest,
   type GridObstacle,
@@ -296,6 +296,7 @@ import type { ArrangeJudgeInput } from "@/lib/arrange-job";
 import {
   ASYNC_ROUTE_EDGE_LIMIT,
   routeWorkerAvailable,
+  runRouteSolveJob,
   scheduleRouteSolve,
   setRouteSolveSink,
   type RouteSolveResult,
@@ -337,7 +338,7 @@ import { loopEdges, type LoopTone } from "./clean/loops";
 import { findUnwiredNodeIds } from "./node-verdict";
 import { useBoardPulseGate, useBoardPulseSync } from "./animation-phase";
 import { useSlicedMount } from "./sliced-mount";
-import { boardVirtualizer } from "./virtual/card-virtualizer";
+import { boardVirtualizer, virtualizationEnabled } from "./virtual/card-virtualizer";
 import { boardEdges } from "./virtual/board-edges";
 import { VirtualizationController } from "./virtual/VirtualizationController";
 import { writeBoardZoom } from "./virtual/zoom-var";
@@ -534,14 +535,14 @@ const FLOW_WRAPPER_STYLE = { backgroundColor: "transparent" } as const;
 const MIN_FRAMED_WIDTH = 420;
 
 /**
- * Mid-drag live rerouting. On boards under this many wires the real route
- * solve (the same one the drop runs) reruns while a card moves, throttled to
- * LIVE_DRAG_SOLVE_MS, so the wires follow it to exactly where they will rest.
- * Past the limit wires freeze until the drop: a full board solve per beat is
- * the per-frame bill CLAUDE.md forbids.
+ * Mid-drag live rerouting. On boards under this many wires the route solve
+ * reruns while a card moves, throttled to LIVE_DRAG_SOLVE_MS, so the wires
+ * follow it. Each beat routes again only the wires the move touched, roughly
+ * (`incremental-router.ts`), and big boards do it in the worker; the drop
+ * routes them properly. Past the limit wires freeze until the drop.
  */
-const LIVE_DRAG_ROUTE_EDGE_LIMIT = 200;
-const LIVE_DRAG_SOLVE_MS = 120;
+const LIVE_DRAG_ROUTE_EDGE_LIMIT = 1000;
+const LIVE_DRAG_SOLVE_MS = 50;
 /**
  * Measured half of the gate above. Each mid-drag solve is timed through to
  * the frame it painted; one over this budget marks the current board size as
@@ -1001,6 +1002,54 @@ function queryRouteSegments(rect: {
   return found;
 }
 
+/**
+ * Per-wire route stamps. A worker answer that moves a few wires re-renders
+ * those wires (and the ones near them, whose crossing hops may change)
+ * through these, instead of re-issuing every edge on the board: while a card
+ * is dragged answers land several times a second.
+ */
+const edgeRouteStamps = new Map<string, number>();
+const edgeRouteListeners = new Map<string, Set<() => void>>();
+
+function subscribeEdgeRoute(edgeId: string, listener: () => void): () => void {
+  let listeners = edgeRouteListeners.get(edgeId);
+  if (!listeners) {
+    listeners = new Set();
+    edgeRouteListeners.set(edgeId, listeners);
+  }
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0) edgeRouteListeners.delete(edgeId);
+  };
+}
+
+function edgeRouteStamp(edgeId: string): number {
+  return edgeRouteStamps.get(edgeId) ?? 0;
+}
+
+function touchEdgeRoutes(edgeIds: Iterable<string>) {
+  for (const edgeId of edgeIds) {
+    edgeRouteStamps.set(edgeId, edgeRouteStamp(edgeId) + 1);
+    for (const listener of edgeRouteListeners.get(edgeId) ?? []) listener();
+  }
+}
+
+/** The box of a polyline, for asking the segment index what lies near it. */
+function pointsBox(points: Array<{ x: number; y: number }>) {
+  let left = Infinity;
+  let right = -Infinity;
+  let top = Infinity;
+  let bottom = -Infinity;
+  for (const point of points) {
+    if (point.x < left) left = point.x;
+    if (point.x > right) right = point.x;
+    if (point.y < top) top = point.y;
+    if (point.y > bottom) bottom = point.y;
+  }
+  return { left, right, top, bottom };
+}
+
 /** The single door into the route cache, so the index can never drift from it. */
 function setDirectRoute(
   edgeId: string,
@@ -1088,6 +1137,25 @@ let gridSolveInstalledSeq = 0;
 let gridSolveWantedSignature = "";
 /** How the board re-issues its edges when worker routes land. */
 let routeSolveRerender: (() => void) | undefined;
+/**
+ * A card is in hand: solves are rough (no negotiation), and the solve after
+ * the drop routes those wires again properly. Part of the signature, so the
+ * drop asks for that solve even when the card ends where the last beat put it.
+ */
+let routeDragActive = false;
+/**
+ * A plan's first route solve waits, up to this long, for its cards to take
+ * their real sizes: the plan's own solve (its books) to land, since a card's
+ * height follows its numbers, and every card to be drawn once, since a shell
+ * never drawn wears an estimated size. Routes worked out before then are
+ * thrown away when the cards grow: on a big board a whole solve wasted, and
+ * stored routes (`route-memory.ts`) would not match the cards they were for.
+ */
+const FIRST_SOLVE_SETTLE_WAIT_MS = 12000;
+/** The plan the last solve was asked for, and when this one was first asked. */
+let routedBoardKey: string | undefined;
+let firstSolveAskedAt = 0;
+let firstSolveRetry: ReturnType<typeof setTimeout> | undefined;
 
 function pointListsEqual(
   a: Array<{ x: number; y: number }> | undefined,
@@ -1177,59 +1245,10 @@ function resolveGridRouteEndpoints(
 ): GridEndpoint[] {
   const nodeId = end === "source" ? input.sourceNodeId : input.targetNodeId;
   const rect = getMeasuredNodeBoundsById(nodeId);
-  if (!rect) {
-    return [];
-  }
-  const snap = (value: number) => Math.round(value / BOARD_GRID) * BOARD_GRID;
-
   // Every wire docks freely, self loops included; the router keeps a self
   // loop's two ends apart so it reads as a loop.
-  const left = snap(rect.left);
-  const right = snap(rect.right);
-  const top = snap(rect.top);
-  const bottom = snap(rect.bottom);
-  // Every grid line crossing the border is a candidate; huge multiblock
-  // cards coarsen to every other line so the candidate set stays bounded.
-  const perimeterCells = (right - left + (bottom - top)) / BOARD_GRID;
-  const step = perimeterCells > 60 ? 2 * BOARD_GRID : BOARD_GRID;
-  // The corner itself is not a dock (a wire off the very corner reads as
-  // clipped through the card); one cell in is fine, at 45° too.
-  const keepOutFor = (span: number) => (span >= 2 * BOARD_GRID ? BOARD_GRID : 0);
-  const dockTop = top;
-  const centerX = (left + right) / 2;
-  const centerY = (dockTop + bottom) / 2;
-  const candidates: GridEndpoint[] = [];
-  const keepOutX = keepOutFor(right - left);
-  const keepOutY = keepOutFor(bottom - dockTop);
-  for (let x = left + keepOutX; x <= right - keepOutX; x += step) {
-    const penalty = Math.abs(x - centerX) * DOCK_CENTER_BIAS;
-    candidates.push({ x, y: top, side: "top", penalty });
-    candidates.push({ x, y: bottom, side: "bottom", penalty });
-  }
-  for (let y = dockTop + keepOutY; y <= bottom - keepOutY; y += step) {
-    const penalty = Math.abs(y - centerY) * DOCK_CENTER_BIAS;
-    candidates.push({ x: left, y, side: "left", penalty }, { x: right, y, side: "right", penalty });
-  }
-  // Defensive: a card with no dock left after the keep-out falls back to its
-  // side centres.
-  if (candidates.length === 0) {
-    candidates.push(
-      { x: left, y: snap(centerY), side: "left" },
-      { x: right, y: snap(centerY), side: "right" },
-      { x: snap(centerX), y: bottom, side: "bottom" },
-    );
-    candidates.push({ x: snap(centerX), y: top, side: "top" });
-  }
-  return candidates;
+  return rect ? cardRimDocks(rect) : [];
 }
-
-/**
- * Cost per pixel of distance from a side's centre when choosing a dock:
- * mid-way out a machine's long side costs about one extra turn, so facing
- * wires meet centre-to-centre and a wire slides toward a corner only when
- * the route earns it.
- */
-const DOCK_CENTER_BIAS = 0.25;
 
 /**
  * Runs the grid solve if anything it depends on changed, and parks every
@@ -1239,12 +1258,12 @@ const DOCK_CENTER_BIAS = 0.25;
  * measurements and width changes show up in the per-edge parts, and an
  * unchanged board is one string compare.
  */
-function ensureGridSolve() {
+function ensureGridSolve(): "unchanged" | "async" | "sync" {
   if (
     gridSolveCheckedStamp === gridSolveInputsStamp &&
     gridSolveCheckedEpoch === measuredLayoutEpoch
   ) {
-    return;
+    return "unchanged";
   }
   gridSolveCheckedStamp = gridSolveInputsStamp;
   gridSolveCheckedEpoch = measuredLayoutEpoch;
@@ -1303,9 +1322,30 @@ function ensureGridSolve() {
     .join(";");
 
   const tuning = getRouterTuning();
-  const signature = `${routerTuningKey(tuning)}::${sweep.hash}::${framesPart}::${parts.join(";")}`;
+  const thorough = !routeDragActive;
+  const signature = `${thorough ? "T" : "R"}::${routerTuningKey(tuning)}::${sweep.hash}::${framesPart}::${parts.join(";")}`;
   if (signature === gridSolveSignature || signature === gridSolveWantedSignature) {
-    return;
+    return "unchanged";
+  }
+  // Each plan keeps its own router, and the worker its stored routes.
+  const boardKey = useDesignStore.getState().activeDesignId ?? "";
+  if (boardKey !== routedBoardKey) {
+    const now = performance.now();
+    if (firstSolveAskedAt === 0) firstSolveAskedAt = now;
+    const unsettled =
+      useFactoryStore.getState().lastResult?.stale === true ||
+      (virtualizationEnabled() && boardVirtualizer.undrawnCount() > 0);
+    if (unsettled && now - firstSolveAskedAt < FIRST_SOLVE_SETTLE_WAIT_MS) {
+      // Ask again shortly: what settles last may move no geometry.
+      firstSolveRetry ??= setTimeout(() => {
+        firstSolveRetry = undefined;
+        gridSolveCheckedEpoch = -1;
+        routeSolveRerender?.();
+      }, 200);
+      return "unchanged";
+    }
+    routedBoardKey = boardKey;
+    firstSolveAskedAt = 0;
   }
   gridSolveWantedSignature = signature;
   gridSolveRequestSeq += 1;
@@ -1329,6 +1369,8 @@ function ensureGridSolve() {
       homeObstacleIds: input.homeBoardIds,
       sourceCardId: input.sourceNodeId,
       targetCardId: input.targetNodeId,
+      sourceSquare: input.sourceStorageEndpoint || undefined,
+      targetSquare: input.targetStorageEndpoint || undefined,
     });
     orderByEdge.set(input.edgeId, input.order);
   }
@@ -1431,22 +1473,23 @@ function ensureGridSolve() {
   // keeps serving the installed routes (`gridSolveSignature` does not move
   // until the answer lands) and `installSolvedRoutes` re-issues the edges
   // then. A small board solves synchronously so its wires never lag a frame
-  // behind their cards.
+  // behind their cards. Either way the solve routes again only what changed
+  // since that thread's last one (`incremental-router.ts`).
+  const job = { signature, seq, obstacles, requests, tuning, thorough, boardKey };
   if (requests.length > ASYNC_ROUTE_EDGE_LIMIT && routeWorkerAvailable()) {
-    scheduleRouteSolve({ signature, seq, obstacles, requests, tuning });
-    return;
+    scheduleRouteSolve(job);
+    return "async";
   }
   gridSolveSignature = signature;
   gridSolveInstalledSeq = seq;
-  const solved = solveGridRoutes(obstacles, requests, undefined, tuning);
-  for (const [edgeId, routed] of solved) {
+  for (const routed of runRouteSolveJob(job).routes) {
     if (routed.points.length < 2) {
-      deleteDirectRoute(edgeId);
+      deleteDirectRoute(routed.edgeId);
       continue;
     }
-    setDirectRoute(edgeId, {
+    setDirectRoute(routed.edgeId, {
       signature,
-      routeIndex: orderByEdge.get(edgeId) ?? 0,
+      routeIndex: orderByEdge.get(routed.edgeId) ?? 0,
       route: buildRoutedEdgePath(routed.points),
       segments: getPolylineSegments(routed.points),
     });
@@ -1454,6 +1497,7 @@ function ensureGridSolve() {
   // Edges that rendered before this solve saw the previous routes; the
   // settle pass re-issues them against the fresh cache.
   routeCacheGrewThisPass = true;
+  return "sync";
 }
 
 /**
@@ -1468,11 +1512,27 @@ function installSolvedRoutes(result: RouteSolveResult) {
   }
   gridSolveInstalledSeq = result.seq;
   gridSolveSignature = result.signature;
+  // Most answers keep most routes (incremental-router.ts): those entries only
+  // take the new signature, and only wires that moved are rebuilt.
+  const moved = new Set<string>();
+  const regions: Array<ReturnType<typeof pointsBox>> = [];
   for (const routed of result.routes) {
+    const entry = directRouteCache.get(routed.edgeId);
     if (routed.points.length < 2) {
+      if (entry) {
+        regions.push(pointsBox(entry.route.points));
+        moved.add(routed.edgeId);
+      }
       deleteDirectRoute(routed.edgeId);
       continue;
     }
+    if (entry && entry.routeIndex === routed.order && pointListsEqual(entry.route.points, routed.points)) {
+      entry.signature = result.signature;
+      continue;
+    }
+    if (entry) regions.push(pointsBox(entry.route.points));
+    regions.push(pointsBox(routed.points));
+    moved.add(routed.edgeId);
     setDirectRoute(routed.edgeId, {
       signature: result.signature,
       routeIndex: routed.order,
@@ -1480,60 +1540,128 @@ function installSolvedRoutes(result: RouteSolveResult) {
       segments: getPolylineSegments(routed.points),
     });
   }
-  routeCacheGrewThisPass = true;
-  routeSolveRerender?.();
+  if (2 * moved.size > result.routes.length) {
+    routeCacheGrewThisPass = true;
+    routeSolveRerender?.();
+    return;
+  }
+  if (moved.size === 0) {
+    return;
+  }
+  // The wires near a moved one may hop it differently now, and the ratio
+  // percentages are laid out together.
+  const touched = new Set(moved);
+  for (const region of regions) {
+    for (const segment of queryRouteSegments(region)) touched.add(segment.edgeId);
+  }
+  for (const input of ratioLabelInputs) touched.add(input.id);
+  touchEdgeRoutes(touched);
 }
 setRouteSolveSink(installSolvedRoutes);
 
-/** The judge's inputs, serialisable: what the arrange worker builds its judge from. */
-function buildArrangeJudgeInput(cardIds: readonly string[]): ArrangeJudgeInput | undefined {
-  const ids = new Set(cardIds);
-  const inputs = publishedGridRouteEdges.filter(
-    (input) => ids.has(input.sourceNodeId) && ids.has(input.targetNodeId),
-  );
-  if (inputs.length === 0) {
-    return undefined;
+/**
+ * The judge's inputs, serialisable: what the arrange worker builds its judge
+ * from. The cards are the level's arrange cards; a group is one of them, a
+ * block of its frame's size. Inside an open group the cards ride the block
+ * (`members`, route-judge.ts `riders`): a wire into the group is judged at
+ * the card it really reaches, through the frame as the board routes it. A
+ * wire into a collapsed group meets its summary card (`representativeOf`).
+ * A wire with both ends in one block never changes with the layout and is
+ * left out.
+ */
+function buildArrangeJudgeInput(
+  cards: ReadonlyArray<{ id: string; x: number; y: number; width: number; height: number }>,
+  representativeOf: (id: string) => string | undefined,
+  isBlock: (id: string) => boolean,
+  members: ReadonlyArray<{ id: string; top: string }>,
+): ArrangeJudgeInput | undefined {
+  const ids = new Set(cards.map((card) => card.id));
+  // A plain card is judged at its measured box, as the router sees it; a
+  // group at the block the arrange moves.
+  const bounds = new Map<string, { left: number; top: number; right: number; bottom: number }>();
+  for (const card of cards) {
+    const block = isBlock(card.id);
+    const measured = block ? undefined : getMeasuredNodeBoundsById(card.id);
+    if (!measured && !block) {
+      return undefined;
+    }
+    bounds.set(
+      card.id,
+      measured ?? { left: card.x, top: card.y, right: card.x + card.width, bottom: card.y + card.height },
+    );
   }
-  const base: Array<{ input: GridRouteEdgeInput; sources: GridEndpoint[]; targets: GridEndpoint[] }> = [];
-  for (const input of inputs) {
-    const sources = resolveGridRouteEndpoints(input, "source");
-    const targets = resolveGridRouteEndpoints(input, "target");
+  // The cards drawn inside an open top-level group, and the block each rides.
+  const riders = new Map<string, string>();
+  for (const member of members) {
+    if (!ids.has(member.top) || !isBlock(member.top) || bounds.has(member.id)) continue;
+    const measured = getMeasuredNodeBoundsById(member.id);
+    if (!measured) continue;
+    bounds.set(member.id, measured);
+    riders.set(member.id, member.top);
+  }
+  const topOf = (id: string) => riders.get(id) ?? id;
+  const requests: GridRouteRequest[] = [];
+  for (const input of publishedGridRouteEdges) {
+    // An end the board draws (a card here, or one inside an open group) is
+    // judged at its own docks; anything else at its stand-in's rim.
+    const endOf = (end: "source" | "target") => {
+      const id = end === "source" ? input.sourceNodeId : input.targetNodeId;
+      if (bounds.has(id)) return { id, own: true };
+      const rep = representativeOf(id);
+      return rep && ids.has(rep) ? { id: rep, own: false } : undefined;
+    };
+    const source = endOf("source");
+    const target = endOf("target");
+    if (!source || !target || topOf(source.id) === topOf(target.id)) {
+      continue;
+    }
+    const docks = (end: "source" | "target", at: { id: string; own: boolean }) =>
+      at.own ? resolveGridRouteEndpoints(input, end) : cardRimDocks(bounds.get(at.id)!);
+    const sources = docks("source", source);
+    const targets = docks("target", target);
     if (sources.length === 0 || targets.length === 0) {
       continue;
     }
-    base.push({ input, sources, targets });
+    // The frames this wire may cross, as the board routes it; only frames
+    // the judge holds count.
+    const frames = (list: string[] | undefined) => {
+      const kept = (list ?? []).filter((id) => bounds.has(id));
+      return kept.length > 0 ? kept : undefined;
+    };
+    requests.push({
+      edgeId: input.edgeId,
+      order: input.order,
+      sources,
+      targets,
+      strokeWidth: Math.min(input.routingWidth, LANE_CAPACITY),
+      sourceCardId: source.id,
+      targetCardId: target.id,
+      // As the board routes them (ensureGridSolve): a drawer's own end lands square.
+      sourceSquare: (source.own && input.sourceStorageEndpoint) || undefined,
+      targetSquare: (target.own && input.targetStorageEndpoint) || undefined,
+      exemptObstacleIds: frames(input.throughBoardIds),
+      homeObstacleIds: frames(input.homeBoardIds),
+    });
   }
-  if (base.length === 0) {
+  if (requests.length === 0) {
     return undefined;
-  }
-  const bounds = new Map<string, { left: number; top: number; right: number; bottom: number }>();
-  for (const id of ids) {
-    const rect = getMeasuredNodeBoundsById(id);
-    if (!rect) {
-      return undefined;
-    }
-    bounds.set(id, rect);
   }
   const obstacles: GridObstacle[] = [];
   for (const [id, rect] of bounds) {
     obstacles.push({ id, left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom });
   }
-  const requests: GridRouteRequest[] = base.map(({ input, sources, targets }) => ({
-    edgeId: input.edgeId,
-    order: input.order,
-    sources,
-    targets,
-    strokeWidth: Math.min(input.routingWidth, LANE_CAPACITY),
-    sourceCardId: input.sourceNodeId,
-    targetCardId: input.targetNodeId,
-  }));
   // The judge's exact inputs at the moment of the arrange, for the audit
   // tool (tools/audit-board.mjs) to save beside the result.
-  const input: ArrangeJudgeInput = { obstacles, requests, tuning: getRouterTuning() };
+  const input: ArrangeJudgeInput = {
+    obstacles,
+    requests,
+    tuning: getRouterTuning(),
+    riders: riders.size > 0 ? [...riders] : undefined,
+  };
   if (typeof window !== "undefined") {
     (window as unknown as { __gtnhArrangeJudgeInput?: unknown }).__gtnhArrangeJudgeInput = {
       ...input,
-      cardIds: [...cardIds],
+      cardIds: [...ids],
     };
   }
   return input;
@@ -2778,10 +2906,22 @@ export function FactoryFlow() {
       }
     });
   }, []);
+  // One drag beat's solve. A solve the worker takes leaves the wires as
+  // they are until its answer re-issues them, so the beat itself re-renders
+  // nothing; one solved here re-issues the wires now and is timed.
+  const liveDragSolve = useCallback(
+    (edgeCount: number, startedAt: number) => {
+      if (ensureGridSolve() === "sync") {
+        setLayoutVersion((version) => version + 1);
+        meterLiveDragSolve(edgeCount, startedAt);
+      }
+    },
+    [meterLiveDragSolve],
+  );
   useLayoutEffect(() => {
     // Drag frames rewrite positions constantly. Where the board can afford
-    // it, wires FOLLOW: a throttled real solve (the one the drop runs) reruns
-    // against the card's current cell. Wires freeze instead for an
+    // it, wires FOLLOW: a throttled rough solve of the wires the move touched
+    // reruns against the card's current cell. Wires freeze instead for an
     // annotation-only drag (ink cannot change a route), a board past the wire
     // cap, or a board whose measured solves blew the frame budget. Not a
     // setting on purpose. The drop republishes explicitly (handleNodeDragStop)
@@ -2811,13 +2951,14 @@ export function FactoryFlow() {
           const trailingStart = performance.now();
           lastLiveDragSolveAtRef.current = trailingStart;
           publishBoardGeometry();
-          setLayoutVersion((version) => version + 1);
-          meterLiveDragSolve(edgeCount, trailingStart);
+          liveDragSolve(edgeCount, trailingStart);
         }, LIVE_DRAG_SOLVE_MS - sinceLastSolve);
         return;
       }
       lastLiveDragSolveAtRef.current = now;
-      meterLiveDragSolve(edgeCount, now);
+      publishBoardGeometry();
+      liveDragSolve(edgeCount, now);
+      return;
     }
 
     publishBoardGeometry();
@@ -2826,7 +2967,7 @@ export function FactoryFlow() {
     // recompute against what was just published, including nodes that grew
     // as icons or NEI layout resolved.
     setLayoutVersion((version) => version + 1);
-  }, [obstacleGeometryFingerprint, publishBoardGeometry]);
+  }, [obstacleGeometryFingerprint, publishBoardGeometry, liveDragSolve]);
   useLayoutEffect(() => {
     // Annotation geometry changed and nothing else: refresh the published
     // maps and touch nothing routing owns. Quiet mid-drag: the drop's
@@ -5368,7 +5509,7 @@ export function FactoryFlow() {
   // The arrange in flight, for the loader; undefined when none is.
   const [arrangeProgress, setArrangeProgress] = useState<ArrangeProgress | undefined>(undefined);
   const arrangeRunningRef = useRef(false);
-  const handleAutoArrange = useCallback(async (options: { keepBoards: boolean }) => {
+  const handleAutoArrange = useCallback(async (options: { keepBoards: boolean; ungroup?: boolean }) => {
     // One at a time: a click while one runs is ignored.
     if (arrangeRunningRef.current) {
       return;
@@ -5379,9 +5520,11 @@ export function FactoryFlow() {
     // Unless Keep boards is on, every board is dissolved first (members
     // surface where the frame stood) and the arrange lays out one flat set
     // of cards. With Keep boards on, each board is sealed and only placed.
-    // Plan boards always keep their groups: each is one block, its insides untouched (docs/groups.md, Arrange).
+    // Plan boards keep their groups unless the Arrange menu's Ungroup all was picked: each is one block, its insides
+    // untouched (docs/groups.md, Arrange).
     const dumpBoards =
-      !options.keepBoards && state.project.planMode !== true && (state.project.pockets?.length ?? 0) > 0;
+      (state.project.pockets?.length ?? 0) > 0 &&
+      (options.ungroup === true || (!options.keepBoards && state.project.planMode !== true));
     const project = dumpBoards ? flattenBoards(state.project) : state.project;
     let computed: Awaited<ReturnType<typeof computeAutoArrangement>>;
     try {
@@ -5443,7 +5586,7 @@ export function FactoryFlow() {
   useEffect(
     () =>
       registerBoardCommands({
-        arrange: () => void handleAutoArrange({ keepBoards: false }),
+        arrange: (options) => void handleAutoArrange({ keepBoards: false, ungroup: options?.ungroup }),
         cancelArrange,
         fit: handleFitView,
         openBoardMenu: (at) => {
@@ -5716,6 +5859,7 @@ export function FactoryFlow() {
     // paces the changes after it.
     lastLiveDragSolveAtRef.current = 0;
     draggingNodeRef.current = true;
+    routeDragActive = true;
     // The card-over-wires layering during the drag is pure CSS: the
     // --dragging board class and the .dragging node rule lift the held card
     // over the wires and its siblings.
@@ -5913,6 +6057,7 @@ export function FactoryFlow() {
       dragConstraintsRef.current = new Map();
       dragPassengersRef.current = new Set();
       draggingNodeRef.current = false;
+      routeDragActive = false;
       // The drop's own publish below supersedes any trailing live-drag solve.
       window.clearTimeout(liveDragTrailingTimerRef.current);
       // The geometry-publish effects can't see the drop: React Flow streamed
@@ -8734,6 +8879,9 @@ function ResourceEdgeComponent({
     getServerNodeDetailLevel,
   );
   const detailLevel = EDGE_DETAIL_BY_LEVEL[boardDetailLevel];
+  // Re-renders this wire alone when a worker answer moves it or a wire near it.
+  const subscribeRoute = useCallback((listener: () => void) => subscribeEdgeRoute(id, listener), [id]);
+  useSyncExternalStore(subscribeRoute, () => edgeRouteStamp(id), () => 0);
   const resourceColor = data?.resource
     ? getInitialResourceColor(data.resource)
     : (data?.color ?? DEFAULT_ITEM_EDGE_COLOR);
@@ -8870,10 +9018,12 @@ function ResourceEdgeComponent({
   const wasSolvedRef = useRef(true);
   const routeSourceChanged = wasSolvedRef.current !== Boolean(routedEdge.solved);
   wasSolvedRef.current = Boolean(routedEdge.solved);
+  // Snaps while a card is in hand: re-routes land several times a second
+  // then, and a morph per beat would keep the wire a step behind the card.
   const liveRoute = useMotionRoute(
     routedEdge.points,
     routedEdge.path,
-    moveMotion && !routeSourceChanged && publishedGridRouteEdges.length <= 300,
+    moveMotion && !routeSourceChanged && !routeDragActive && publishedGridRouteEdges.length <= 300,
   );
   // LIGHTNING. A power wire draws JAGGED: the router's route, zigzagged
   // after the fact so the router, the lanes and the hit-testing all still
@@ -11427,12 +11577,32 @@ async function computeAutoArrangement(
   // The root pass: boards as meta cards at their fresh sizes, wire length
   // between the blocks doing the placing.
   const root = gatherLevel(undefined);
-  // The judge routes the real wires at each candidate layout; it exists
-  // only when every card on the level is a plain card (no boards).
-  const rootIsPlain = root.cards.every((card) => !isPocketId(project, card.id));
-  const judgeInput = rootIsPlain
-    ? buildArrangeJudgeInput(root.cards.map((card) => card.id))
-    : undefined;
+  // The judge routes the real wires at each candidate layout, a group as
+  // one block and the wires into it as wires into the block.
+  // Everything inside a top-level group, and that group.
+  const pocketParent = new Map((project.pockets ?? []).map((pocket) => [pocket.id, pocket.parentPocketId]));
+  const topPocketOf = (pocketId: string): string => {
+    let current = pocketId;
+    const seen = new Set<string>();
+    while (pocketParent.get(current) !== undefined && !seen.has(current)) {
+      seen.add(current);
+      current = pocketParent.get(current)!;
+    }
+    return current;
+  };
+  const groupMembers: Array<{ id: string; top: string }> = [];
+  for (const item of [...project.nodes, ...(project.storages ?? [])]) {
+    if (item.pocketId !== undefined) groupMembers.push({ id: item.id, top: topPocketOf(item.pocketId) });
+  }
+  for (const pocket of project.pockets ?? []) {
+    if (pocket.parentPocketId !== undefined) groupMembers.push({ id: pocket.id, top: topPocketOf(pocket.id) });
+  }
+  const judgeInput = buildArrangeJudgeInput(
+    root.cards,
+    (id) => representativeAt(undefined, id),
+    (id) => isPocketId(project, id),
+    groupMembers,
+  );
   if (typeof window !== "undefined") {
     (window as unknown as { __gtnhArrangeInput?: unknown }).__gtnhArrangeInput = {
       cards: root.cards,

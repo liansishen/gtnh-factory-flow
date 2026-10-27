@@ -19,8 +19,8 @@ The board must stay smooth with 100+ cards on weak PCs.
 4. Identity is currency: node `data` through `reuseObjectIdentity`, edges through
    `reuseDeepObjectIdentity` (`layoutEpoch` is the deliberate bust), custom `memo`
    comparators on node components, stable callbacks for toolbar children.
-5. Drags never show a guessed route. Small boards rerun the real solve on a throttle;
-   past `LIVE_DRAG_ROUTE_EDGE_LIMIT` wires hold their routes until the drop.
+5. Drags never show a guessed route. Each beat (throttled) routes the moved wires for real but rough (no
+   negotiation), the drop routes them properly; past `LIVE_DRAG_ROUTE_EDGE_LIMIT` wires hold until the drop.
 6. An effect that touches every card at once (the hop map, `hop-map.ts`) paints CSS
    custom properties; it does not go through React.
 7. No `querySelectorAll` / `getBoundingClientRect` per edge, node or frame. No card
@@ -114,7 +114,14 @@ The board must stay smooth with 100+ cards on weak PCs.
 
 ## Wires and routing (grid-edge-router.ts)
 
-- One deterministic solve over every edge (`solveGridRoutes`), independent of zoom and
+- Between edits the board routes incrementally (`incremental-router.ts`): a wire keeps its route unless one of its
+  cards changed, its request changed, or it runs where a card or frame left, took or now stands; the rest are re-solved
+  pinned around it. Most of the board changed, or the dials did: a fresh solve. Routes depend on the board's history,
+  never the viewport. One router per plan per thread (`grid-route-job.ts`); the worker stores each plan's routes in
+  IndexedDB (`route-memory.ts`, never in the plan) so a reload starts from them. A plan's first solve waits for its
+  books and every card's first draw (`FIRST_SOLVE_SETTLE_WAIT_MS`): routes against placeholder sizes are thrown away.
+  Exam: `incremental-router.test.ts`; bench: `incremental-bench.local.test.ts`.
+- A solve is one deterministic pass over the wires it routes (`solveGridRoutes`), independent of zoom and
   render order: plan docks per card so siblings don't cross (`planDocks`), route the
   thickest then longest wires first, keep the board with the fewest points (`retainBest`,
   `routePoints`), then rip up and reroute crossing wires with escalating costs and dock
@@ -123,7 +130,10 @@ The board must stay smooth with 100+ cards on weak PCs.
   stub. Diagonals only for trips whose card rims are 6+ cells apart, at least two cells
   long. Self loops use 90-degree turns and land a cell from their exit. Turns and
   crossings are priced; reversals are all but forbidden.
-- Docking is free on the whole perimeter (corners excepted). Wire width follows flow
+- Docking is free on the whole perimeter (corners excepted). Docks sit on each side's first grid line at or
+  outside the border, never the nearest (`cardRimDocks`), and `stubDepth` draws the wire on to the border: clean
+  drawers and cards come in 10 px sizes and group members can sit half a cell off, and a dock inside the card
+  loses the whole side or draws the wire from under it. Wire width follows flow
   (`laneWidthForHeat`) and wires sit under cards. No rate labels on wires, except
   ratio-drawer percentages. One drawn wire per material between two cards
   (`channelEdgeIdsByRepresentative`).
@@ -132,7 +142,10 @@ The board must stay smooth with 100+ cards on weak PCs.
 - Every dial is in `router-tuning.ts` (`DEFAULT_ROUTER_TUNING`), editable per device in the
   dev menu. Arrange dials are left out of `routerTuningKey` so they never re-route.
 - Past `ASYNC_ROUTE_EDGE_LIMIT` wires, routing runs in a worker (`grid-route-solve.ts`).
-  A worker file must never import the module that spawns it (Turbopack hangs).
+  A worker file must never import the module that spawns it (Turbopack hangs). Negotiation budgets count
+  the wires that can move, not pinned ones.
+- Drawer, trash and minimized-board ends meet their card square (`sourceSquare`/`targetSquare`): a 45° stub into a
+  two-cell drawer reads as aimed at the wrong spot. Past the clean run the wire may still go diagonal.
 - Crossing hops (`wire-hops.ts`) are measured along the whole wire; arrows avoid hops.
 - Count crossings with `measureWireRoutes` (`src/lib/route-metrics.ts`), which counts them
   at bends and run ends too. Tools: `router-replay.local.test.ts`,
@@ -143,11 +156,15 @@ The board must stay smooth with 100+ cards on weak PCs.
 
 - Three candidates (column pass, annealed challenger, free placement in
   `board-arrange-free.ts`), each judged by the real router on points (flow-weighted via
-  `wireWeight`) plus stranger air; the best two are polished and the lower wins. The proxy
-  scorer must price like the router and must never pin ports.
-- The arrange dissolves every board first (`flattenBoards`) unless the "Keep boards on
-  rearrange" browser setting is on. Islands emerge from `board-arrange-air.ts`
-  (`islandAir`), not from cutting rules. Drawers are placed by pattern (a line beside
+  `wireWeight`) plus stranger air; the best two are polished and the pick counts a crossing
+  `PICK_CROSSING_EXTRA` px more (`fewerCrossings`; fewest crossings at any cost stacked a grouped
+  board into a tower). The proxy scorer must price like the router and must never pin ports.
+  `arrangeCrossing` (dev menu) reprices crossings for the whole arrange; 400, as the router.
+- On a plan with groups the Arrange key opens a menu (`BoardToolbar.tsx`): Keep groups (each
+  top-level group one block, its insides untouched) or Ungroup all (`flattenBoards` first). With
+  groups kept the judge still sees the cards inside an open group, riding its block
+  (`buildArrangeJudgeInput` members, route-judge `riders`). Islands emerge from
+  `board-arrange-air.ts` (`islandAir`), not from cutting rules. Drawers are placed by pattern (a line beside
   their one machine, or between their two), not searched.
 - Run the `free-explain` harness before tuning arrange weights. The free placement spots
   drawers by width, not role. Every router-judged search needs a time cap, not only a count.

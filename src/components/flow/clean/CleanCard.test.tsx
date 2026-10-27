@@ -208,11 +208,13 @@ it("lights a spill's Forced tile with the rest of the spill, and lights the rest
 
 it("localizes CSS-painted count text and verdicts without changing the model", () => {
   const plain = referenceView();
+  plain.count = { ...plain.count, unit: "seeds" };
   const plainBefore = JSON.stringify(plain);
   const { container, unmount } = renderCard(plain);
   act(() => setLocale("zh-CN"));
   // The set box is `attr()` content painted by CSS: the card prints its text, it is not a React child.
   expect(container.querySelector(".cc-count")?.getAttribute("data-set")).toBe("设置");
+  expect(container.querySelector(".cc-count")?.getAttribute("data-unit")).toBe("种子");
   expect(container.querySelector(".cc-rule")?.textContent).toBe("任意");
   expect(JSON.stringify(plain)).toBe(plainBefore);
   unmount();

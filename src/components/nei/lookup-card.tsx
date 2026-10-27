@@ -699,6 +699,11 @@ function LookupRow({
   const displayName = gameName(name);
   const chanceText =
     chance !== undefined && chance < 1 ? `${Math.round(chance * 1000) / 10}%` : undefined;
+  const consumeChance = (resource as { consumeChance?: number }).consumeChance;
+  const consumeText =
+    consumeChance !== undefined && consumeChance < 1
+      ? `Used up ${Math.round(consumeChance * 1000) / 10}% of runs, counted in`
+      : undefined;
   const unit = amount.unit ?? "";
   const nameSmall = mcTextWidth(displayName) > 71;
   const nameWraps = measureClean(displayName, nameSmall ? 6 : 8) > WORDS;
@@ -714,6 +719,7 @@ function LookupRow({
       ...(reading ? [reading] : []),
       ...(tip ? [tip] : []),
       ...(chanceText ? [`${chanceText} chance, counted in`] : []),
+      ...(consumeText ? [consumeText] : []),
     ];
     const out = itemTipLines({ name, id: resource.id, tooltip: resource.tooltip, extra });
     if (picker) out.splice(1, 0, { text: "Scroll to change it", tone: "hint" });
@@ -722,6 +728,7 @@ function LookupRow({
     amount.text,
     amount.unit,
     chanceText,
+    consumeText,
     hover,
     kept,
     name,

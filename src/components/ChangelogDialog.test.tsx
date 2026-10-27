@@ -21,22 +21,16 @@ describe("the changelog in Chinese", () => {
   it("translates the newest three releases", () => {
     render(<ChangelogDialog onClose={vi.fn()} />);
     expect(screen.getByText("所有改动，最新的在最前。")).toBeTruthy();
-    expect(screen.getByText("官方 4.4.3 更新")).toBeTruthy();
+    expect(screen.getByText("官方 4.7.0 更新")).toBeTruthy();
     expect(
-      screen.getByText("机器数量现在统一使用“任意”“至多”和“恰好”；清除数量后会回到“任意”。"),
+      screen.getByText("自动整理可以保留分组，也可以拆开所有分组后整理每张卡片，并优先减少导线交叉。"),
     ).toBeTruthy();
-    expect(screen.getByText("机器数量像抽屉一样工作")).toBeTruthy();
+    expect(screen.getByText("自动整理可选择是否保留分组")).toBeTruthy();
     expect(
-      screen.getByText(
-        "未设置数量的机器现在显示“任意”：由方案决定数量。选择“任意”后不会再跳回“至多”。",
-      ),
+      screen.getByText("在带分组的方案上，自动整理会询问：保留分组，还是拆开全部分组后整理每张卡片。"),
     ).toBeTruthy();
-    expect(screen.getByText("不再有看不见的连线")).toBeTruthy();
-    expect(
-      screen.getByText(
-        "修复了方案几乎不运行某张卡片、却仍在使用它时，其连线消失的问题。现在该卡片的行和连线会保留在画布上。",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("导线即时跟随")).toBeTruthy();
+    expect(screen.getByText("移动卡片后导线会立刻更新，并在拖动过程中跟随。")).toBeTruthy();
   });
 
   it("translates the Full history count through the dynamic rule", () => {
@@ -49,6 +43,10 @@ describe("the changelog in Chinese", () => {
     render(<ChangelogDialog onClose={vi.fn()} />);
     expect(CHANGELOG.length - 3).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /完整历史/ }));
+    expect(screen.getByText("合适的“至多”数量现在可以求解")).toBeTruthy();
+    expect(screen.getByText("树木、蜜蜂与树叶")).toBeTruthy();
+    expect(screen.getByText("机器不再消失")).toBeTruthy();
+    expect(screen.getByText("官方 4.4.3 更新")).toBeTruthy();
     expect(screen.getByText("大型发电方案重新可解")).toBeTruthy();
     expect(screen.getByText("画布更清晰，数量更明确")).toBeTruthy();
     expect(

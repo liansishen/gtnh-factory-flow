@@ -1,5 +1,25 @@
 [
   {
+    "re": "^Used up ([\\d,.]+)% of runs, counted in$",
+    "flags": "",
+    "zh": "每次运行有 $1% 的概率消耗，已计入用量"
+  },
+  {
+    "re": "^Used up ([\\d,.]+)% of runs$",
+    "flags": "",
+    "zh": "每次运行有 $1% 的概率消耗"
+  },
+  {
+    "re": "^One (.+) seed bed holds ([\\d,]+) seeds\\.$",
+    "flags": "",
+    "zh": "一个 $1 种植床可容纳 $2 粒种子。"
+  },
+  {
+    "re": "^One (.+) Crop Manager reaches (\\d+) x (\\d+), (\\d+) layers deep: ([\\d,]+) crop sticks with every block planted\\.$",
+    "flags": "",
+    "zh": "一个 $1 作物管理器覆盖 $2 × $3、$4 层，种满时可容纳 $5 个作物架。"
+  },
+  {
     "re": "^Full history \\((\\d+) earlier releases?\\)$",
     "flags": "",
     "zh": "完整历史（更早的 $1 个版本）"

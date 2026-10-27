@@ -61,6 +61,9 @@ prefix included); bees, crops, veins, mobs and underground fluids keep theirs by
   `scripts/singleblock-tiers.test.mjs`. A multiblock whose name collides with a
   singleblock gets its own id.
 - Concrete items carry their oredict membership.
+- What a slot accepts (`mAltFluidInputs`, `mOreDictAlt`) stays on that recipe's input. The
+  catalog and the resource index carry only item-level alternatives: the server gives
+  every slot without its own the index entry's. Exam: `build-resource-index.test.mjs`.
 - NEI layout: keep exported slot positions and progress bars; empty slots stay visible;
   non-consumed slots stay visible except TGS tool placeholders; never replace a real slot
   with a fake label.
@@ -70,5 +73,7 @@ prefix included); bees, crops, veins, mobs and underground fluids keep theirs by
   chances replayed in `eec-drops.mjs`). Sparge Tower rolled outputs and fusion startup EU
   are per-recipe export fields; `sparge-byproducts.mjs` appends rolled slots AFTER the
   exported ones so recipe ids stay stable.
+- An item input's chance (`inputChance`, out of 10000) becomes `amount` x chance plus `consumeChance`; the recipe id
+  hashes the whole stack, so it keeps the id an export without the chance gave it.
 - Faint fluid icons: repair only captures under 20% mean opacity, starting from the
   original PNGs (`normalize-fluid-icon-alpha.mjs`).

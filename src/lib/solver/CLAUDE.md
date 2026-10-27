@@ -28,7 +28,11 @@ nowhere or goes nowhere except through a source, a drawer or trash. Longer versi
   nothing that size may run on the main thread.
 - Plan solver dust (`plan/validate.ts` `dustScales`) is judged per network, never over the whole point: a
   reactor's billions of EU a second must not zero a 0.03/s item wire (the answer then fails its own check).
+- HiGHS misses rows by about 1e-7 on its own scaling, so values held from one stage's point can leave a later stage
+  nothing: least flow retries once with the holds `loosened`. Exam: `plan/loosened-holds.test.ts`.
 - Node rates in results are FULL SPEED; actual = nameplate x `min(1, max(0, utilization))`.
+- The plan adapter reads per-craft amounts from the nameplate loop (`PlanUnit.perCraft`): a card with no count has
+  zero flows, and the bare recipe would drop machine effects (a TGS's tier and tools). Exam: `adapter/per-craft.test.ts`.
 - Only synchronous solves write `lastSolveDurationMs` in `solve-books.ts`; worker timings
   never un-slow a plan.
   "A big plan lags every edit": look first for a diagnosis running on the main thread.

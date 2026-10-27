@@ -24,6 +24,10 @@ describe("the runtime message catalog", () => {
   });
 
   it("answers the Full history count through the runtime rule", () => {
+    expect(translateMessage("Used up 10% of runs, counted in", "zh-CN")).toBe("每次运行有 10% 的概率消耗，已计入用量");
+    expect(translateMessage("Used up 10% of runs", "zh-CN")).toBe("每次运行有 10% 的概率消耗");
+    expect(translateMessage("One IV seed bed holds 81 seeds.", "zh-CN")).toBe("一个 IV 种植床可容纳 81 粒种子。");
+    expect(translateMessage("One HV Crop Manager reaches 11 x 11, 2 layers deep: 242 crop sticks with every block planted.", "zh-CN")).toBe("一个 HV 作物管理器覆盖 11 × 11、2 层，种满时可容纳 242 个作物架。");
     expect(translateMessage("Full history (206 earlier releases)", "zh-CN")).toBe(
       "完整历史（更早的 206 个版本）",
     );

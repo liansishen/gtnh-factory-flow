@@ -1,5 +1,6 @@
 import type { FactoryNode, Recipe, ResourceAmount, ResourceKind } from "./types";
 import { isOreDictionaryResource } from "./resources";
+import { applyInputConsumeChances } from "./input-chance";
 import { applyVatInputs, isVatRecipe } from "@/lib/machines/bacterial-vat";
 import { getOverclockedRecipeStats } from "@/lib/solver/overclock";
 
@@ -30,13 +31,31 @@ export function inputOverrideAmount(
 }
 
 /**
- * The recipe's inputs as this node takes them: the wired substitutes, then the machine's own scaling (the
- * Bacterial Vat's fill multiplier on its fluid, its radio hatch's burn).
+ * Whether putting `resource` in this slot makes the recipe consume what it makes. Some slots accept their own
+ * product (an Industrial Chisel turns any glass into one variant, that variant included), but running the recipe
+ * on it is a loop no plan wants. The slot's own resource is never a switch.
+ */
+export function switchesSlotToOwnProduct(
+  recipe: Pick<Recipe, "outputs">,
+  input: Pick<ResourceAmount, "kind" | "id">,
+  resource: Pick<ResourceAmount, "kind" | "id">,
+): boolean {
+  if (resource.kind === input.kind && resource.id === input.id) {
+    return false;
+  }
+  return recipe.outputs.some((output) => output.kind === resource.kind && output.id === resource.id);
+}
+
+/**
+ * The recipe's inputs as this node takes them: chanced inputs at their average (a plan saved before the dataset
+ * carried the chance), the wired substitutes, then the machine's own scaling (the Bacterial Vat's fill multiplier
+ * on its fluid, its radio hatch's burn).
  */
 export function applyRecipeInputOverrides(
   recipe: Recipe,
   node: Pick<FactoryNode, "recipeInputOverrides"> & Partial<FactoryNode>,
 ): Recipe {
+  recipe = applyInputConsumeChances(recipe);
   const overridden = applyWiredOverrides(recipe, node);
   if (isVatRecipe(recipe)) {
     const stats = getOverclockedRecipeStats(recipe, node as FactoryNode);

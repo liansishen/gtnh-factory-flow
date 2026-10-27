@@ -355,7 +355,7 @@ try {
   await page.getByRole("menuitem", { name: /What's new|更新内容/ }).click();
   await appDialog.waitFor();
   await observe("changelog-desktop-zh");
-  assert.match(await appDialog.innerText(), /4\.4\.3\.7/);
+  assert.match(await appDialog.innerText(), /4\.7\.0\.8/);
   await appDialog.getByRole("button", { name: /完整历史/ }).click();
   assert.match(await appDialog.innerText(), /菜单与机器设置汉化补全/);
   assert.match(await appDialog.innerText(), /支持中文、英文和拼音搜索/);
