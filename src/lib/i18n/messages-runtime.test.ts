@@ -44,3 +44,17 @@ describe("the runtime message catalog", () => {
     expect(translateMessage("3 recipes and more", "zh-CN")).toBe("3 recipes and more");
   });
 });
+
+describe("seed count accessibility labels", () => {
+  it.each([
+    ["0 seeds running, any", "运行种子数：0，由方案决定"],
+    ["<0.001 seeds running, any", "运行种子数：<0.001，由方案决定"],
+    ["1 seed running, up to 1", "运行种子数：1，至多 1"],
+    ["724 seeds running, up to 724", "运行种子数：724，至多 724"],
+    ["1,024 seeds running, exactly 1,024", "运行种子数：1,024，恰好 1,024"],
+    ["0.25 seeds running, exactly 1.5", "运行种子数：0.25，恰好 1.5"],
+  ])("translates %s and preserves English", (source, expected) => {
+    expect(translateMessage(source, "zh-CN")).toBe(expected);
+    expect(translateMessage(source, "en")).toBe(source);
+  });
+});

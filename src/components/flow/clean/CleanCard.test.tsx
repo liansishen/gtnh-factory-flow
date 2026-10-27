@@ -690,3 +690,21 @@ it("lays strip chips out on whole-cell rows inside the card", () => {
   }
   expect(layoutStrip([]).height).toBe(0);
 });
+
+it.each([
+  ["any", undefined, 0, "运行种子数：0，由方案决定"],
+  ["upTo", 724, 724, "运行种子数：724，至多 724"],
+  ["exact", 724, 724, "运行种子数：724，恰好 724"],
+] as const)("localizes the %s seed count label without changing its view", (rule, pin, value, expected) => {
+  const view = referenceView();
+  view.count = { ...count(rule, pin, value), text: String(value), unit: "seeds" };
+  const before = JSON.stringify(view);
+  const english = `${value} seeds running, ${view.count.ruleWord.toLowerCase()}${view.count.pinned ? ` ${view.count.setText}` : ""}`;
+  const { container } = renderCard(view);
+  expect(container.querySelector(".cc-count")?.getAttribute("aria-label")).toBe(english);
+  act(() => setLocale("zh-CN"));
+  expect(container.querySelector(".cc-count")?.getAttribute("aria-label")).toBe(expected);
+  expect(JSON.stringify(view)).toBe(before);
+  act(() => setLocale("en"));
+  expect(container.querySelector(".cc-count")?.getAttribute("aria-label")).toBe(english);
+});

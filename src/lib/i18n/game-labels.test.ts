@@ -50,3 +50,19 @@ describe("game labels and UI rules", () => {
     expect(translateGameLabel("Xyzzyplugh (LV)", "zh-CN")).toBe("Xyzzyplugh（LV）");
   });
 });
+
+describe("input consumption labels", () => {
+  it.each([
+    ["Leaves (used up 10% of runs)", "树叶（每次运行有 10% 的概率消耗）"],
+    ["Water (used up 12.5% of runs)", "水（每次运行有 12.5% 的概率消耗）"],
+    ["Xyzzyplugh (used up 0.1% of runs)", "Xyzzyplugh（每次运行有 0.1% 的概率消耗）"],
+  ])("translates the resource and the consumption note in %s", (source, expected) => {
+    expect(translateGameLabel(source, "zh-CN")).toBe(expected);
+    expect(translateGameLabel(source, "en")).toBe(source);
+  });
+
+  it("translates standalone probability values in game-label fields", () => {
+    expect(translateGameLabel("10% of runs", "zh-CN")).toBe("每次运行有 10% 的概率");
+    expect(translateGameLabel("10% of runs", "en")).toBe("10% of runs");
+  });
+});

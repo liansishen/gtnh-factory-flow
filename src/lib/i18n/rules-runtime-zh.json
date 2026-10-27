@@ -1,5 +1,25 @@
 [
   {
+    "re": "^([\\d,.]+)% of runs$",
+    "flags": "",
+    "zh": "每次运行有 $1% 的概率"
+  },
+  {
+    "re": "^(<?[\\d,.]+) seeds? running, any$",
+    "flags": "",
+    "zh": "运行种子数：$1，由方案决定"
+  },
+  {
+    "re": "^(<?[\\d,.]+) seeds? running, up to ([\\d,.]+)$",
+    "flags": "",
+    "zh": "运行种子数：$1，至多 $2"
+  },
+  {
+    "re": "^(<?[\\d,.]+) seeds? running, exactly ([\\d,.]+)$",
+    "flags": "",
+    "zh": "运行种子数：$1，恰好 $2"
+  },
+  {
     "re": "^Used up ([\\d,.]+)% of runs, counted in$",
     "flags": "",
     "zh": "每次运行有 $1% 的概率消耗，已计入用量"
