@@ -1,6 +1,7 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 import { NextResponse } from "next/server";
+import { serveDatasetTextureWithFallback } from "@/lib/server/dataset-storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +34,12 @@ export async function GET(
       },
     });
   } catch {
+    const fallbackResponse = await serveDatasetTextureWithFallback(
+      `${versionId}/textures/${assetPath.join("/")}`,
+    );
+    if (fallbackResponse.ok) {
+      return fallbackResponse;
+    }
     return NextResponse.json({ error: "Texture not found." }, { status: 404 });
   }
 }

@@ -69,3 +69,5 @@ tools/parity/out/
 
 # the live service bundle (npm run build:live)
 /dist-live/
+/.cf-dist/
+/.wrangler/

@@ -1263,19 +1263,31 @@ async function queryResourcesInChunks(
   if (query.limit <= RESOURCE_QUERY_MAX) {
     return queryRecipeDatasetResources(manifestUrl, version, query, options);
   }
-  const parts: Array<Promise<RecipeDatasetResourceQueryResult>> = [];
-  for (let at = 0; at < query.limit; at += RESOURCE_QUERY_MAX) {
-    parts.push(
-      queryRecipeDatasetResources(
-        manifestUrl,
-        version,
-        { ...query, offset: query.offset + at, limit: Math.min(RESOURCE_QUERY_MAX, query.limit - at) },
-        options,
-      ),
-    );
+  const first = await queryRecipeDatasetResources(
+    manifestUrl,
+    version,
+    { ...query, limit: RESOURCE_QUERY_MAX },
+    options,
+  );
+  if (!first.hasMore) {
+    return {
+      ...first,
+      limit: query.limit,
+    };
   }
-  const answers = await Promise.all(parts);
-  const first = answers[0];
+  const answers: RecipeDatasetResourceQueryResult[] = [first];
+  for (let at = RESOURCE_QUERY_MAX; at < query.limit; at += RESOURCE_QUERY_MAX) {
+    const next = await queryRecipeDatasetResources(
+      manifestUrl,
+      version,
+      { ...query, offset: query.offset + at, limit: Math.min(RESOURCE_QUERY_MAX, query.limit - at) },
+      options,
+    );
+    answers.push(next);
+    if (!next.hasMore) {
+      break;
+    }
+  }
   return {
     ...first,
     resources: answers.flatMap((answer) => answer.resources),

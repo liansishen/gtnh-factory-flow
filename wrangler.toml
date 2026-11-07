@@ -1,0 +1,44 @@
+name = "gtnh-factory-flow"
+main = ".cf-dist/worker.mjs"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+workers_dev = true
+routes = [
+  { pattern = "plan.playgtnh.dpdns.org", custom_domain = true },
+]
+[assets]
+directory = ".cf-dist/assets"
+binding = "ASSETS"
+run_worker_first = [
+  "/api/*",
+  "/datasets/gtnh/*/textures/*",
+  "/community",
+  "/llms.txt",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/manifest.webmanifest",
+  "/",
+]
+
+[[r2_buckets]]
+binding = "DATASET_BUCKET"
+bucket_name = "gtnh-datasets"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "edgessh-accounts"
+database_id = "2f8bffb6-0366-4fde-889c-535368a387cd"
+
+[[kv_namespaces]]
+binding = "TEXTURE_CACHE_KV"
+id = "3dbd32a644e0493f8817513e9cab59b0"
+
+[vars]
+OFFICIAL_COMMUNITY_URL = "https://gtnhplanner.com"
+NEXT_PUBLIC_OFFICIAL_COMMUNITY_READ_ONLY = "1"
+NEXT_PUBLIC_SITE_URL = "https://plan.playgtnh.dpdns.org"
+OFFICIAL_TEXTURE_ORIGIN = "https://gtnhplanner.com"
+
+[observability]
+enabled = true

@@ -60,6 +60,18 @@ import {
 } from "@/lib/search";
 import { bilingualSearch } from "@/lib/i18n/game-search";
 import { buildPinyinSearchIndex, withPinyinSearch, type PinyinSearchIndex } from "@/lib/i18n/pinyin-search";
+import {
+  getPartitionedDatasetCatalog,
+  getPartitionedDatasetRecipe,
+  getPartitionedDatasetRecipeIds,
+  hasPartitionedDataset,
+  listPartitionedDatasetCropFarmRecipes,
+  listPartitionedDatasetEecMobs,
+  prewarmPartitionedDatasetVersion,
+  queryPartitionedDatasetRecipes,
+  queryPartitionedDatasetResources,
+  resolvePartitionedDatasetRecipeRefs,
+} from "./dataset-partitions";
 
 type TierFilter = "all" | Exclude<MachineTier, "DEMO">;
 type SearchableResource = Pick<
@@ -197,7 +209,11 @@ const BEE_RECIPE_MAPS = new Set(["Bee Produce"]);
 
 export type ResourceSourceFilter = "plants" | "bees";
 
-const datasetRoot = path.join(process.cwd(), "public", "datasets", "gtnh");
+function getDatasetRoot(): string {
+  return process.env.GTNH_DATASET_ROOT
+    ? path.resolve(process.env.GTNH_DATASET_ROOT)
+    : path.join(process.cwd(), "public", "datasets", "gtnh");
+}
 const loadedCatalogs = new Map<string, LoadedRecipeIndex>();
 const pendingCatalogLoads = new Map<string, Promise<LoadedRecipeIndex>>();
 const pendingRecipeIndexLoads = new Map<string, Promise<LoadedRecipeIndex>>();
@@ -213,7 +229,23 @@ const gunzipAsync = promisify(gunzip);
 const maxLoadedShardCount = positiveIntEnv("GTNH_MAX_LOADED_RECIPE_SHARDS", 8);
 const maxHydratedRecipeSummaryCount = positiveIntEnv("GTNH_MAX_HYDRATED_RECIPE_SUMMARIES", 8000);
 
+export function clearDatasetQueryCaches(): void {
+  loadedCatalogs.clear();
+  pendingCatalogLoads.clear();
+  pendingRecipeIndexLoads.clear();
+  loadedRecipeLookupIndexes.clear();
+  pendingRecipeLookupLoads.clear();
+  loadedShards.clear();
+  pendingShardLoads.clear();
+  pendingRawRecipeIdIndexLoads.clear();
+  pendingPrewarmLoads.clear();
+  manifestCache = undefined;
+  manifestCacheStamp = undefined;
+}
 export async function getDatasetCatalog(versionId: string) {
+  if (await hasPartitionedDataset(versionId)) {
+    return getPartitionedDatasetCatalog(versionId);
+  }
   const catalog = await loadCatalog(versionId);
   return {
     schemaVersion: 1 as const,
@@ -336,7 +368,7 @@ export function withSynthesizedHandlerIcons(catalog: LoadedRecipeIndex): Machine
   return icons;
 }
 
-function getMachineConfigResources(catalog: LoadedRecipeIndex): DatasetResourceIndexEntry[] {
+export function getMachineConfigResources(catalog: LoadedRecipeIndex): DatasetResourceIndexEntry[] {
   // The curated machine table names its control blocks by dataset id (field
   // restriction coils); ship those faces too, or the client can only draw
   // its labelled-slot fallback for them.
@@ -393,6 +425,9 @@ function isMachineConfigTooltipLine(line: string) {
 }
 
 export async function getDatasetRecipeIds(versionId: string): Promise<string[]> {
+  if (await hasPartitionedDataset(versionId)) {
+    return getPartitionedDatasetRecipeIds(versionId);
+  }
   const catalog = await loadCatalog(versionId);
   if (catalog.version.recipeLookupIndexPath) {
     return (await loadRecipeLookupIndex(catalog.version)).recipeIds;
@@ -421,7 +456,9 @@ export async function resolveDatasetRecipeRefs(
   if (refs.length === 0) {
     return [];
   }
-
+  if (await hasPartitionedDataset(versionId)) {
+    return resolvePartitionedDatasetRecipeRefs(versionId, refs);
+  }
   const catalog = await loadCatalog(versionId);
   const lookup = await loadRecipeLookupIndex(catalog.version);
   const candidateIndexesByRef = new Map<DatasetRecipeRef, number[]>();
@@ -622,6 +659,9 @@ export async function queryDatasetResources(
     popularity?: Map<string, number>;
   },
 ) {
+  if (await hasPartitionedDataset(versionId)) {
+    return queryPartitionedDatasetResources(versionId, request);
+  }
   const catalog = await loadCatalog(versionId);
   // Nothing typed is the item list as it opens and as it scrolls: every resource, sorted, about a second of the one
   // server thread on RC-2. The answer only changes with the catalog and the popularity sweep, so it is kept.
@@ -897,6 +937,9 @@ function isRecipeMapSelected(
 }
 
 export async function queryDatasetRecipes(versionId: string, request: DatasetRecipeQueryRequest) {
+  if (await hasPartitionedDataset(versionId)) {
+    return queryPartitionedDatasetRecipes(versionId, request);
+  }
   const catalog = await loadCatalog(versionId);
   if (catalog.version.recipeLookupIndexPath) {
     return queryDatasetRecipesFromLookup(catalog, request);
@@ -1243,11 +1286,17 @@ async function listDatasetMapRecipes(versionId: string, recipeMap: string) {
 
 /** All crop source "recipes", for the crop picker on a crop farm card. */
 export async function listDatasetCropFarmRecipes(versionId: string) {
+  if (await hasPartitionedDataset(versionId)) {
+    return listPartitionedDatasetCropFarmRecipes(versionId);
+  }
   return { crops: await listDatasetMapRecipes(versionId, CROP_FARM_RECIPE_MAP) };
 }
 
 /** The Extreme Entity Crusher's mobs, one recipe each, for its spawner picker. */
 export async function listDatasetEecMobs(versionId: string) {
+  if (await hasPartitionedDataset(versionId)) {
+    return listPartitionedDatasetEecMobs(versionId);
+  }
   return { mobs: await listDatasetMapRecipes(versionId, EEC_MACHINE_TYPE) };
 }
 
@@ -1715,6 +1764,10 @@ async function prewarmDatasetVersionOnce(
   versionId: string,
   { includeShards = false }: { includeShards?: boolean },
 ): Promise<void> {
+  if (await hasPartitionedDataset(versionId)) {
+    await prewarmPartitionedDatasetVersion(versionId);
+    return;
+  }
   const catalog = await loadCatalog(versionId);
   getCatalogResourcesByKey(catalog);
   ensureResourceIndexes(catalog);
@@ -1740,6 +1793,9 @@ export async function getDatasetRecipe(
   versionId: string,
   recipeId: string,
 ): Promise<Recipe | undefined> {
+  if (await hasPartitionedDataset(versionId)) {
+    return getPartitionedDatasetRecipe(versionId, recipeId);
+  }
   const catalog = await loadCatalog(versionId);
   const recipeIndex = catalog.version.recipeLookupIndexPath
     ? await getRecipeIndexFromLookup(catalog.version, recipeId)
@@ -1776,7 +1832,7 @@ export async function getDatasetRecipe(
 }
 
 async function loadManifest(): Promise<DatasetManifest> {
-  const manifestPath = path.join(datasetRoot, "datasets.manifest.json");
+  const manifestPath = path.join(getDatasetRoot(), "datasets.manifest.json");
   const stat = await fs.stat(manifestPath);
   const stamp = `${stat.mtimeMs}:${stat.size}`;
   if (manifestCache && manifestCacheStamp === stamp) {
@@ -2087,7 +2143,11 @@ function positiveIntEnv(name: string, defaultValue: number): number {
 }
 
 function publicPathToFile(publicPath: string): string {
-  return path.join(process.cwd(), "public", publicPath.replace(/^\//, ""));
+  const normalized = publicPath.replace(/^\/+/, "");
+  if (normalized.startsWith("datasets/gtnh/")) {
+    return path.join(getDatasetRoot(), normalized.slice("datasets/gtnh/".length));
+  }
+  return path.join(process.cwd(), "public", normalized);
 }
 
 function hydrateRecipeSummary(recipe: RecipeSummary, catalog: LoadedRecipeIndex): RecipeSummary {
@@ -2968,7 +3028,7 @@ function buildRecipeMapIconMap(
   );
 }
 
-function getRecipeMapIcon(
+export function getRecipeMapIcon(
   catalog: LoadedRecipeIndex,
   recipeMap: string,
 ): DatasetResourceIndexEntry | undefined {

@@ -10,6 +10,8 @@ import {
   localDbUrl,
 } from "./local-db/client";
 import { makeSessionToken, readSessionCookie, SESSION_COOKIE, SESSION_DAYS, verifySessionToken } from "./session";
+import { getCloudflareRuntimeBindings, type D1DatabaseLike } from "./dataset-storage";
+import { createD1PostgrestHandler } from "./local-db/d1-postgrest";
 
 export { makeSessionToken, SESSION_COOKIE };
 
@@ -20,6 +22,7 @@ export { makeSessionToken, SESSION_COOKIE };
  */
 
 let cachedClient: SupabaseClient | undefined;
+const d1Clients = new WeakMap<D1DatabaseLike, SupabaseClient>();
 
 /**
  * How long one database request may take before it is abandoned. Without a
@@ -131,10 +134,30 @@ export async function fetchWithDbTimeout(
 }
 
 export function isCommunityConfigured(): boolean {
-  return isLocalDb() || Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return (
+    Boolean(getCloudflareRuntimeBindings().DB) ||
+    isLocalDb() ||
+    Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+  );
 }
 
 export function getCommunityDb(): SupabaseClient {
+  const d1 = getCloudflareRuntimeBindings().DB;
+  if (d1) {
+    let d1Client = d1Clients.get(d1);
+    if (!d1Client) {
+      const handler = createD1PostgrestHandler(d1);
+      d1Client = createClient("http://d1-local.internal", LOCAL_DB_SERVICE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: {
+          fetch: (input, init) =>
+            fetchFromDb(input, init, (i, n) => handler(new Request(i, n))),
+        },
+      });
+      d1Clients.set(d1, d1Client);
+    }
+    return d1Client;
+  }
   if (!cachedClient && isLocalDb()) {
     // Local development (LOCAL_DB=1): the database on this machine, never
     // the hosted project, whatever SUPABASE_URL says. Never in production.

@@ -1,5 +1,5 @@
 import { polyphonic } from "pinyin-pro";
-import { parseSearchQuery, type SearchQuery, type SearchTermVariant } from "@/lib/search";
+import { normalizeSearchText, splitSearchTokens, type SearchQuery, type SearchTermVariant } from "@/lib/search";
 import { getChineseSearchWords, stripGameFormatting, translateGameName } from "./game-names";
 
 interface PhoneticChar {
@@ -194,15 +194,35 @@ function aliasVariants(aliases: readonly PinyinAlias[]): SearchTermVariant[] {
   if (cached) return cached;
   const byPhrase = new Map<string, SearchTermVariant>();
   for (const alias of aliases) {
-    const parsed = parseSearchQuery(alias.name);
-    const tokens = parsed.terms.map(term => term.raw);
+    const tokens = splitSearchTokens(alias.name);
     const key = tokens.join(" ");
     if (key && !byPhrase.has(key)) byPhrase.set(key, { tokens, weight: alias.weight * 0.5 });
   }
   const candidates = [...byPhrase.values()].sort((left, right) => left.tokens.length - right.tokens.length || right.weight - left.weight);
   const variants: SearchTermVariant[] = [];
+  const byFirstToken = new Map<string, SearchTermVariant[]>();
   for (const candidate of candidates) {
-    if (!variants.some(old => old.weight >= candidate.weight && old.tokens.every(token => candidate.tokens.includes(token)))) variants.push(candidate);
+    let dominated = false;
+    for (let i = 0; i < candidate.tokens.length && !dominated; i += 1) {
+      const list = byFirstToken.get(candidate.tokens[i]);
+      if (!list) continue;
+      for (let j = 0; j < list.length; j += 1) {
+        const old = list[j];
+        if (old.weight >= candidate.weight && old.tokens.every(token => candidate.tokens.includes(token))) {
+          dominated = true;
+          break;
+        }
+      }
+    }
+    if (!dominated) {
+      variants.push(candidate);
+      const first = candidate.tokens[0];
+      if (first) {
+        const list = byFirstToken.get(first);
+        if (list) list.push(candidate);
+        else byFirstToken.set(first, [candidate]);
+      }
+    }
   }
   variantCache.set(aliases, variants);
   return variants;
@@ -213,7 +233,7 @@ function mergeVariants(original: SearchTermVariant[], extra: SearchTermVariant[]
 }
 function recordNames(target: Map<string, number>, aliases: readonly PinyinAlias[]) {
   for (const alias of aliases) {
-    const key = parseSearchQuery(alias.name).text;
+    const key = normalizeSearchText(alias.name);
     target.set(key, Math.max(target.get(key) ?? 0, alias.weight * 0.5));
   }
 }
@@ -221,7 +241,7 @@ function recordNames(target: Map<string, number>, aliases: readonly PinyinAlias[
 export function withPinyinSearch(query: SearchQuery, getIndex: () => PinyinSearchIndex, raw = query.text): SearchQuery {
   if ((!query.terms.length && !queryNeedle(raw)) || /^[a-z0-9_.-]+:[a-z0-9_.@-]+$/i.test(raw.trim())) return query;
   const rawWords = normalize(raw).trim().split(/\s+/);
-  const canGroup = rawWords.every(word => !RESERVED.has(word)) && queryNeedle(raw);
+  const canGroup = (query.terms.length !== 1 || HAN.test(raw)) && rawWords.every(word => !RESERVED.has(word)) && queryNeedle(raw);
   let index: PinyinSearchIndex | undefined;
   const search = (value: string) => {
     if (!queryNeedle(value)) return [];
@@ -230,7 +250,7 @@ export function withPinyinSearch(query: SearchQuery, getIndex: () => PinyinSearc
   };
   const aliases = canGroup ? search(raw) : [];
   const nameAliases = new Map<string, number>();
-  if (aliases.length && (query.terms.length !== 1 || HAN.test(raw))) {
+  if (aliases.length) {
     const variants: SearchTermVariant[] = query.terms.length
       ? [{ tokens: query.terms.map(term => term.raw), weight: 1 }] : [];
     recordNames(nameAliases, aliases);
