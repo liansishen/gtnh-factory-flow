@@ -43,7 +43,6 @@ import {
   type AssetsFetcherLike,
   type D1DatabaseLike,
   type ExecutionContextLike,
-  type KVNamespaceLike,
   type R2BucketLike,
 } from "@/lib/server/dataset-storage";
 import {
@@ -56,7 +55,6 @@ import { describePlanRow, getPublicPlanRow } from "@/lib/server/plan-preview";
 export interface WorkerEnv {
   DB?: D1DatabaseLike;
   DATASET_BUCKET?: R2BucketLike;
-  TEXTURE_CACHE_KV?: KVNamespaceLike;
   ASSETS?: AssetsFetcherLike;
   COMMUNITY_HASH_SALT?: string;
   OFFICIAL_COMMUNITY_URL?: string;
@@ -89,7 +87,6 @@ function applyWorkerEnv(env: WorkerEnv, ctx: ExecutionContextLike): void {
   setCloudflareRuntimeBindings({
     DB: env.DB,
     DATASET_BUCKET: env.DATASET_BUCKET,
-    TEXTURE_CACHE_KV: env.TEXTURE_CACHE_KV,
     ASSETS: env.ASSETS,
     ctx,
     OFFICIAL_TEXTURE_ORIGIN: env.OFFICIAL_TEXTURE_ORIGIN,

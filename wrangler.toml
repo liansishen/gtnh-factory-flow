@@ -30,10 +30,6 @@ binding = "DB"
 database_name = "edgessh-accounts"
 database_id = "2f8bffb6-0366-4fde-889c-535368a387cd"
 
-[[kv_namespaces]]
-binding = "TEXTURE_CACHE_KV"
-id = "3dbd32a644e0493f8817513e9cab59b0"
-
 [vars]
 OFFICIAL_COMMUNITY_URL = "https://gtnhplanner.com"
 NEXT_PUBLIC_OFFICIAL_COMMUNITY_READ_ONLY = "1"

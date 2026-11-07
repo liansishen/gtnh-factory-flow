@@ -28,15 +28,6 @@ export interface R2BucketLike {
   ): Promise<unknown>;
 }
 
-export interface KVNamespaceLike {
-  get(key: string, type: "arrayBuffer"): Promise<ArrayBuffer | null>;
-  put(
-    key: string,
-    value: ArrayBuffer | Uint8Array | string,
-    options?: { expirationTtl?: number; metadata?: Record<string, string> },
-  ): Promise<void>;
-}
-
 export interface D1PreparedStatementLike {
   bind(...values: unknown[]): D1PreparedStatementLike;
   all<T = Record<string, unknown>>(): Promise<{ results: T[] }>;
@@ -60,7 +51,6 @@ export interface ExecutionContextLike {
 
 export interface CloudflareRuntimeBindings {
   DATASET_BUCKET?: R2BucketLike;
-  TEXTURE_CACHE_KV?: KVNamespaceLike;
   DB?: D1DatabaseLike;
   ASSETS?: AssetsFetcherLike;
   ctx?: ExecutionContextLike;
@@ -277,23 +267,7 @@ export async function serveDatasetTextureWithFallback(
     });
   }
 
-  // 2. Check KV texture cache if bound
-  const kvKey = `texture:${normalized}`;
-  if (bindings.TEXTURE_CACHE_KV) {
-    const cachedKv = await bindings.TEXTURE_CACHE_KV.get(kvKey, "arrayBuffer");
-    if (cachedKv) {
-      return new Response(new Uint8Array(cachedKv), {
-        status: 200,
-        headers: {
-          "Content-Type": contentType,
-          "Cache-Control": TEXTURE_CACHE_CONTROL,
-          "X-GTNH-Asset-Cache": "HIT-KV",
-        },
-      });
-    }
-  }
-
-  // 3. Fetch missing texture from official origin (gtnhplanner.com)
+  // 2. Fetch missing texture from official origin (gtnhplanner.com)
   const originBase = (
     options?.originUrl ??
     bindings.OFFICIAL_TEXTURE_ORIGIN ??
@@ -324,25 +298,14 @@ export async function serveDatasetTextureWithFallback(
   const resolvedContentType = upstreamResponse.headers.get("content-type") ?? contentType;
 
   const persistTask = (async () => {
-    const tasks: Promise<unknown>[] = [];
     if (bindings.DATASET_BUCKET) {
-      tasks.push(
-        bindings.DATASET_BUCKET.put(`datasets/gtnh/${normalized}`, bytes, {
-          httpMetadata: {
-            contentType: resolvedContentType,
-            cacheControl: TEXTURE_CACHE_CONTROL,
-          },
-        }).catch(() => undefined),
-      );
+      await bindings.DATASET_BUCKET.put(`datasets/gtnh/${normalized}`, bytes, {
+        httpMetadata: {
+          contentType: resolvedContentType,
+          cacheControl: TEXTURE_CACHE_CONTROL,
+        },
+      }).catch(() => undefined);
     }
-    if (bindings.TEXTURE_CACHE_KV) {
-      tasks.push(
-        bindings.TEXTURE_CACHE_KV.put(kvKey, bytes, {
-          expirationTtl: 60 * 60 * 24 * 365,
-        }).catch(() => undefined),
-      );
-    }
-    await Promise.all(tasks);
   })();
 
   if (bindings.ctx) {

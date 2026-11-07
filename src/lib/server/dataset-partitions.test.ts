@@ -27,7 +27,6 @@ import {
   readDatasetBytes,
   serveDatasetTextureWithFallback,
   setCloudflareRuntimeBindings,
-  type KVNamespaceLike,
   type R2BucketLike,
 } from "./dataset-storage";
 
@@ -553,7 +552,6 @@ describe("partitioned dataset engine & Cloudflare storage bindings", () => {
 
   it("reads dataset objects from R2 bucket bindings and caches missing textures from gtnhplanner.com", async () => {
     const storedR2 = new Map<string, Uint8Array>();
-    const storedKv = new Map<string, Uint8Array>();
     const waitUntilPromises: Promise<unknown>[] = [];
 
     const r2Bucket: R2BucketLike = {
@@ -577,28 +575,8 @@ describe("partitioned dataset engine & Cloudflare storage bindings", () => {
         }
       },
     };
-
-    const kvNamespace: KVNamespaceLike = {
-      async get(key: string) {
-        const bytes = storedKv.get(key);
-        if (!bytes) return null;
-        return bytes.buffer.slice(
-          bytes.byteOffset,
-          bytes.byteOffset + bytes.byteLength,
-        ) as ArrayBuffer;
-      },
-      async put(key: string, value: ArrayBuffer | Uint8Array | string) {
-        if (value instanceof Uint8Array) {
-          storedKv.set(key, new Uint8Array(value));
-        } else if (value instanceof ArrayBuffer) {
-          storedKv.set(key, new Uint8Array(value));
-        }
-      },
-    };
-
     setCloudflareRuntimeBindings({
       DATASET_BUCKET: r2Bucket,
-      TEXTURE_CACHE_KV: kvNamespace,
       ctx: {
         waitUntil(promise: Promise<unknown>) {
           waitUntilPromises.push(promise);
@@ -628,9 +606,6 @@ describe("partitioned dataset engine & Cloudflare storage bindings", () => {
     await Promise.all(waitUntilPromises);
     expect(
       storedR2.has("datasets/gtnh/local-2.9.0-rc-2/textures/rendered/missing_icon-123456.png"),
-    ).toBe(true);
-    expect(
-      storedKv.has("texture:local-2.9.0-rc-2/textures/rendered/missing_icon-123456.png"),
     ).toBe(true);
 
     // Subsequent read hits R2 directly without calling upstream fetch
