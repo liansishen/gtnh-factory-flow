@@ -104,8 +104,15 @@ function normalizeDatasetRelativePath(relativePath: string): string {
 export async function readDatasetBytes(relativePath: string): Promise<Uint8Array | undefined> {
   const normalized = normalizeDatasetRelativePath(relativePath);
   const bindings = getCloudflareRuntimeBindings();
+  const rawCandidate = normalized.endsWith(".gz") ? normalized.slice(0, -3) : undefined;
 
   if (bindings.DATASET_BUCKET) {
+    if (rawCandidate) {
+      const rawObject = await bindings.DATASET_BUCKET.get(`datasets/gtnh/${rawCandidate}`);
+      if (rawObject) {
+        return new Uint8Array(await rawObject.arrayBuffer());
+      }
+    }
     const object = await bindings.DATASET_BUCKET.get(`datasets/gtnh/${normalized}`);
     if (object) {
       return new Uint8Array(await object.arrayBuffer());
@@ -138,8 +145,15 @@ export async function readDatasetBytes(relativePath: string): Promise<Uint8Array
 export async function datasetFileExists(relativePath: string): Promise<boolean> {
   const normalized = normalizeDatasetRelativePath(relativePath);
   const bindings = getCloudflareRuntimeBindings();
+  const rawCandidate = normalized.endsWith(".gz") ? normalized.slice(0, -3) : undefined;
 
   if (bindings.DATASET_BUCKET) {
+    if (rawCandidate) {
+      const rawObject = await bindings.DATASET_BUCKET.get(`datasets/gtnh/${rawCandidate}`);
+      if (rawObject) {
+        return true;
+      }
+    }
     const object = await bindings.DATASET_BUCKET.get(`datasets/gtnh/${normalized}`);
     if (object) {
       return true;

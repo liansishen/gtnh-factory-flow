@@ -491,10 +491,14 @@ const recipeVocabCache = new BoundedLru<string, LoadedRecipeVocabBundle>(1);
 const choiceAlternativesCache = new BoundedLru<string, Map<string, ResourceAlternative[]>>(1);
 const resourceEntriesPartCache = new BoundedLru<string, ReturnType<typeof unpackPostingsBuffer>>(2);
 const resourceEntryCache = new BoundedLru<string, DatasetResourceIndexEntry>(1024);
-const resourceKeyBucketCache = new BoundedLru<string, ResourceKeyBucketFile>(2);
+interface IndexedJsonBucket {
+  extractProp<T>(key: string): T | undefined;
+}
+const resourceKeyBucketCache = new BoundedLru<string, IndexedJsonBucket>(4);
 const resolvedResourceKeyCache = new BoundedLru<string, ResourceKeyBucketEntry>(1024);
-const lookupBucketCache = new BoundedLru<string, LookupBucketFile>(4);
-const recipeIdBucketCache = new BoundedLru<string, RecipeIdBucketFile>(2);
+const lookupBucketCache = new BoundedLru<string, IndexedJsonBucket>(4);
+const resolvedLookupEntryCache = new BoundedLru<string, Array<[number, number[]]>>(1024);
+const recipeIdBucketCache = new BoundedLru<string, IndexedJsonBucket>(4);
 const pinyinCoreCache = new BoundedLru<string, CompiledPinyinCore>(1);
 const pinyinBucketCache = new BoundedLru<string, CompiledPinyinBucket>(4);
 const pinyinQueryHitCache = new BoundedLru<string, readonly PinyinAlias[]>(64);
@@ -530,6 +534,7 @@ export function clearPartitionedDatasetCaches(): void {
   resourceKeyBucketCache.clear();
   resolvedResourceKeyCache.clear();
   lookupBucketCache.clear();
+  resolvedLookupEntryCache.clear();
   recipeIdBucketCache.clear();
   pinyinCoreCache.clear();
   pinyinBucketCache.clear();
@@ -672,6 +677,85 @@ async function loadRecipeTokenBucket(versionId: string, bucketIndex: number) {
 
 const RESOURCE_ENTRIES_PART_SIZE = 34000;
 const utf8Decoder = new TextDecoder();
+const utf8Encoder = new TextEncoder();
+
+function createIndexedJsonBucket(bytes: Uint8Array): IndexedJsonBucket {
+  const parsedProps = new Map<string, unknown>();
+  return {
+    extractProp<T>(key: string): T | undefined {
+      if (parsedProps.has(key)) {
+        return parsedProps.get(key) as T | undefined;
+      }
+      const needle = utf8Encoder.encode(`${JSON.stringify(key)}:`);
+      const nLen = needle.length;
+      const max = bytes.length - nLen;
+      if (max < 0) {
+        parsedProps.set(key, undefined);
+        return undefined;
+      }
+      const pivotOffset = Math.max(1, nLen - 3);
+      const pivotByte = needle[pivotOffset];
+      let pos = pivotOffset;
+      let foundStart = -1;
+      while (pos <= max + pivotOffset) {
+        const pIdx = bytes.indexOf(pivotByte, pos);
+        if (pIdx === -1 || pIdx > max + pivotOffset) break;
+        const start = pIdx - pivotOffset;
+        if (bytes[start] === 34 && bytes[start + nLen - 1] === 58) {
+          let ok = true;
+          for (let i = 1; i < nLen - 1; i += 1) {
+            if (bytes[start + i] !== needle[i]) {
+              ok = false;
+              break;
+            }
+          }
+          if (ok && (start === 0 || bytes[start - 1] === 123 || bytes[start - 1] === 44 || bytes[start - 1] <= 32)) {
+            foundStart = start;
+            break;
+          }
+        }
+        pos = pIdx + 1;
+      }
+      if (foundStart === -1) {
+        parsedProps.set(key, undefined);
+        return undefined;
+      }
+      let vStart = foundStart + nLen;
+      const len = bytes.length;
+      while (vStart < len && bytes[vStart] <= 32) vStart += 1;
+      let vPos = vStart;
+      let depth = 0;
+      let inStr = false;
+      while (vPos < len) {
+        const b = bytes[vPos++];
+        if (inStr) {
+          if (b === 92) vPos += 1;
+          else if (b === 34) {
+            inStr = false;
+            if (depth === 0) break;
+          }
+        } else if (b === 34) {
+          inStr = true;
+        } else if (b === 123 || b === 91) {
+          depth += 1;
+        } else if (b === 125 || b === 93) {
+          if (depth === 0) {
+            vPos -= 1;
+            break;
+          }
+          depth -= 1;
+          if (depth === 0) break;
+        } else if (depth === 0 && (b === 44 || b <= 32)) {
+          vPos -= 1;
+          break;
+        }
+      }
+      const value = JSON.parse(utf8Decoder.decode(bytes.subarray(vStart, vPos))) as T;
+      parsedProps.set(key, value);
+      return value;
+    },
+  };
+}
 
 async function loadResourceEntriesPart(
   versionId: string,
@@ -689,34 +773,37 @@ async function loadResourceEntriesPart(
 async function loadResourceKeyBucket(
   versionId: string,
   bucketIndex: number,
-): Promise<ResourceKeyBucketFile> {
+): Promise<IndexedJsonBucket> {
   const key = `${versionId}:${bucketIndex}`;
-  return resourceKeyBucketCache.getOrLoad(key, () =>
-    readDatasetGzipJson<ResourceKeyBucketFile>(
+  return resourceKeyBucketCache.getOrLoad(key, async () => {
+    const bytes = await readDatasetGzipBytes(
       `${versionId}/partitions/resource-key-buckets/bucket-${padBucketIndex(bucketIndex)}.json.gz`,
-    ),
-  );
+    );
+    return createIndexedJsonBucket(bytes);
+  });
 }
 
-async function loadLookupBucket(versionId: string, bucketIndex: number): Promise<LookupBucketFile> {
+async function loadLookupBucket(versionId: string, bucketIndex: number): Promise<IndexedJsonBucket> {
   const key = `${versionId}:${bucketIndex}`;
-  return lookupBucketCache.getOrLoad(key, () =>
-    readDatasetGzipJson<LookupBucketFile>(
+  return lookupBucketCache.getOrLoad(key, async () => {
+    const bytes = await readDatasetGzipBytes(
       `${versionId}/partitions/lookup-buckets/bucket-${padBucketIndex(bucketIndex)}.json.gz`,
-    ),
-  );
+    );
+    return createIndexedJsonBucket(bytes);
+  });
 }
 
 async function loadRecipeIdBucket(
   versionId: string,
   bucketIndex: number,
-): Promise<RecipeIdBucketFile> {
+): Promise<IndexedJsonBucket> {
   const key = `${versionId}:${bucketIndex}`;
-  return recipeIdBucketCache.getOrLoad(key, () =>
-    readDatasetGzipJson<RecipeIdBucketFile>(
+  return recipeIdBucketCache.getOrLoad(key, async () => {
+    const bytes = await readDatasetGzipBytes(
       `${versionId}/partitions/recipe-id-buckets/bucket-${padBucketIndex(bucketIndex)}.json.gz`,
-    ),
-  );
+    );
+    return createIndexedJsonBucket(bytes);
+  });
 }
 
 async function loadChoiceAlternatives(
@@ -1881,7 +1968,7 @@ async function loadResourcesByKeys(
     [...byBucket.entries()].map(async ([bucketIdx, bucketKeys]) => {
       const bucket = await loadResourceKeyBucket(versionId, bucketIdx);
       for (const key of bucketKeys) {
-        const entry = bucket.entries[key] ?? {};
+        const entry = bucket.extractProp<ResourceKeyBucketEntry>(key) ?? {};
         resolvedResourceKeyCache.set(`${versionId}:${key}`, entry);
         if (entry.resource) {
           out.set(key, entry.resource);
@@ -1912,7 +1999,7 @@ async function resolvePartitionedResourceScope(
   const key = `${resource.kind}:${resource.id}`;
   const bucketIdx = hashPartitionKey(key, meta.keyBucketCount);
   const bucket = await loadResourceKeyBucket(versionId, bucketIdx);
-  const bucketEntry = bucket.entries[key];
+  const bucketEntry = bucket.extractProp<ResourceKeyBucketEntry>(key);
 
   if (bucketEntry) {
     const precomputedKeys =
@@ -1957,7 +2044,7 @@ async function resolvePartitionedResourceScope(
       const wildcardKey = `item:${wildcard.id}`;
       const wbIdx = hashPartitionKey(wildcardKey, meta.keyBucketCount);
       const wb = wbIdx === bucketIdx ? bucket : await loadResourceKeyBucket(versionId, wbIdx);
-      for (const oredictName of wb.wildcardOredicts[wildcard.id] ?? []) {
+      for (const oredictName of wb.extractProp<string[]>(wildcard.id) ?? []) {
         addScoped({ kind: "item", id: `oredict:${oredictName}` });
       }
     }
@@ -1990,8 +2077,13 @@ async function loadLookupEntriesForScopedResources(
     [...byBucket.entries()].map(async ([bucketIdx, modeKeys]) => {
       const bucket = await loadLookupBucket(versionId, bucketIdx);
       for (const modeKey of modeKeys) {
-        const entries = bucket.entries[modeKey];
-        if (!entries) {
+        const cacheKey = `${versionId}:${modeKey}`;
+        let entries = resolvedLookupEntryCache.get(cacheKey);
+        if (entries === undefined) {
+          entries = bucket.extractProp<Array<[number, number[]]>>(modeKey) ?? [];
+          resolvedLookupEntryCache.set(cacheKey, entries);
+        }
+        if (entries.length === 0) {
           continue;
         }
         for (const [recipeMapId, recipeIndexes] of entries) {
@@ -2255,7 +2347,7 @@ export async function getPartitionedDatasetRecipe(
   const meta = await loadPartitionMeta(versionId);
   const bucketIdx = hashPartitionKey(recipeId, meta.recipeIdBucketCount);
   const idBucket = await loadRecipeIdBucket(versionId, bucketIdx);
-  const recipeIndex = idBucket.recipeIds[recipeId] ?? -1;
+  const recipeIndex = idBucket.extractProp<number>(recipeId) ?? -1;
   if (recipeIndex < 0) {
     return undefined;
   }
@@ -2373,7 +2465,7 @@ export async function resolvePartitionedDatasetRecipeRefs(
         }
         const bucketIdx = hashPartitionKey(rawId, meta.recipeIdBucketCount);
         const bucket = await loadRecipeIdBucket(versionId, bucketIdx);
-        rawIndexesById.set(rawId, bucket.rawRecipeIds[rawId] ?? []);
+        rawIndexesById.set(rawId, bucket.extractProp<number[]>(rawId) ?? []);
       }),
     );
     const rawCandidatesByIndex = await loadPartitionedRecipeBodies(

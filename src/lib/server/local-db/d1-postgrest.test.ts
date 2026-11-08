@@ -64,6 +64,13 @@ function createNodeSqliteD1Adapter(sqlite: SqliteDatabaseSync): D1DatabaseLike {
       };
       return stmt;
     },
+    async batch(statements: D1PreparedStatementLike[]) {
+      const out: unknown[] = [];
+      for (const s of statements) {
+        out.push(await s.run());
+      }
+      return out;
+    },
     async exec(query: string) {
       sqlite.exec(query);
     },

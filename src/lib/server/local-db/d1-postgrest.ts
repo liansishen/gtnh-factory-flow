@@ -775,15 +775,24 @@ function coerceInputForSqliteWithChunks(
   };
   chunkWrites.push(
     (async () => {
+      const statements: ReturnType<D1DatabaseLike["prepare"]>[] = [];
       for (let i = 0, idx = 0; i < coerced.length; i += MAX_INLINE_JSON_CHARS, idx += 1) {
         const slice = coerced.slice(i, i + MAX_INLINE_JSON_CHARS);
-        await d1
-          .prepare(
-            `INSERT OR REPLACE INTO d1_json_chunks (table_name, row_key, column_name, chunk_index, chunk_text)
-             VALUES (?, ?, ?, ?, ?)`,
-          )
-          .bind(tableName, chunkKey, columnName, idx, slice)
-          .run();
+        statements.push(
+          d1
+            .prepare(
+              `INSERT OR REPLACE INTO d1_json_chunks (table_name, row_key, column_name, chunk_index, chunk_text)
+               VALUES (?, ?, ?, ?, ?)`,
+            )
+            .bind(tableName, chunkKey, columnName, idx, slice),
+        );
+      }
+      if (d1.batch && statements.length > 1) {
+        await d1.batch(statements);
+      } else {
+        for (const stmt of statements) {
+          await stmt.run();
+        }
       }
     })(),
   );
